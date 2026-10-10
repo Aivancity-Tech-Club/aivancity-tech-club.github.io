@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Join · aivancity Tech Club</title>
+  <meta name="description" content="Join the aivancity Tech Club: every Thursday, 1–2 PM, AIClinic – Room 107. No sign-up needed.">
+  <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/">
+        <img src="assets/tech-club-logo.svg" alt="Tech Club logo">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="/about">About</a>
+        <a href="/schedule">Schedule</a>
+        <a href="/rules">Rules</a>
+        <a href="/join" aria-current="page">Join</a>
+        <a href="/mountain" style="border-color:var(--line)">Mountain</a>
+      </nav>
+    </div>
+  </header>
+
+    <main>
+    <section class="page-head">
+      <div class="wrap">
+        <p class="eyebrow">&lt;join /&gt;</p>
+        <h1>Just <b>show up</b></h1>
+        <p class="lede" style="font-size:1.15rem;color:var(--ink-soft);margin:0;max-width:60ch">No sign-up needed. Every aivancity student is welcome, whatever your level.</p>
+      </div>
+    </section>
+
+    <section style="padding-top:24px">
+      <div class="wrap hero-grid">
+        <div>
+          <h2 style="margin-bottom:16px">How it <b>works</b></h2>
+          <ul style="margin:0;padding-left:1.1em;display:grid;gap:10px">
+            <li>Come to AIClinic – Room 107 on any Thursday, 1–2 PM. Joining online counts too.</li>
+            <li>Bring a laptop if you have one. If not, pair up with someone.</li>
+            <li>Check in at the start of each session to earn your first points and your white bandana.</li>
+            <li>Take part in games, give talks and ship projects to climb the six peaks.</li>
+          </ul>
+          <div class="btns" style="margin-top:28px">
+            <a class="btn btn-primary" href="/schedule">See this week's session →</a>
+            <a class="btn btn-ghost" href="/rules">How points work</a>
+            <a class="btn btn-ghost" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener">GDG chapter page ↗</a>
+          </div>
+        </div>
+
+        <aside class="meet-card" aria-label="Weekly meeting">
+          <p class="label">// we meet every week</p>
+          <p class="day">Thursdays</p>
+          <p class="time">1:00 – 2:00 PM</p>
+          <span class="room">📍 AIClinic – Room 107</span>
+          <div class="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener">GDG on Campus chapter ↗</a> <span class="mono">#GDGOnCampus</span>
+    </div>
+  </footer>
+
+  <script>document.getElementById("yr").textContent = new Date().getFullYear();</script>
+</body>
+</html>

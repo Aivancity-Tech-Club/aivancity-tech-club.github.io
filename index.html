@@ -11,19 +11,21 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/schedule.css">
 </head>
 <body>
   <header class="site-header">
     <div class="wrap">
-      <a class="brand" href="./">
+      <a class="brand" href="/">
         <img src="assets/tech-club-logo.svg" alt="Tech Club logo">
         <span>aivancity Tech Club</span>
       </a>
       <nav class="nav" aria-label="Main">
-        <a href="#about">About</a>
-        <a href="schedule.html">Schedule</a>
-        <a href="rules.html">Rules</a>
-        <a href="#join">Join</a>
+        <a href="/about">About</a>
+        <a href="/schedule">Schedule</a>
+        <a href="/rules">Rules</a>
+        <a href="/join">Join</a>
+        <a href="/mountain" style="border-color:var(--line)">Mountain</a>
       </nav>
     </div>
   </header>
@@ -36,8 +38,8 @@
           <h1>Build, learn &amp; <b>ship together.</b></h1>
           <p class="lede">A student community for anyone curious about code, AI and Google developer technologies. Every level is welcome.</p>
           <div class="btns">
-            <a class="btn btn-primary" href="schedule.html">View the schedule →</a>
-            <a class="btn btn-ghost" href="#about">What we do</a>
+            <a class="btn btn-primary" href="/schedule">View the schedule →</a>
+            <a class="btn btn-ghost" href="/about">What we do</a>
           </div>
         </div>
 
@@ -51,49 +53,23 @@
       </div>
     </section>
 
-    <section id="about">
-      <div class="wrap">
-        <div class="section-head">
-          <h2>One club, <b>two ways in.</b></h2>
-        </div>
-        <div class="groups">
-          <article class="group tech">
-            <img class="logo-tech" src="assets/tech-club-logo.svg" alt="">
-            <h3>aivancity Tech Club</h3>
-            <p>The home base. Weekly sessions where we pick up new tools, work on projects and help each other get unstuck.</p>
-            <ul>
-              <li>Hands-on workshops</li>
-              <li>Team projects &amp; hack nights</li>
-              <li>Peer help and code reviews</li>
-            </ul>
-          </article>
-          <article class="group gdg">
-            <div class="gdg-lockup">
-              <img src="assets/gdg-mark.svg" alt="">
-              <div>
-                <div class="t1">Google Developer Groups</div>
-                <div class="t2">On Campus · aivancity</div>
-              </div>
-            </div>
-            <h3>GDG on Campus aivancity</h3>
-            <p>Our Google Developer Group on Campus, run inside the Tech Club. It connects us to the global GDG network.</p>
-            <ul>
-              <li>Sessions on Google technologies (Cloud, Android, Flutter, Gemini…)</li>
-              <li>Study jams and certification prep</li>
-              <li>Events with the wider GDG community</li>
-            </ul>
-          </article>
-        </div>
-      </div>
-    </section>
-
     <section id="upcoming">
       <div class="wrap">
         <div class="section-head">
           <h2>Coming <b>up next</b></h2>
-          <a class="btn btn-ghost" href="schedule.html">Full schedule →</a>
+          <a class="btn btn-ghost" href="/schedule">Full schedule →</a>
         </div>
         <div class="session-list" id="upcoming-list"></div>
+      </div>
+    </section>
+
+    <section id="recent" data-hide-empty>
+      <div class="wrap">
+        <div class="section-head">
+          <h2>What we've <b>been up to</b></h2>
+          <a class="btn btn-ghost" href="/schedule">Whole season →</a>
+        </div>
+        <div class="session-list" id="recent-list"></div>
       </div>
     </section>
 
@@ -104,7 +80,7 @@
             <h2><b>Just show up.</b></h2>
             <p>No sign-up needed. Come to AIClinic – Room 107 on any Thursday from 1 to 2 PM, bring a laptop if you have one, and say hi.</p>
           </div>
-          <a class="btn" href="schedule.html">See this week's session →</a>
+          <a class="btn" href="/join">How to join →</a>
         </div>
       </div>
     </section>
@@ -113,13 +89,14 @@
   <footer class="site-footer">
     <div class="wrap">
       <span>© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
-      <span class="mono">#GDGOnCampus</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener">GDG on Campus chapter ↗</a> <span class="mono">#GDGOnCampus</span>
     </div>
   </footer>
 
   <script src="assets/schedule.js"></script>
   <script>
     renderSchedule(document.getElementById("upcoming-list"), { limit: 3 });
+    renderRecent(document.getElementById("recent-list"), { limit: 3 });
     document.getElementById("yr").textContent = new Date().getFullYear();
   </script>
 </body>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About · aivancity Tech Club</title>
+  <meta name="description" content="The aivancity Tech Club and its Google Developer Group on Campus: what we do and how they fit together.">
+  <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/">
+        <img src="assets/tech-club-logo.svg" alt="Tech Club logo">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="/about" aria-current="page">About</a>
+        <a href="/schedule">Schedule</a>
+        <a href="/rules">Rules</a>
+        <a href="/join">Join</a>
+        <a href="/mountain" style="border-color:var(--line)">Mountain</a>
+      </nav>
+    </div>
+  </header>
+
+    <main>
+    <section class="page-head">
+      <div class="wrap">
+        <p class="eyebrow">&lt;about /&gt;</p>
+        <h1>One club, <b>two ways in</b></h1>
+        <p class="lede" style="font-size:1.15rem;color:var(--ink-soft);margin:0;max-width:60ch">The aivancity Tech Club is the home base. GDG on Campus aivancity is our Google Developer Group, run inside the club.</p>
+      </div>
+    </section>
+
+    <section style="padding-top:24px">
+      <div class="wrap">
+        <div class="groups">
+          <article class="group tech">
+            <img class="logo-tech" src="assets/tech-club-logo.svg" alt="">
+            <h3>aivancity Tech Club</h3>
+            <p>The home base. Weekly sessions where we pick up new tools, work on projects and help each other get unstuck.</p>
+            <ul>
+              <li>Hands-on workshops</li>
+              <li>Team projects &amp; hack nights</li>
+              <li>Peer help and code reviews</li>
+            </ul>
+          </article>
+          <article class="group gdg">
+            <div class="gdg-lockup">
+              <img src="assets/gdg-mark.svg" alt="">
+              <div>
+                <div class="t1">Google Developer Groups</div>
+                <div class="t2">On Campus · aivancity</div>
+              </div>
+            </div>
+            <h3>GDG on Campus aivancity</h3>
+            <p>Our Google Developer Group on Campus, run inside the Tech Club. It connects us to the global GDG network.</p>
+            <ul>
+              <li>Sessions on Google technologies (Cloud, Android, Flutter, Gemini…)</li>
+              <li>Study jams and certification prep</li>
+              <li>Events with the wider GDG community</li>
+            </ul>
+            <p style="margin:16px 0 0"><a class="btn" style="background:#fff;color:#1e1e1e" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener">Join our GDG chapter page →</a></p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener">GDG on Campus chapter ↗</a> <span class="mono">#GDGOnCampus</span>
+    </div>
+  </footer>
+
+  <script>document.getElementById("yr").textContent = new Date().getFullYear();</script>
+</body>
+</html>

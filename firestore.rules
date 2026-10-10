@@ -1,0 +1,81 @@
+rules_version = '2';
+// Security rules for the Tech Club mountain (Cloud Firestore).
+// Paste into Firebase console → Firestore Database → Rules, then Publish.
+// Members never write points: they add facts, and points are recomputed from rules/rules.yaml.
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function signedIn() { return request.auth != null; }
+    // Only verified @aivancity.education accounts (email-link sign-in verifies the address).
+    function school() {
+      return signedIn() && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('.*@aivancity[.]education$');
+    }
+    function memberDoc() { return get(/databases/$(db)/documents/members/$(request.auth.uid)); }
+    function isMember() { return school() && exists(/databases/$(db)/documents/members/$(request.auth.uid)); }
+    function isOrganizer() { return isMember() && memberDoc().data.get('role', 'member') == 'organizer'; }
+    function code(c) { return get(/databases/$(db)/documents/checkinCodes/$(c)).data; }
+
+    // Public profile inside the club: name, GitHub username, accessories. Roles are set by an owner in the console.
+    match /members/{uid} {
+      allow read: if isMember();
+      allow create: if school() && request.auth.uid == uid
+        && request.resource.data.consent == true
+        && !('role' in request.resource.data)
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40;
+      allow update: if school() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'github', 'accessories'])
+        && request.resource.data.accessories.size() <= 2;
+      allow delete: if false;
+    }
+
+    // Email addresses: only the person and organizers can read them.
+    match /private/{uid} {
+      allow read: if (signedIn() && request.auth.uid == uid) || isOrganizer();
+      allow write: if school() && request.auth.uid == uid;
+    }
+
+    // One document per session code: { date: "YYYY-MM-DD", validFrom: timestamp, validUntil: timestamp, double: bool }.
+    // Members can't read or list codes; the rules below only check that a typed code exists.
+    match /checkinCodes/{c} {
+      allow read, write: if isOrganizer();
+    }
+
+    match /facts/{id} {
+      allow read: if isMember();
+
+      // 1) Check-in: the code must exist, be for today's session and be used inside its time window.
+      allow create: if isMember()
+        && request.resource.data.type == 'attend'
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'approved'
+        && id == request.auth.uid + '_' + request.resource.data.date
+        && exists(/databases/$(db)/documents/checkinCodes/$(request.resource.data.code))
+        && code(request.resource.data.code).date == request.resource.data.date
+        && request.time >= code(request.resource.data.code).validFrom
+        && request.time <= code(request.resource.data.code).validUntil;
+
+      // 2) Proof submissions start as pending and earn nothing until an organizer verifies them.
+      allow create: if isMember()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.type in ['ship_project', 'open_source', 'skill_badge', 'certification', 'mentoring']
+        && request.resource.data.status == 'pending'
+        && request.resource.data.proof is string && request.resource.data.proof.size() < 500;
+
+      // 3) Organizers record results for other members (never for themselves).
+      allow create: if isOrganizer()
+        && request.resource.data.uid != request.auth.uid
+        && request.resource.data.recordedBy == request.auth.uid;
+
+      // 4) Organizers verify submissions from other members. Only the decision fields can change.
+      allow update: if isOrganizer()
+        && resource.data.uid != request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reason', 'verifiedBy', 'verifiedAt'])
+        && request.resource.data.verifiedBy == request.auth.uid
+        && request.resource.data.status in ['approved', 'rejected'];
+
+      // Facts are never deleted. Corrections are new facts, so the log stays complete.
+      allow delete: if false;
+    }
+  }
+}
