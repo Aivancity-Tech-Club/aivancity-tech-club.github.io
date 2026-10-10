@@ -14,6 +14,9 @@ const store = {
   del(k) { try { localStorage.removeItem(k); } catch (e) {} },
 };
 const SUBMIT_TYPES = ['ship_project', 'open_source', 'skill_badge', 'certification', 'mentoring'];
+/* Messages go through I18N when the page loaded it (English otherwise). */
+const tr = (k, en, v) => { if (window.I18N) { const x = I18N.t(k, v); if (x !== k) return x; } return en; };
+const PHONE_RE = /^\+?[0-9 ().-]{6,20}$/;
 const validEmail = (e) => new RegExp('^[^@\\s]+@' + DOMAIN.replace(/\./g, '\\.') + '$', 'i').test(String(e || '').trim());
 
 /* ================= demo backend ================= */
@@ -57,21 +60,25 @@ function demoBackend() {
     mode: 'demo',
     async init() {}, onAuth(cb) { cb(user); },
     async sendLink() { return { ok: true }; }, async signOut() { store.del('nw-demo-v1'); state = demoSeed(); },
+    async onRoster() { return true; }, async requestStatus() { return store.get('nw-demo-req'); },
+    async apply(d) { store.set('nw-demo-req', { ...d, email: user.email }); return { ok: true }; },
+    async inviteLink() { return null; },
+    async sendFeedback() { return { ok: true, demo: true }; },
     async loadMembers() { return state.members; }, async loadFacts() { return state.facts; },
     async getProfile(uid) { return state.members.find(m => m.uid === uid) || null; },
     async saveProfile(p) { Object.assign(state.members.find(m => m.uid === 'you'), p); save(); },
     async saveLook(acc) { state.members.find(m => m.uid === 'you').accessories = acc; save(); },
     async checkIn(code) {
       const date = todayStr();
-      if (String(code).trim().toUpperCase() !== 'DEMO') return { ok: false, message: 'That code does not match this session. In the demo, use DEMO.' };
-      if (state.facts.some(f => f.uid === 'you' && f.type === 'attend' && f.date === date)) return { ok: false, message: 'You already checked in today.' };
+      if (String(code).trim().toUpperCase() !== 'DEMO') return { ok: false, message: tr('m.checkin.demo', 'That code does not match this session. In the demo, use DEMO.') };
+      if (state.facts.some(f => f.uid === 'you' && f.type === 'attend' && f.date === date)) return { ok: false, message: tr('m.checkin.dup', 'You already checked in today.') };
       state.facts.push({ id: 'd' + Date.now(), uid: 'you', type: 'attend', date, status: 'approved' }); save();
-      return { ok: true, message: 'Checked in. +1 point.' };
+      return { ok: true, message: tr('m.checkin.ok', 'Checked in. +1 point.') };
     },
     async submit(s) {
-      if (!SUBMIT_TYPES.includes(s.type)) return { ok: false, message: 'That kind of proof is not on the list.' };
+      if (!SUBMIT_TYPES.includes(s.type)) return { ok: false, message: tr('m.proof.badtype', 'That kind of proof is not on the list.') };
       state.facts.push({ id: 'd' + Date.now(), uid: 'you', date: todayStr(), status: 'pending', ...s }); save();
-      return { ok: true, message: 'Sent. An organizer will check it within 7 days.' };
+      return { ok: true, message: tr('m.proof.ok', 'Sent. An organizer will check it within 7 days.') };
     },
     reset() { store.del('nw-demo-v1'); state = demoSeed(); },
   };
@@ -79,6 +86,14 @@ function demoBackend() {
 
 /* ================= Firebase backend ================= */
 function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); }); }
+function linkErrorText(e) {
+  const c = (e && e.code) || '';
+  if (c.includes('invalid-action-code') || c.includes('expired-action-code')) return tr('err.link.expired', 'That sign-in link has expired or was already used. Request a new one below and open it right away.');
+  if (c.includes('invalid-email')) return tr('err.link.email', 'The email in the link does not match. Request a new link from this browser.');
+  if ((e && e.message || '').includes('referer') || c.includes('api-key')) return tr('err.link.key', 'Sign-in is blocked by the API key settings. If you just changed them, wait 5 minutes and try again.');
+  const why = c || (e && e.message) || 'unknown error';
+  return tr('err.link.other', 'Sign-in did not finish (' + why + '). Request a new link and try again.', { e: why });
+}
 function firebaseBackend() {
   let auth, db;
   const V = '10.12.2', base = 'https://www.gstatic.com/firebasejs/' + V + '/';
@@ -93,22 +108,57 @@ function firebaseBackend() {
       if (auth.isSignInWithEmailLink(location.href)) {
         let email = store.get('nw-email');
         // If the link was opened on another device, the page asks for the email (see completeLink).
-        if (email) { await auth.signInWithEmailLink(email, location.href); store.del('nw-email'); history.replaceState(null, '', location.pathname); }
-        else this.pendingLink = location.href;
+        if (email) {
+          try { await auth.signInWithEmailLink(email, location.href); store.del('nw-email'); }
+          catch (e) { this.linkError = linkErrorText(e); }
+          history.replaceState(null, '', location.pathname);
+        } else this.pendingLink = location.href;
       }
     },
     async completeLink(email) {
-      if (!validEmail(email)) throw new Error('Use your @' + DOMAIN + ' email.');
+      if (!validEmail(email)) throw new Error(tr('err.email', 'Use your @' + DOMAIN + ' school email.', { d: DOMAIN }));
       await auth.signInWithEmailLink(email.trim(), this.pendingLink); this.pendingLink = null; history.replaceState(null, '', location.pathname);
     },
     onAuth(cb) { auth.onAuthStateChanged(u => cb(u ? { uid: u.uid, email: u.email } : null)); },
     async sendLink(email) {
-      if (!validEmail(email)) return { ok: false, message: 'Use your @' + DOMAIN + ' school email.' };
-      await auth.sendSignInLinkToEmail(email.trim(), { url: location.origin + location.pathname, handleCodeInApp: true });
+      if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your @' + DOMAIN + ' school email.', { d: DOMAIN }) };
+      try { await auth.sendSignInLinkToEmail(email.trim(), { url: location.origin + location.pathname, handleCodeInApp: true }); }
+      catch (e) { return { ok: false, message: linkErrorText(e) }; }
       store.set('nw-email', email.trim());
-      return { ok: true, message: 'Check your inbox: we sent a sign-in link to ' + email.trim() + '.' };
+      return { ok: true, message: tr('m.signin.sent', 'Check your inbox: we sent a sign-in link to ' + email.trim() + '.', { email: email.trim() }) };
     },
     async signOut() { await auth.signOut(); },
+    /* Member = on the roster (added by an organizer) OR sent the /apply form, unless an organizer set status "removed". */
+    async onRoster() {
+      const u = auth.currentUser, em = (u.email || '').toLowerCase();
+      const read = async (ref) => { try { return await ref.get({ source: 'server' }); } catch (e) { try { return await ref.get(); } catch (e2) { return null; } } };
+      const r = await read(db.collection('roster').doc(em));
+      if (r && r.exists) return true;
+      const q = await read(db.collection('requests').doc(u.uid));
+      return !!(q && q.exists && q.data().status !== 'removed');
+    },
+    async requestStatus() { try { const d = await db.collection('requests').doc(auth.currentUser.uid).get(); return d.exists ? d.data() : null; } catch (e) { return null; } },
+    /* Application to join the club (and its WhatsApp group). Only the person and organizers can read it. */
+    async apply(d) {
+      const u = auth.currentUser;
+      const doc = { email: u.email.toLowerCase(), name: d.name, program: d.program || '', phone: d.phone, interests: d.interests || [],
+        level: d.level, heard: d.heard || '', consent: true, lang: d.lang === 'fr' ? 'fr' : 'en', at: firebase.firestore.FieldValue.serverTimestamp() };
+      try { await db.collection('requests').doc(u.uid).set(doc, { merge: true }); return { ok: true }; }
+      catch (e) { return { ok: false, message: tr('err.generic', 'Something went wrong. Try again in a moment.') + ' (' + (e.code || e.message) + ')' }; }
+    },
+    /* The WhatsApp invite link lives in Firestore (invites/whatsapp), not in this public repository.
+       The rules only let people who applied, or who are on the roster, read it. */
+    async inviteLink() {
+      try { const d = await db.collection('invites').doc('whatsapp').get({ source: 'server' }); return d.exists ? (d.data().link || null) : null; }
+      catch (e) { return null; }
+    },
+    async sendFeedback(f) {
+      const doc = { topic: f.topic, message: f.message, lang: f.lang === 'fr' ? 'fr' : 'en', createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+      if (f.rating) doc.rating = f.rating;
+      if (f.contact) doc.contact = f.contact;
+      try { await db.collection('feedback').add(doc); return { ok: true }; }
+      catch (e) { return { ok: false, message: tr('err.generic', 'Something went wrong. Try again in a moment.') + ' (' + (e.code || e.message) + ')' }; }
+    },
     async loadMembers() { const s = await db.collection('members').get(); return s.docs.map(d => ({ uid: d.id, ...d.data() })); },
     async loadFacts() { const s = await db.collection('facts').get(); return s.docs.map(d => ({ id: d.id, ...d.data() })); },
     async getProfile(uid) { const d = await db.collection('members').doc(uid).get(); return d.exists ? { uid, ...d.data() } : null; },
@@ -125,19 +175,19 @@ function firebaseBackend() {
       const uid = auth.currentUser.uid, date = todayStr(), c = String(code).trim().toUpperCase();
       try {
         await db.collection('facts').doc(uid + '_' + date).set({ uid, type: 'attend', date, code: c, status: 'approved', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        return { ok: true, message: 'Checked in. +1 point.' };
+        return { ok: true, message: tr('m.checkin.ok', 'Checked in. +1 point.') };
       } catch (e) {
-        return { ok: false, message: 'That code did not work. Check it on the screen, and note codes only work during the session.' };
+        return { ok: false, message: tr('m.checkin.bad', 'That code did not work. Check it on the screen, and note codes only work during the session.') };
       }
     },
     async submit(s) {
-      if (!SUBMIT_TYPES.includes(s.type)) return { ok: false, message: 'That kind of proof is not on the list.' };
+      if (!SUBMIT_TYPES.includes(s.type)) return { ok: false, message: tr('m.proof.badtype', 'That kind of proof is not on the list.') };
       const uid = auth.currentUser.uid;
       await db.collection('facts').add({ uid, date: todayStr(), status: 'pending', createdAt: firebase.firestore.FieldValue.serverTimestamp(), ...s });
-      return { ok: true, message: 'Sent. An organizer will check it within 7 days.' };
+      return { ok: true, message: tr('m.proof.ok', 'Sent. An organizer will check it within 7 days.') };
     },
   };
 }
 
-window.ClubData = { create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, DOMAIN, SUBMIT_TYPES, todayStr };
+window.ClubData = { create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
 })();

@@ -2,44 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Schedule · aivancity Tech Club</title>
   <meta name="description" content="Upcoming sessions of the aivancity Tech Club and GDG on Campus aivancity. Every Thursday, 1–2 PM, AIClinic – Room 107.">
+  <meta name="theme-color" content="#f0f0f0">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="aivancity Tech Club">
+  <meta property="og:title" content="Schedule · aivancity Tech Club">
+  <meta property="og:description" content="Upcoming sessions of the aivancity Tech Club and GDG on Campus aivancity. Every Thursday, 1–2 PM, AIClinic – Room 107.">
+  <meta property="og:image" content="https://aivancity-tech-club.github.io/assets/tech-club-logo.png">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css">
-  <link rel="stylesheet" href="assets/schedule.css">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css?v=20261010f">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261010f">
+  <script src="assets/i18n.js?v=20261010f"></script>
 </head>
-<body>
+<body data-i18n-title="nav.schedule">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
   <header class="site-header">
     <div class="wrap">
       <a class="brand" href="/">
-        <img src="assets/tech-club-logo.svg" alt="Tech Club logo">
+        <img src="assets/tech-club-logo.svg" alt="">
         <span>aivancity Tech Club</span>
       </a>
       <nav class="nav" aria-label="Main">
-        <a href="/about">About</a>
-        <a href="/schedule" aria-current="page">Schedule</a>
-        <a href="/rules">Rules</a>
-        <a href="/join">Join</a>
-        <a href="/mountain" style="border-color:var(--line)">Mountain</a>
+        <a href="/about" data-i18n="nav.about">About</a>
+        <a href="/schedule" aria-current="page" data-i18n="nav.schedule">Schedule</a>
+        <a href="/rules" data-i18n="nav.rules">Rules</a>
+        <a href="/join" data-i18n="nav.join">Join</a>
+        <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
+        <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
       </nav>
     </div>
   </header>
 
-  <main>
+  <main id="main">
     <section class="page-head">
       <div class="wrap">
         <p class="eyebrow">&lt;schedule /&gt;</p>
-        <h1>Every Thursday, <b>1–2 PM</b></h1>
-        <p class="lede" style="font-size:1.15rem;color:var(--ink-soft);margin:0">AIClinic – Room 107 · open to all aivancity students. Sessions marked <b>Planned</b> may still change.</p>
+        <h1 data-i18n="schedule.h1">Every Thursday, <b>1–2 PM</b></h1>
+        <p class="lede" style="font-size:1.15rem;color:var(--ink-soft);margin:0" data-i18n="schedule.lede">AIClinic – Room 107 · open to all aivancity students. Sessions marked <b>Planned</b> may still change.</p>
         <div class="legend" aria-label="Legend">
-          <span><i style="background:var(--p-blue)"></i>Tech Club</span>
-          <span><i style="background:var(--p-green)"></i>GDG on Campus</span>
-          <span><i style="background:var(--p-red)"></i>Special event</span>
+          <span><i style="background:var(--p-blue)"></i><span data-i18n="schedule.legend.tech">Tech Club</span></span>
+          <span><i style="background:var(--p-green)"></i><span data-i18n="schedule.legend.gdg">GDG on Campus</span></span>
+          <span><i style="background:var(--p-red)"></i><span data-i18n="schedule.legend.event">Special event</span></span>
         </div>
       </div>
     </section>
@@ -52,13 +62,14 @@
   <footer class="site-footer">
     <div class="wrap">
       <span>© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
-      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener">GDG on Campus chapter ↗</a> <span class="mono">#GDGOnCampus</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
     </div>
   </footer>
 
-  <script src="assets/schedule.js"></script>
+  <script src="assets/schedule.js?v=20261010f"></script>
   <script>
-    renderSeason(document.getElementById("season"));
+    const draw = () => renderSeason(document.getElementById("season"));
+    draw(); addEventListener("langchange", draw);
     document.getElementById("yr").textContent = new Date().getFullYear();
   </script>
 </body>

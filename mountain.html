@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Code Ninja.">
+<script src="assets/i18n.js?v=20261010f"></script>
+<meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +22,10 @@
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+/* 16px inputs stop iPhones from zooming in when a field is focused */
+.input, .suffix input, select { font-size: 16px; }
+button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 [hidden] { display: none !important; }
 body { background: #79b8f2; color: var(--ink); font-family: var(--display); overflow: hidden; }
 button, input, select { font: inherit; color: inherit; }
@@ -30,7 +35,7 @@ button, input, select { font: inherit; color: inherit; }
 #stage { position: fixed; inset: 0; }
 #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-.bar { position: fixed; z-index: 5; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top, 0px));
+.bar { position: fixed; z-index: 9; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top, 0px));
   display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; pointer-events: none; }
 .pill { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: var(--glass); border: 2px solid var(--ink); border-radius: 999px; padding: 4px; }
 .brand { padding-right: 14px; text-decoration: none; color: var(--ink); }
@@ -38,12 +43,13 @@ button, input, select { font: inherit; color: inherit; }
 .brand b { font-size: 15px; }
 .pill button { border: 0; background: transparent; border-radius: 999px; padding: 7px 11px; min-height: 34px; font-size: 13px; font-weight: 700; cursor: pointer; }
 .pill button[aria-pressed="true"] { background: var(--ink); color: var(--on-dark); }
+.lang-btn { min-height: 44px; padding: 0 14px; font-weight: 800; font-size: 13px; cursor: pointer; }
 .me-btn { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: var(--ink); color: var(--on-dark); border: 2px solid var(--ink);
   border-radius: 999px; padding: 3px 14px 3px 3px; font-weight: 800; font-size: 14px; cursor: pointer; min-height: 44px; }
 .me-btn img { width: 38px; height: 36px; background: var(--p-green); border-radius: 50%; object-fit: contain; }
 
 .demo { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-  background: var(--p-yellow); border: 2px solid var(--ink); border-radius: 999px; padding: 6px 8px 6px 14px; font-size: 13px; display: flex; gap: 10px; align-items: center; max-width: calc(100% - 24px); }
+  background: var(--p-yellow); border: 2px solid var(--ink); border-radius: 18px; padding: 6px 8px 6px 14px; font-size: 13px; display: flex; gap: 10px; align-items: center; width: max-content; max-width: calc(100% - 24px); }
 .demo button { border: 2px solid var(--ink); background: var(--paper); border-radius: 999px; padding: 4px 10px; font-weight: 700; font-size: 12px; cursor: pointer; }
 
 #labels { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
@@ -51,12 +57,16 @@ button, input, select { font: inherit; color: inherit; }
   border: 2px solid var(--ink); border-radius: 14px; padding: 4px 10px; font-size: 12px; font-weight: 800; text-decoration: none; display: flex; flex-direction: column; align-items: center; }
 .peak small { font-family: var(--mono); font-size: 10px; font-weight: 400; }
 .peak.black { background: var(--glass-dark); color: var(--on-dark); }
+.peak-sr { position: fixed; left: 12px; bottom: 70px; z-index: 6; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
+.peak-sr:focus { clip-path: none; width: auto; height: auto; padding: 8px 14px; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper); font-weight: 700; }
+.back { font-size: 14px; color: var(--ink-soft); text-align: center; }
+.back a { color: var(--ink); font-weight: 700; }
 .you-tag { position: fixed; left: 0; top: 0; background: var(--yellow); border: 2px solid var(--ink); border-radius: 999px; padding: 0 9px; font-size: 12px; font-weight: 800; will-change: transform; }
 
 /* cards: sign-in, setup, peak list, ninja popover */
 .veil { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; padding: 16px; background: rgba(30, 30, 60, 0.25); }
 .card { width: min(440px, 100%); background: var(--paper); border: 2px solid var(--ink); border-radius: 28px; padding: 26px; display: flex; flex-direction: column; gap: 14px;
-  max-height: calc(100vh - 32px); overflow: auto; }
+  max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: auto; }
 .card h1, .card h2 { margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
 .card h1 { font-size: 30px; font-weight: 400; } .card h1 b { font-weight: 800; }
 .card p { margin: 0; color: var(--ink-soft); }
@@ -75,7 +85,7 @@ label { font-weight: 700; font-size: 14px; }
 .check input { width: 20px; height: 20px; margin-top: 1px; accent-color: var(--blue); flex: none; }
 
 /* My climb drawer */
-.drawer { position: fixed; z-index: 6; top: 0; right: 0; bottom: 0; width: min(420px, 100%); background: var(--ground); border-left: 2px solid var(--ink);
+.drawer { position: fixed; z-index: 10; top: 0; right: 0; bottom: 0; width: min(420px, 100%); background: var(--ground); border-left: 2px solid var(--ink);
   transform: translateX(105%); transition: transform 260ms ease; overflow-y: auto; padding: calc(16px + env(safe-area-inset-top, 0px)) 18px calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
 .drawer.open { transform: none; }
 .drawer-head { display: flex; justify-content: space-between; align-items: center; }
@@ -118,119 +128,173 @@ label { font-weight: 700; font-size: 14px; }
 .climber .mini i { display: block; height: 100%; background: var(--green); }
 .pop { position: fixed; z-index: 7; background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 10px 14px; font-size: 13px; pointer-events: none; transform: translate(-50%, -110%); white-space: nowrap; }
 .loading { position: fixed; inset: 0; display: grid; place-items: center; color: #fff; font-family: var(--mono); z-index: 1; }
+/* phones: a row of peak buttons at the bottom (the world is wider than the screen; swipe or tap to move) */
+.peaks-strip { display: none; }
 @media (max-width: 720px) {
   .peak { font-size: 10px; padding: 3px 7px; } .peak small { display: none; }
   .brand b { display: none; } .brand { padding-right: 4px; }
   .pill button { padding: 6px 8px; font-size: 12px; }
+  .peaks-strip { display: flex; position: fixed; z-index: 5; left: 0; right: 0; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); gap: 6px;
+    overflow-x: auto; padding: 2px 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .peaks-strip::-webkit-scrollbar { display: none; }
+  .peaks-strip button { flex: none; display: flex; align-items: center; gap: 7px; background: var(--glass); color: var(--ink); border: 2px solid var(--ink);
+    border-radius: 999px; padding: 4px 12px 4px 8px; min-height: 44px; font-weight: 800; font-size: 13px; cursor: pointer; }
+  .peaks-strip button[aria-pressed="true"] { background: var(--ink); color: var(--on-dark); }
+  .peaks-strip i { width: 12px; height: 18px; border-radius: 5px; border: 1.5px solid currentColor; flex: none; }
+  .peaks-strip small { font-family: var(--mono); font-weight: 400; font-size: 11px; opacity: 0.8; }
+  .demo { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); font-size: 12px; }
+  .peak-panel { left: 12px; right: 12px; width: auto; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); max-height: 52vh; max-height: 52dvh; }
+  .card { padding: 22px 18px; border-radius: 24px; }
+  .card h1 { font-size: 26px; }
+  /* cards start below the top bar and the whole veil scrolls (short phones, keyboard open) */
+  .veil { align-items: start; padding-top: calc(var(--bar-h, 120px) + 8px); padding-bottom: 90px; overflow-y: auto; }
+  .veil .card { max-height: none; }
+}
+@media (max-width: 400px) {
+  .pill button { padding: 6px 6px; font-size: 11.5px; }
+  .bar { gap: 6px; }
+}
+@media (max-width: 720px) and (max-height: 500px) {
+  /* phone held sideways: keep the strip, drop the demo pill out of the way */
+  .demo { display: none; }
 }
 </style>
 </head>
-<body>
+<body data-i18n-title="m.title">
 <div id="stage" role="img" aria-label="The six peaks, with every club member's ninja standing on the peak of their bandana color"></div>
 <div id="labels"></div>
-<div class="loading" id="loading">painting the world…</div>
+<div class="loading" id="loading" data-i18n="m.loading">painting the world…</div>
 
 <div class="bar">
-  <a class="pill brand" href="/"><img src="assets/tech-club-logo.svg" alt=""><b>The Mountain</b></a>
-  <div class="pill" role="group" aria-label="Time of day" id="modes">
-    <button type="button" data-mode="auto">Auto</button><button type="button" data-mode="dawn">Dawn</button><button type="button" data-mode="day">Day</button><button type="button" data-mode="evening">Evening</button><button type="button" data-mode="night">Night</button>
+  <a class="pill brand" href="/"><img src="assets/tech-club-logo.svg" alt=""><b data-i18n="m.title">The Mountain</b></a>
+  <div class="pill" role="group" aria-label="Time of day" data-i18n-attr="aria-label:m.time.aria" id="modes">
+    <button type="button" data-mode="auto" data-i18n="m.mode.auto">Auto</button><button type="button" data-mode="dawn" data-i18n="m.mode.dawn">Dawn</button><button type="button" data-mode="day" data-i18n="m.mode.day">Day</button><button type="button" data-mode="evening" data-i18n="m.mode.evening">Evening</button><button type="button" data-mode="night" data-i18n="m.mode.night">Night</button>
   </div>
-  <button type="button" class="me-btn" id="meBtn" hidden aria-controls="drawer" aria-expanded="false"><img id="meAvatar" alt="">My climb</button>
+  <button type="button" class="me-btn" id="meBtn" hidden aria-controls="drawer" aria-expanded="false"><img id="meAvatar" alt=""><span data-i18n="m.myclimb">My climb</span></button>
+  <button type="button" class="pill lang-btn lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
 </div>
 
-<div class="demo" id="demoBar" hidden><span><b>Demo:</b> sample members, saved only in this browser. Check-in code: <span class="mono">DEMO</span></span><button type="button" id="demoReset">Reset</button></div>
+<div class="demo" id="demoBar" hidden><span data-i18n="m.demo"><b>Demo:</b> sample members, saved only in this browser. Check-in code: <span class="mono">DEMO</span></span><button type="button" id="demoReset" data-i18n="m.reset">Reset</button></div>
 
 <!-- sign in -->
 <div class="veil" id="signin" hidden>
   <form class="card" id="signinForm" novalidate>
-    <h1>Start your <b>climb</b></h1>
-    <p>Members only. We'll email you a sign-in link. No password, and you stay signed in on this device. The email can land in <b>Junk</b>, so check there too.</p>
+    <h1 data-i18n="m.signin.h">Start your <b>climb</b></h1>
+    <p data-i18n="m.signin.p">Members only. We'll email you a sign-in link. No password, and you stay signed in on this device. The email can land in <b>Junk</b>, so check there too.</p>
     <div class="field">
-      <label for="email">School email</label>
+      <label for="email" data-i18n="m.signin.email">School email</label>
       <div class="suffix"><input id="email" name="email" autocomplete="username" placeholder="first.last" required><span>@aivancity.education</span></div>
     </div>
-    <button class="btn" type="submit" id="signinBtn">Email me a sign-in link</button>
+    <button class="btn" type="submit" id="signinBtn" data-i18n="m.signin.btn">Email me a sign-in link</button>
     <div class="msg" id="signinMsg" hidden></div>
+    <p class="back" data-i18n="m.signin.back"><a href="/">← Back to the website</a> · Not a member yet? <a href="/apply">Join the club</a></p>
   </form>
+</div>
+
+<!-- signed in, but not on the club roster -->
+<div class="veil" id="notlisted" hidden>
+  <div class="card" id="requestCard">
+    <h1 data-i18n="m.notlisted.h">Members <b>only</b></h1>
+    <p id="notlistedP1"></p>
+    <p data-i18n="m.notlisted.p2"></p>
+    <div class="msg ok" id="requestMsg" hidden data-i18n="m.notlisted.pending"></div>
+    <a class="btn" href="/apply" id="applyBtn" data-i18n="m.notlisted.cta" style="display:grid;place-items:center;text-decoration:none">Apply to join →</a>
+    <p class="back" id="notlistedBack" data-i18n="m.notlisted.back"><a href="/">← Back to the website</a> · <a href="#" id="otherAccount">Use another email</a></p>
+  </div>
 </div>
 
 <!-- first visit: profile + consent -->
 <div class="veil" id="setup" hidden>
   <form class="card" id="setupForm" novalidate>
-    <h1>Welcome to <b>the club</b></h1>
-    <p>Pick the name other members will see on the mountain.</p>
-    <div class="field"><label for="name">Display name</label><input class="input" id="name" maxlength="40" placeholder="e.g. Amina K." required></div>
-    <div class="field"><label for="github">GitHub username <span style="font-weight:400">(optional, used to count your merged changes)</span></label><input class="input" id="github" maxlength="39" placeholder="amina-k"></div>
-    <label class="check"><input type="checkbox" id="consent"> My name, bandana, points and activity are visible to signed-in club members. Only organizers can see my email.</label>
-    <button class="btn" type="submit">Enter the mountain</button>
+    <h1 data-i18n="m.setup.h">Welcome to <b>the club</b></h1>
+    <p data-i18n="m.setup.p">Pick the name other members will see on the mountain.</p>
+    <div class="field"><label for="name" data-i18n="m.setup.name">Display name</label><input class="input" id="name" maxlength="40" placeholder="Amina K." required></div>
+    <div class="field"><label for="github" data-i18n="m.setup.github">GitHub username <span style="font-weight:400">(optional, used to count your merged changes)</span></label><input class="input" id="github" maxlength="39" placeholder="amina-k"></div>
+    <label class="check"><input type="checkbox" id="consent"> <span data-i18n="m.setup.consent">My name, bandana, points and activity are visible to signed-in club members. Only organizers can see my email.</span></label>
+    <button class="btn" type="submit" data-i18n="m.setup.btn">Enter the mountain</button>
     <div class="msg err" id="setupMsg" hidden></div>
   </form>
 </div>
 
 <!-- My climb -->
-<aside class="drawer" id="drawer" aria-label="My climb" aria-hidden="true">
-  <div class="drawer-head"><h2 style="margin:0;font-size:22px">My climb</h2><button type="button" class="x" id="closeDrawer" aria-label="Close">×</button></div>
+<aside class="drawer" id="drawer" aria-label="My climb" data-i18n-attr="aria-label:m.myclimb" aria-hidden="true">
+  <div class="drawer-head"><h2 style="margin:0;font-size:22px" data-i18n="m.myclimb">My climb</h2><button type="button" class="x" id="closeDrawer" aria-label="Close" data-i18n-attr="aria-label:m.close">×</button></div>
   <section class="box hero" id="heroBox"></section>
   <section class="box" id="nextBox"></section>
   <section class="box">
-    <h3>Thursday check-in</h3>
+    <h3 data-i18n="m.checkin.h">Thursday check-in</h3>
     <form class="row" id="checkinForm" novalidate>
       <label for="code" class="sr" hidden>Session code</label>
       <input class="input" id="code" maxlength="6" placeholder="CODE" autocomplete="off" aria-label="Session code">
-      <button class="btn" type="submit">Check in</button>
+      <button class="btn" type="submit" data-i18n="m.checkin.btn">Check in</button>
     </form>
     <div class="msg" id="checkinMsg" hidden></div>
   </section>
   <section class="box">
-    <h3>Submit a proof</h3>
-    <p style="margin:0;font-size:13px;color:var(--ink-soft)">An organizer checks that it matches the rule. Points appear once it's verified.</p>
+    <h3 data-i18n="m.proof.h">Submit a proof</h3>
+    <p style="margin:0;font-size:13px;color:var(--ink-soft)" data-i18n="m.proof.p">An organizer checks that it matches the rule. Points appear once it's verified.</p>
     <form id="proofForm" style="display:flex;flex-direction:column;gap:8px" novalidate>
-      <div class="field"><label for="ptype">What is it?</label>
+      <div class="field"><label for="ptype" data-i18n="m.proof.type">What is it?</label>
         <select class="input" id="ptype">
-          <option value="certification">Certification (+15)</option>
-          <option value="skill_badge">Study jam or skill badge (+3)</option>
-          <option value="open_source">Merged open-source pull request (+5)</option>
-          <option value="ship_project">Shipped project, public repo (+8)</option>
-          <option value="mentoring">Mentoring session (+3)</option>
+          <option value="certification" data-i18n="m.proof.t.certification">Certification (+15)</option>
+          <option value="skill_badge" data-i18n="m.proof.t.skill_badge">Study jam or skill badge (+3)</option>
+          <option value="open_source" data-i18n="m.proof.t.open_source">Merged open-source pull request (+5)</option>
+          <option value="ship_project" data-i18n="m.proof.t.ship_project">Shipped project, public repo (+8)</option>
+          <option value="mentoring" data-i18n="m.proof.t.mentoring">Mentoring session (+3)</option>
         </select></div>
-      <div class="field"><label for="ptitle">Short title</label><input class="input" id="ptitle" maxlength="80" placeholder="e.g. Google Cloud Digital Leader"></div>
-      <div class="field"><label for="plink">Proof link</label><input class="input" id="plink" type="url" maxlength="400" placeholder="https://"></div>
-      <button class="btn ghost" type="submit">Send for verification</button>
+      <div class="field"><label for="ptitle" data-i18n="m.proof.title">Short title</label><input class="input" id="ptitle" maxlength="80" placeholder="e.g. Google Cloud Digital Leader" data-i18n-attr="placeholder:m.proof.title.ph"></div>
+      <div class="field"><label for="plink" data-i18n="m.proof.link">Proof link</label><input class="input" id="plink" type="url" maxlength="400" placeholder="https://"></div>
+      <button class="btn ghost" type="submit" data-i18n="m.proof.btn">Send for verification</button>
     </form>
     <div class="msg" id="proofMsg" hidden></div>
   </section>
   <section class="box">
-    <h3>Dress your ninja</h3>
+    <h3 data-i18n="m.dress.h">Dress your ninja</h3>
     <div class="acc-grid" id="accGrid"></div>
     <p style="margin:0;font-size:12px;color:var(--ink-soft)" id="accNote"></p>
   </section>
-  <section class="box"><h3>Badges</h3><div class="badges" id="badges"></div></section>
-  <section class="box"><h3>Activity</h3><ul class="list log" id="log"></ul></section>
-  <button type="button" class="btn ghost" id="signOut">Sign out</button>
+  <section class="box"><h3 data-i18n="m.badges.h">Badges</h3><div class="badges" id="badges"></div></section>
+  <section class="box"><h3 data-i18n="m.activity.h">Activity</h3><ul class="list log" id="log"></ul></section>
+  <a class="btn ghost" href="/feedback?topic=platform" style="display:grid;place-items:center;text-decoration:none" data-i18n="m.feedback">Give feedback</a>
+  <button type="button" class="btn ghost" id="signOut" data-i18n="m.signout">Sign out</button>
 </aside>
 
 <!-- climbers on one peak -->
+<nav class="peaks-strip" id="peaksStrip" aria-label="Peaks" data-i18n-attr="aria-label:m.peaks"></nav>
 <section class="box peak-panel" id="peakPanel" hidden aria-live="polite"></section>
 <div class="pop" id="pop" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js"></script>
-<script src="assets/world/world.js"></script>
-<script src="assets/js-yaml.min.js"></script>
-<script src="assets/schedule.js"></script>
-<script src="assets/platform/config.js"></script>
-<script src="assets/platform/engine.js"></script>
-<script src="assets/platform/data.js"></script>
+<script src="assets/world/world-data.js?v=20261010f"></script>
+<script src="assets/world/world.js?v=20261010f"></script>
+<script src="assets/js-yaml.min.js?v=20261010f"></script>
+<script src="assets/schedule.js?v=20261010f"></script>
+<script src="assets/platform/config.js?v=20261010f"></script>
+<script src="assets/platform/engine.js?v=20261010f"></script>
+<script src="assets/platform/data.js?v=20261010f"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const ACC = { beanie: 'Beanie', cap: 'Cap', party: 'Party hat', catears: 'Cat ears', headphones: 'Headphones', glasses: 'Glasses', flower: 'Flower', mustache: 'Mustache', beard: 'Beard', shades: 'Shades', halo: 'Halo', crown: 'Crown' };
-  const LOCKED_WHY = { shades: 'Win a competition', halo: 'Sensei badge', crown: 'Season Champion' };
+  const T = (k, v) => I18N.t(k, v);
+  const ACC = ['beanie', 'cap', 'party', 'catears', 'headphones', 'glasses', 'flower', 'mustache', 'beard', 'shades', 'halo', 'crown'];
   const BADGES = { first_blood: 'First Blood', mic_drop: 'Mic Drop', on_fire: 'On Fire', sensei: 'Sensei', shipped_it: 'Shipped It', certified: 'Certified', founding: 'Founding Ninja' };
-  const RANK_NAME = { white: 'White', yellow: 'Yellow', green: 'Green', blue: 'Blue', red: 'Red', black: 'Black' };
-  const RULE_LABEL = { attend: 'Checked in', streak: 'Streak bonus', compete_enter: 'Entered a competition', compete_place: 'Podium', talk_lightning: 'Lightning talk', workshop: 'Gave a workshop',
-    host_event: 'Hosted an event', ship_project: 'Shipped a project', club_contribution: 'Club repo contribution', open_source: 'Open-source contribution', skill_badge: 'Skill badge', certification: 'Certification', mentoring: 'Mentoring session', referral: 'Brought a new member' };
+  const RANK = (id) => T('rank.' + id);
+  // engine notes are English; show them in the page language
+  const NOTE = { 'Waiting for an organizer': 'note.pending', 'Already checked in': 'note.dup', 'Project already counted': 'note.project', 'Already counted': 'note.dup',
+    'Monthly limit reached': 'note.month', 'Weekly limit for this pair reached': 'note.week' };
+  const noteText = (n) => {
+    if (!n) return '';
+    if (NOTE[n]) return T(NOTE[n]);
+    if (/^Session cap/.test(n)) return T('note.cap');
+    if (/^Not accepted/.test(n)) return T('note.rejected') + n.slice('Not accepted'.length);
+    return n;
+  };
+  const reqText = (c) => {
+    const base = T('req.' + c.key, { v: c.v });
+    if (c.key === 'mentoring') return base + ' (' + ((result.byUid[me.uid].counts || {}).mentoring || 0) + '/' + c.v + ')';
+    return base;
+  };
 
   function ninjaURI(rank, acc) {
     const N = NW_DATA.ninja;
@@ -240,12 +304,18 @@ label { font-weight: 700; font-size: 14px; }
   const accURI = (a) => { const N = NW_DATA.ninja; return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${N.w}" height="${N.h}" viewBox="${N.viewBox}"><g opacity=".25">${N.bases.white}</g>${N.accessories[a]}</svg>`); };
   const show = (el, text, ok) => { el.hidden = false; el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
 
+  // keep cards clear of the top bar, whatever height it wraps to
+  const barH = () => document.documentElement.style.setProperty('--bar-h', Math.ceil(document.querySelector('.bar').getBoundingClientRect().bottom) + 'px');
+  barH(); addEventListener('resize', barH); addEventListener('langchange', barH);
+  new MutationObserver(barH).observe($('meBtn'), { attributes: true, attributeFilter: ['hidden'] });
+
   /* ---------- data + rulebook ---------- */
   const data = ClubData.create();
-  try { await data.init(); } catch (e) { $('loading').textContent = 'Could not reach the club database. Check your connection and reload.'; return; }
+  try { await data.init(); } catch (e) { console.error(e); $('loading').textContent = T('m.dberror', { e: (e && (e.code || e.message)) || '?' }); return; }
   if (data.mode === 'demo') $('demoBar').hidden = false;
   const rulebook = jsyaml.load(await (await fetch('rules/rules.yaml', { cache: 'no-cache' })).text());
   const today = ClubData.todayStr();
+  const rankName = (id) => { const r = (rulebook.ranks || []).find(x => x.id === id); return r ? I18N.pick(r, 'name') : ''; };
   const regular = SESSIONS.filter(s => s.track !== 'break' && parseDate(s.date).getDay() === 4 && s.date <= today).map(s => s.date).sort();
 
   /* ---------- world ---------- */
@@ -256,14 +326,18 @@ label { font-weight: 700; font-size: 14px; }
       container: $('stage'), labelsEl: $('labels'),
       labelTop: () => (window.innerWidth < 720 ? 120 : 84),
       onPeakClick: (id) => showPeak(id),
+      peakText: (p, n) => (n === 1 ? T('peak.climber') : (!n && p.id === 'black') ? T('peak.empty') : T('peak.climbers', { n })),
+      youText: () => T('peak.you'),
+      peakTitle: (p) => RANK(p.id) + ' · ' + (rankName(p.id) || p.name),
+      peakLabel: (p) => T('m.peak.h', { rank: RANK(p.id), name: rankName(p.id) || p.name }),
       onNinjaClick: (m, g) => {
         const s = result && result.byUid[m.id];
-        pop.innerHTML = `<b>${esc(m.name)}</b><br>${RANK_NAME[m.rank]} bandana · ${s ? s.lifetime : 0} pts`;
+        pop.innerHTML = `<b>${esc(m.name)}</b><br>${esc(T('m.pop', { rank: RANK(m.rank), pts: s ? s.lifetime : 0 }))}`;
         pop.style.left = g.x + 'px'; pop.style.top = g.y + 'px'; pop.hidden = false;
         clearTimeout(pop.t); pop.t = setTimeout(() => pop.hidden = true, 2600);
       },
     });
-  } catch (e) { $('loading').textContent = 'The animated world needs WebGL. Your progress below still works.'; }
+  } catch (e) { $('loading').textContent = T('m.webgl'); }
   $('loading').hidden = true;
 
   // time of day
@@ -284,10 +358,10 @@ label { font-weight: 700; font-size: 14px; }
     worn = (profile && profile.accessories) || [];
     const onMountain = members.filter(m => result.byUid[m.uid].isMember || m.uid === me.uid).map(m => {
       const s = result.byUid[m.uid];
-      return { id: m.uid, name: m.uid === me.uid ? (m.name || 'You') : m.name, rank: s.rank, progress: s.waiting ? 1 : s.progress, accessories: m.accessories || [], isMe: m.uid === me.uid };
+      return { id: m.uid, name: m.uid === me.uid ? (m.name || T('peak.you')) : m.name, rank: s.rank, progress: s.waiting ? 1 : s.progress, accessories: m.accessories || [], isMe: m.uid === me.uid };
     });
     world && world.setMembers(onMountain);
-    renderDrawer();
+    renderDrawer(); renderStrip();
   }
 
   function renderDrawer() {
@@ -295,41 +369,55 @@ label { font-weight: 700; font-size: 14px; }
     $('meAvatar').src = ninjaURI(s.rank, worn); $('meBtn').hidden = false;
     const seasonRank = Object.values(result.byUid).filter(x => x.isMember).sort((a, b) => b.season - a.season).findIndex(x => x.uid === me.uid) + 1;
     $('heroBox').style.background = { white: '#ffffff', yellow: '#ffe7a5', green: '#ccf6c5', blue: '#c3ecf6', red: '#f8d8d8', black: '#d9dbef' }[s.rank];
-    $('heroBox').innerHTML = `<img src="${ninjaURI(s.rank, worn)}" alt="Your ninja">
+    $('heroBox').innerHTML = `<img src="${ninjaURI(s.rank, worn)}" alt="">
       <h2 style="margin:0;font-size:24px">${esc(profile.name)}</h2>
-      <div style="font-weight:700">${s.isMember ? `${RANK_NAME[s.rank]} bandana · ${esc(s.rankName)}` : 'Check in at a session to earn your white bandana'}</div>
-      <div class="stats"><div><b>${s.lifetime}</b><span>lifetime</span></div><div><b>${s.season}</b><span>this season</span></div><div><b>${s.isMember ? '#' + seasonRank : '–'}</b><span>season rank</span></div></div>`;
+      <div style="font-weight:700">${s.isMember ? esc(T('m.bandana', { rank: RANK(s.rank), name: rankName(s.rank) })) : T('m.notyet')}</div>
+      <div class="stats"><div><b>${s.lifetime}</b><span>${T('m.lifetime')}</span></div><div><b>${s.season}</b><span>${T('m.season')}</span></div><div><b>${s.isMember ? '#' + seasonRank : '–'}</b><span>${T('m.seasonrank')}</span></div></div>`;
     $('nextBox').innerHTML = s.next
-      ? `<h3>Next peak: ${RANK_NAME[s.next]} · ${esc(s.nextName)}</h3>
+      ? `<h3>${esc(T('m.next', { rank: RANK(s.next), name: rankName(s.next) }))}</h3>
          <div class="bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(s.progress * 100)}"><div class="bar-fill" style="width:${Math.round(s.progress * 100)}%"></div></div>
-         ${s.waiting ? '<p style="margin:0;font-size:13px"><b>You have the points.</b> Pass the belt test below to cross to the next peak.</p>' : ''}
-         <ul class="list">${s.checklist.map(c => `<li><span class="tick${c.done ? ' done' : ''}">${c.done ? '✓' : ''}</span>${esc(c.label)}</li>`).join('')}</ul>`
-      : '<h3>You reached the summit. Code Ninja.</h3>';
+         ${s.waiting ? `<p style="margin:0;font-size:13px">${T('m.waiting')}</p>` : ''}
+         <ul class="list">${s.checklist.map(c => `<li><span class="tick${c.done ? ' done' : ''}">${c.done ? '✓' : ''}</span>${esc(reqText(c))}</li>`).join('')}</ul>`
+      : `<h3>${T('m.summit')}</h3>`;
     // accessories
-    $('accGrid').innerHTML = Object.keys(ACC).map(a => {
+    $('accGrid').innerHTML = ACC.map(a => {
       const ok = s.unlocked.includes(a), on = worn.includes(a);
-      return `<button type="button" class="acc" data-acc="${a}" aria-pressed="${on}" ${ok ? '' : 'disabled'} title="${ok ? '' : esc(LOCKED_WHY[a] || '')}"><img src="${accURI(a)}" alt="">${esc(ACC[a])}</button>`;
+      return `<button type="button" class="acc" data-acc="${a}" aria-pressed="${on}" ${ok ? '' : 'disabled'}><img src="${accURI(a)}" alt="">${esc(T('acc.' + a))}</button>`;
     }).join('');
-    $('accNote').textContent = `Wear up to ${result.maxWorn}. Locked: shades (win a competition), halo (Sensei badge), crown (Season Champion).`;
+    $('accNote').textContent = T('m.dress.note', { n: result.maxWorn });
     $('badges').innerHTML = Object.entries(BADGES).map(([k, v]) => `<span class="badge${s.badges.includes(k) ? '' : ' off'}">${esc(v)}</span>`).join('');
     $('log').innerHTML = s.history.slice(0, 40).map(h => {
-      const f = h.fact, label = f.type === 'compete_place' ? `Podium: place ${f.place}` : (RULE_LABEL[f.type] || h.rule);
-      const extra = [f.title, f.double ? '×2 event' : ''].filter(Boolean).join(' · ');
-      return `<li><span>${esc(label)}${extra ? ' · ' + esc(extra) : ''}<small>${esc(f.date)}${h.note ? ' · ' + esc(h.note) : ''}</small></span><span class="pts${h.points ? '' : ' pending'}">${h.points ? '+' + h.points : '·'}</span></li>`;
-    }).join('') || '<li>Nothing yet. Check in on Thursday to start.</li>';
+      const f = h.fact, key = 'fact.' + f.type, label = T(key, { n: f.place }) !== key ? T(key, { n: f.place }) : h.rule;
+      const extra = [f.title, f.double ? T('fact.double') : ''].filter(Boolean).join(' · ');
+      const date = new Date(f.date + 'T12:00').toLocaleDateString(I18N.locale(), { day: 'numeric', month: 'short', year: 'numeric' });
+      return `<li><span>${esc(label)}${extra ? ' · ' + esc(extra) : ''}<small>${esc(date)}${h.note ? ' · ' + esc(noteText(h.note)) : ''}</small></span><span class="pts${h.points ? '' : ' pending'}">${h.points ? '+' + h.points : '·'}</span></li>`;
+    }).join('') || `<li>${T('m.activity.empty')}</li>`;
   }
+
+  const BAND = { white: '#f4f4f4', yellow: '#f9ab00', green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#2d2d2f' };
+  function renderStrip() {
+    const count = (id) => members.filter(m => result.byUid[m.uid].isMember && result.byUid[m.uid].rank === id).length;
+    const open = !$('peakPanel').hidden && $('peakPanel').dataset.peak;
+    $('peaksStrip').innerHTML = NW_DATA.peaks.slice().sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id)).map(p =>
+      `<button type="button" data-peak="${p.id}" aria-pressed="${open === p.id}"><i style="background:${BAND[p.id]}"></i>${esc(RANK(p.id))}<small>${count(p.id)}</small></button>`).join('');
+  }
+  const ORDER = ['white', 'yellow', 'green', 'blue', 'red', 'black'];
+  $('peaksStrip').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-peak]'); if (!b) return;
+    world && world.panTo && world.panTo(b.dataset.peak); showPeak(b.dataset.peak);
+  });
 
   function showPeak(id) {
     if (!result) return;
     const peak = NW_DATA.peaks.find(p => p.id === id);
     const list = members.filter(m => result.byUid[m.uid].isMember && result.byUid[m.uid].rank === id)
       .map(m => ({ m, s: result.byUid[m.uid] })).sort((a, b) => b.s.lifetime - a.s.lifetime);
-    $('peakPanel').innerHTML = `<div class="drawer-head"><h3>${RANK_NAME[id]} peak · ${esc(peak.name)}</h3><button type="button" class="x" id="closePeak" aria-label="Close">×</button></div>
-      ${list.length ? list.map(({ m, s }) => `<div class="climber"><img src="${ninjaURI(s.rank, m.accessories)}" alt=""><div class="grow"><b>${esc(m.name)}</b>${m.uid === me.uid ? ' (you)' : ''}${s.champion ? ' · Season Champion' : ''}
+    $('peakPanel').innerHTML = `<div class="drawer-head"><h3>${esc(T('m.peak.h', { rank: RANK(id), name: rankName(id) || peak.name }))}</h3><button type="button" class="x" id="closePeak" aria-label="${T('m.close')}">×</button></div>
+      ${list.length ? list.map(({ m, s }) => `<div class="climber"><img src="${ninjaURI(s.rank, m.accessories)}" alt=""><div class="grow"><b>${esc(m.name)}</b>${m.uid === me.uid ? T('m.peak.you') : ''}${s.champion ? T('m.peak.champion') : ''}
         <div class="mini"><i style="width:${Math.round((s.waiting ? 1 : s.progress) * 100)}%"></i></div></div><span class="mono">${s.lifetime}</span></div>`).join('')
-        : '<p style="margin:0">No one here yet.</p>'}`;
-    $('peakPanel').hidden = false;
-    $('closePeak').onclick = () => $('peakPanel').hidden = true;
+        : `<p style="margin:0">${T('m.peak.empty')}</p>`}`;
+    $('peakPanel').hidden = false; $('peakPanel').dataset.peak = id; renderStrip();
+    $('closePeak').onclick = () => { $('peakPanel').hidden = true; delete $('peakPanel').dataset.peak; renderStrip(); };
   }
 
   /* ---------- drawer + forms ---------- */
@@ -341,15 +429,15 @@ label { font-weight: 700; font-size: 14px; }
 
   $('checkinForm').addEventListener('submit', async (e) => {
     e.preventDefault(); const code = $('code').value.trim();
-    if (!code) return show($('checkinMsg'), 'Type the code shown on the screen.', false);
+    if (!code) return show($('checkinMsg'), T('m.checkin.empty'), false);
     const r = await data.checkIn(code); show($('checkinMsg'), r.message, r.ok);
     if (r.ok) { $('code').value = ''; await refresh(); }
   });
   $('proofForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const link = $('plink').value.trim(), title = $('ptitle').value.trim();
-    if (!/^https:\/\/\S+$/.test(link)) return show($('proofMsg'), 'Paste a full link that starts with https://', false);
-    if (!title) return show($('proofMsg'), 'Add a short title so organizers know what to look for.', false);
+    if (!/^https:\/\/\S+$/.test(link)) return show($('proofMsg'), T('m.proof.err.link'), false);
+    if (!title) return show($('proofMsg'), T('m.proof.err.title'), false);
     const r = await data.submit({ type: $('ptype').value, proof: link, title });
     show($('proofMsg'), r.message, r.ok);
     if (r.ok) { $('plink').value = ''; $('ptitle').value = ''; await refresh(); }
@@ -369,26 +457,44 @@ label { font-weight: 700; font-size: 14px; }
     $('signinBtn').disabled = true;
     try {
       if (data.pendingLink) { await data.completeLink(v); }
-      else { const r = await data.sendLink(v); show($('signinMsg'), r.ok ? r.message + ' Not there? Check your Junk folder: it comes from noreply@aivancity-tech-club.firebaseapp.com. Open it in this browser, right away.' : r.message, r.ok); }
-    } catch (err) { show($('signinMsg'), err.message || 'Something went wrong. Try again.', false); }
+      else { const r = await data.sendLink(v); show($('signinMsg'), r.message, r.ok); }
+    } catch (err) { show($('signinMsg'), err.message || T('err.generic'), false); }
     $('signinBtn').disabled = false;
   });
+  // "Use another email" lives in translated HTML, so listen on its container
+  $('notlistedBack').addEventListener('click', async (e) => { if (e.target.id !== 'otherAccount') return; e.preventDefault(); await data.signOut(); location.reload(); });
   $('setupForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = $('name').value.trim(), github = $('github').value.trim().replace(/^@/, '');
-    if (!name) return show($('setupMsg'), 'Add a display name.', false);
-    if (!$('consent').checked) return show($('setupMsg'), 'Tick the box to join. The mountain only works if members can see each other.', false);
+    if (!name) return show($('setupMsg'), T('m.setup.err.name'), false);
+    if (!$('consent').checked) return show($('setupMsg'), T('m.setup.err.consent'), false);
     await data.saveProfile({ name, github }); $('setup').hidden = true; await refresh();
+  });
+
+  /* ---------- language switch: redraw everything built in script ---------- */
+  let notlistedEmail = '';
+  addEventListener('langchange', () => {
+    if (notlistedEmail) $('notlistedP1').textContent = T('m.notlisted.p1', { email: notlistedEmail });
+    if (result && me) { renderDrawer(); renderStrip(); if ($('peakPanel').dataset.peak && !$('peakPanel').hidden) showPeak($('peakPanel').dataset.peak); }
+    world && world.refreshText && world.refreshText();
   });
 
   /* ---------- auth flow ---------- */
   data.onAuth(async (user) => {
     if (!user) {
       $('signin').hidden = false; $('meBtn').hidden = true;
-      if (data.pendingLink) { $('signinBtn').textContent = 'Confirm my email'; show($('signinMsg'), 'You opened the link on a different device. Confirm your email to finish signing in.', true); }
+      if (data.linkError) show($('signinMsg'), data.linkError, false);
+      if (data.pendingLink) { $('signinBtn').dataset.i18n = 'm.signin.confirm'; $('signinBtn').textContent = T('m.signin.confirm'); show($('signinMsg'), T('m.signin.otherdevice'), true); }
       return;
     }
     me = user; $('signin').hidden = true;
+    if (!(await data.onRoster())) {
+      $('notlisted').hidden = false; notlistedEmail = user.email || '';
+      $('notlistedP1').textContent = T('m.notlisted.p1', { email: notlistedEmail });
+      const st = await data.requestStatus();
+      if (st) $('requestMsg').hidden = false;
+      return;
+    }
     profile = await data.getProfile(user.uid);
     if (!profile) { $('setup').hidden = false; return; }
     await refresh();

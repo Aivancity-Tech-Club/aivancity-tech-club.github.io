@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Join the club · aivancity Tech Club</title>
+  <meta name="description" content="Apply to join the aivancity Tech Club and its WhatsApp group.">
+  <meta name="theme-color" content="#f0f0f0">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="aivancity Tech Club">
+  <meta property="og:title" content="Join the club · aivancity Tech Club">
+  <meta property="og:description" content="Apply to join the aivancity Tech Club and its WhatsApp group.">
+  <meta property="og:image" content="https://aivancity-tech-club.github.io/assets/tech-club-logo.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css?v=20261010f">
+  <script src="assets/i18n.js?v=20261010f"></script>
+</head>
+<body data-i18n-title="apply.title">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/">
+        <img src="assets/tech-club-logo.svg" alt="">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="/about" data-i18n="nav.about">About</a>
+        <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
+        <a href="/rules" data-i18n="nav.rules">Rules</a>
+        <a href="/join" aria-current="page" data-i18n="nav.join">Join</a>
+        <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
+        <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-head">
+      <div class="wrap">
+        <p class="eyebrow">&lt;apply /&gt;</p>
+        <h1 data-i18n="apply.h1">Join <b>the club</b></h1>
+        <p class="lede" data-i18n="apply.lede"></p>
+        <ol class="steps" id="steps">
+          <li data-i18n="apply.step1">Sign in with your school email</li>
+          <li data-i18n="apply.step2">Tell us about you</li>
+          <li data-i18n="apply.step3">Get the invite</li>
+        </ol>
+      </div>
+    </section>
+
+    <section style="padding-top:24px">
+      <div class="wrap form-layout">
+        <div class="form-card" aria-live="polite">
+          <p class="notice info" id="demoNote" hidden data-i18n="apply.demo"></p>
+
+          <div id="vLoading"><p class="help">…</p></div>
+
+          <!-- 1. sign in -->
+          <form id="vSignin" class="form-grid" hidden novalidate>
+            <p style="margin:0" data-i18n="apply.signin.p"></p>
+            <div class="field">
+              <label for="email" data-i18n="m.signin.email">School email</label>
+              <input class="input" id="email" type="email" autocomplete="email" inputmode="email" required placeholder="prenom.nom@aivancity.education">
+            </div>
+            <p class="notice form-msg" id="signinMsg" role="status"></p>
+            <div><button class="btn btn-primary" type="submit" id="signinBtn" data-i18n="m.signin.btn">Email me a sign-in link</button></div>
+          </form>
+
+          <!-- 1b. link opened on another device -->
+          <form id="vConfirm" class="form-grid" hidden novalidate>
+            <p style="margin:0" data-i18n="m.signin.otherdevice"></p>
+            <div class="field">
+              <label for="email2" data-i18n="m.signin.email">School email</label>
+              <input class="input" id="email2" type="email" autocomplete="email" required>
+            </div>
+            <p class="notice form-msg" id="confirmMsg" role="status"></p>
+            <div><button class="btn btn-primary" type="submit" data-i18n="m.signin.confirm">Confirm my email</button></div>
+          </form>
+
+          <!-- 2. details -->
+          <form id="vForm" class="form-grid" hidden novalidate>
+            <p class="help" style="font-size:.95rem"><span id="who"></span> · <a href="#" class="js-other" data-i18n="apply.other">Use another email</a></p>
+            <p class="notice info" id="alreadyNote" hidden data-i18n="apply.already"></p>
+            <div class="field">
+              <label for="name" data-i18n="apply.name">Full name</label>
+              <input class="input" id="name" autocomplete="name" maxlength="60" required>
+            </div>
+            <div class="field">
+              <label for="program" data-i18n="apply.program">Program and year</label>
+              <input class="input" id="program" maxlength="60" data-i18n-attr="placeholder:apply.program.ph">
+            </div>
+            <div class="field">
+              <label for="phone" data-i18n="apply.phone">WhatsApp number</label>
+              <input class="input" id="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="+33 6 12 34 56 78" required aria-describedby="phoneHelp">
+              <p class="help" id="phoneHelp" data-i18n="apply.phone.help"></p>
+            </div>
+            <fieldset>
+              <legend data-i18n="apply.interests">What are you interested in?</legend>
+              <div class="choices" id="interests"></div>
+            </fieldset>
+            <fieldset>
+              <legend data-i18n="apply.level.legend">Your coding level</legend>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="level" value="new"><span data-i18n="apply.level.new"></span></label>
+                <label class="choice"><input type="radio" name="level" value="some"><span data-i18n="apply.level.some"></span></label>
+                <label class="choice"><input type="radio" name="level" value="solid"><span data-i18n="apply.level.solid"></span></label>
+              </div>
+            </fieldset>
+            <div class="field">
+              <label for="heard" data-i18n="apply.heard">How did you hear about us? (optional)</label>
+              <input class="input" id="heard" maxlength="200">
+            </div>
+            <label class="check"><input type="checkbox" id="consent"><span data-i18n="apply.consent"></span></label>
+            <p class="notice bad form-msg" id="formMsg" role="alert"></p>
+            <div><button class="btn btn-primary" type="submit" id="sendBtn" data-i18n="apply.send">Send my request</button></div>
+          </form>
+
+          <!-- 3. invite -->
+          <div id="vDone" class="form-grid" hidden>
+            <p class="notice ok" data-i18n="apply.sent"></p>
+            <h2 style="margin:0" data-i18n="apply.wa.h">Your <b>invite</b></h2>
+            <div id="waHas" hidden class="form-grid" style="gap:14px">
+              <p style="margin:0" data-i18n="apply.wa.p"></p>
+              <div><a class="btn wa-btn" id="waBtn" href="#" target="_blank" rel="noopener noreferrer">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:inline-block;vertical-align:-4px;margin-right:6px"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.4a.5.5 0 0 0 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a.9.9 0 0 0-.7.3 2.8 2.8 0 0 0-.9 2.1 4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c1.6.7 2.2.7 3 .6a2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .2-1.2c-.1-.2-.3-.2-.5-.3z"/></svg><span data-i18n="apply.wa.btn">Join the WhatsApp group</span></a></div>
+              <p class="help" data-i18n="apply.wa.keep"></p>
+            </div>
+            <p id="waWait" hidden style="margin:0" data-i18n="apply.wa.wait"></p>
+            <div class="btns" style="margin:0"><a class="btn btn-primary" href="/mountain" data-i18n="apply.mountain">Open my climb on the Mountain →</a><button class="btn btn-ghost" type="button" id="editBtn" data-i18n="apply.edit">Edit my answers</button>
+              <a class="btn btn-ghost" href="/schedule" data-i18n="join.cta.schedule">See this week's session</a></div>
+          </div>
+        </div>
+
+        <aside class="form-side">
+          <div class="meet-card" aria-label="Weekly meeting" data-i18n-attr="aria-label:meet.aria">
+            <p class="label" data-i18n="meet.label">// we meet every week</p>
+            <p class="day" data-i18n="meet.day">Thursdays</p>
+            <p class="time" data-i18n="meet.time">1:00 – 2:00 PM</p>
+            <span class="room"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> <span data-i18n="meet.room">AIClinic – Room 107</span></span>
+          </div>
+          <div class="form-card" style="padding:22px">
+            <h3 style="margin:0 0 6px" data-i18n="apply.why.h"></h3>
+            <p class="help" style="font-size:.95rem" data-i18n="apply.why.p"></p>
+          </div>
+          <div class="form-card" style="padding:22px">
+            <h3 style="margin:0 0 6px" data-i18n="apply.priv.h"></h3>
+            <p class="help" style="font-size:.95rem" data-i18n="apply.priv.p"></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
+    </div>
+  </footer>
+
+  <script src="assets/platform/config.js?v=20261010f"></script>
+  <script src="assets/platform/data.js?v=20261010f"></script>
+  <script>
+  (async () => {
+    const $ = id => document.getElementById(id), T = (k, v) => I18N.t(k, v);
+    const INTERESTS = ["ai", "web", "data", "cloud", "games", "competitive", "startup", "career"];
+    $("interests").innerHTML = INTERESTS.map(k => `<label class="choice"><input type="checkbox" name="interest" value="${k}"><span data-i18n="int.${k}"></span></label>`).join("");
+    I18N.apply($("interests"));
+    const views = ["vLoading", "vSignin", "vConfirm", "vForm", "vDone"];
+    function show(v) {
+      views.forEach(x => $(x).hidden = x !== v);
+      const step = { vLoading: 0, vSignin: 0, vConfirm: 0, vForm: 1, vDone: 2 }[v];
+      [...$("steps").children].forEach((li, i) => { li.className = i < step ? "done" : i === step ? "on" : ""; });
+    }
+    const msg = (el, text, kind) => { el.className = "notice form-msg " + (kind || ""); el.innerHTML = text || ""; };
+    const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    show("vLoading");
+
+    const data = ClubData.create();
+    try { await data.init(); } catch (e) { show("vSignin"); msg($("signinMsg"), T("err.generic") + " (" + esc(e.message) + ")", "bad"); return; }
+    if (data.mode === "demo") $("demoNote").hidden = false;
+
+    let user = null, req = null;
+    async function showDone() {
+      show("vDone");
+      const link = await data.inviteLink();
+      const ok = typeof link === "string" && /^https:\/\/chat\.whatsapp\.com\//.test(link);
+      $("waHas").hidden = !ok; $("waWait").hidden = ok;
+      if (ok) $("waBtn").href = link;
+    }
+    function fill(r) {
+      if (!r) return;
+      $("name").value = r.name || ""; $("program").value = r.program || ""; $("phone").value = r.phone || ""; $("heard").value = r.heard || "";
+      document.querySelectorAll('[name=interest]').forEach(c => c.checked = (r.interests || []).includes(c.value));
+      document.querySelectorAll('[name=level]').forEach(c => c.checked = c.value === r.level);
+      $("consent").checked = !!r.consent;
+    }
+    const renderWho = () => { if (user) $("who").innerHTML = T("apply.signedin", { email: esc(user.email) }); };
+    addEventListener("langchange", renderWho);
+
+    if (data.linkError) { show("vSignin"); msg($("signinMsg"), esc(data.linkError), "bad"); }
+    if (data.pendingLink) show("vConfirm");
+
+    data.onAuth(async u => {
+      user = u;
+      if (!u) { if (!data.pendingLink) show("vSignin"); return; }
+      renderWho();
+      const [r, onRoster] = await Promise.all([data.requestStatus(), data.onRoster()]);
+      req = r; fill(r);
+      $("alreadyNote").hidden = !(onRoster && data.mode !== "demo");
+      if (r && r.consent && r.phone) showDone(); else show("vForm");
+    });
+
+    $("vSignin").addEventListener("submit", async e => {
+      e.preventDefault();
+      const btn = $("signinBtn"); btn.disabled = true;
+      const r = await data.sendLink($("email").value);
+      msg($("signinMsg"), esc(r.message), r.ok ? "ok" : "bad");
+      btn.disabled = false;
+    });
+    $("vConfirm").addEventListener("submit", async e => {
+      e.preventDefault();
+      try { await data.completeLink($("email2").value); } catch (err) { msg($("confirmMsg"), esc(err.message), "bad"); }
+    });
+    document.querySelector(".js-other").addEventListener("click", async e => { e.preventDefault(); await data.signOut(); if (data.mode === "demo") location.reload(); });
+    $("editBtn").addEventListener("click", () => show("vForm"));
+
+    $("vForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const f = {
+        name: $("name").value.trim(), program: $("program").value.trim(), phone: $("phone").value.trim(), heard: $("heard").value.trim(),
+        interests: [...document.querySelectorAll('[name=interest]:checked')].map(c => c.value),
+        level: (document.querySelector('[name=level]:checked') || {}).value, lang: I18N.lang,
+      };
+      ["name", "phone"].forEach(id => $(id).removeAttribute("aria-invalid"));
+      let err = null, focus = null;
+      if (!f.name) { err = "err.name"; focus = "name"; }
+      else if (!ClubData.validPhone(f.phone)) { err = "err.phone"; focus = "phone"; }
+      else if (!f.level) err = "err.level";
+      else if (!$("consent").checked) err = "err.consent";
+      if (err) { msg($("formMsg"), T(err), "bad"); if (focus) { $(focus).setAttribute("aria-invalid", "true"); $(focus).focus(); } return; }
+      msg($("formMsg"), "");
+      const btn = $("sendBtn"); btn.disabled = true;
+      const r = await data.apply(f);
+      btn.disabled = false;
+      if (!r.ok) { msg($("formMsg"), esc(r.message), "bad"); return; }
+      req = { ...f, consent: true }; showDone(); scrollTo({ top: 0, behavior: "smooth" });
+    });
+  })();
+  </script>
+</body>
+</html>

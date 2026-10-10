@@ -11,7 +11,7 @@
 #   - A change can never remove points or a bandana already earned.
 # ==============================================================
 
-version: "1.1.0"
+version: "1.2.0"
 effective_from: "2026-10-15"     # first Thursday session of Fall 2026
 
 # --------------------------------------------------------------
@@ -22,10 +22,12 @@ effective_from: "2026-10-15"     # first Thursday session of Fall 2026
 seasons:
   - id: fall-2026
     name: "Fall 2026"
+    name_fr: "Automne 2026"
     start: "2026-09-01"
     end: "2027-01-31"
   - id: spring-2027
     name: "Spring 2027"
+    name_fr: "Printemps 2027"
     start: "2027-02-01"
     end: "2027-08-31"
 
@@ -62,6 +64,9 @@ rules:
     trigger: "Valid check-in code entered during the check-in window."
     recorded_by: member
     limit: "Once per session."
+    name_fr: "Venir à une séance"
+    trigger_fr: "Code de présence valide saisi pendant la fenêtre d'enregistrement."
+    limit_fr: "Une fois par séance."
 
   - id: streak
     category: show_up
@@ -70,6 +75,9 @@ rules:
     trigger: "Every 4th consecutive regular session attended."
     recorded_by: automatic
     notes: "Cancelled sessions do not break a streak."
+    name_fr: "Série de présences"
+    trigger_fr: "Toutes les 4 séances régulières consécutives."
+    notes_fr: "Une séance annulée ne casse pas la série."
 
   - id: referral
     category: show_up
@@ -78,6 +86,9 @@ rules:
     trigger: "A new member names you as referrer at their first check-in."
     recorded_by: automatic
     limit: "Once per new member."
+    name_fr: "Faire venir un nouveau membre"
+    trigger_fr: "Un nouveau membre vous indique comme parrain à son premier enregistrement."
+    limit_fr: "Une fois par nouveau membre."
 
   # ---------- Compete ----------
   - id: compete_enter
@@ -86,6 +97,8 @@ rules:
     points: 2
     trigger: "Member appears on the final results of a competition."
     recorded_by: organizer
+    name_fr: "Participer à une compétition"
+    trigger_fr: "Le membre figure dans les résultats finaux d'une compétition."
 
   - id: compete_place_solo
     category: compete
@@ -94,6 +107,9 @@ rules:
     trigger: "Final ranking entered for a solo competition."
     recorded_by: organizer
     notes: "Tied players each receive the points of the higher place. Added on top of the points for entering."
+    name_fr: "Podium en compétition individuelle"
+    trigger_fr: "Classement final saisi pour une compétition individuelle."
+    notes_fr: "En cas d'égalité, chaque joueur reçoit les points de la meilleure place. S'ajoute aux points de participation."
 
   - id: compete_place_team
     category: compete
@@ -102,6 +118,9 @@ rules:
     trigger: "Final ranking entered for a team competition."
     recorded_by: organizer
     notes: "Every registered team member receives the points. Teams must be registered before the start."
+    name_fr: "Podium en compétition par équipe"
+    trigger_fr: "Classement final saisi pour une compétition par équipe."
+    notes_fr: "Chaque membre inscrit de l'équipe reçoit les points. Les équipes doivent être inscrites avant le départ."
 
   # ---------- Share ----------
   - id: talk_lightning
@@ -113,6 +132,11 @@ rules:
     conditions:
       - "Listed on the published schedule at least 3 days before."
       - "At least 5 check-ins at that session."
+    name_fr: "Faire un lightning talk ou une démo"
+    trigger_fr: "Présentation de 10 minutes maximum lors d'une séance."
+    conditions_fr:
+      - "Inscrit au programme publié au moins 3 jours avant."
+      - "Au moins 5 enregistrements à cette séance."
 
   - id: workshop
     category: share
@@ -123,6 +147,11 @@ rules:
     conditions:
       - "Listed on the published schedule at least 3 days before."
       - "At least 5 check-ins at that session."
+    name_fr: "Animer un atelier"
+    trigger_fr: "Séance de 30 minutes ou plus animée par le membre."
+    conditions_fr:
+      - "Inscrit au programme publié au moins 3 jours avant."
+      - "Au moins 5 enregistrements à cette séance."
 
   - id: host_event
     category: share
@@ -132,6 +161,10 @@ rules:
     recorded_by: organizer
     conditions:
       - "At least 10 check-ins at the event (remote included)."
+    name_fr: "Organiser un événement"
+    trigger_fr: "Le membre est indiqué comme organisateur d'un événement au programme publié."
+    conditions_fr:
+      - "Au moins 10 enregistrements à l'événement (à distance compris)."
 
   # ---------- Build ----------
   - id: ship_project
@@ -144,6 +177,11 @@ rules:
     conditions:
       - "Demo slot follows the same conditions as a lightning talk."
     limit: "Once per repository."
+    name_fr: "Livrer un projet"
+    trigger_fr: "Dépôt GitHub public présenté lors d'un créneau de démo."
+    limit_fr: "Une fois par dépôt."
+    conditions_fr:
+      - "Le créneau de démo suit les mêmes conditions qu'un lightning talk."
 
   - id: club_contribution
     category: build
@@ -152,6 +190,9 @@ rules:
     trigger: "Pull request merged into a club repository by someone other than its author."
     recorded_by: automatic
     limit: "Max 3 per calendar month."
+    name_fr: "Contribuer à un dépôt du club"
+    trigger_fr: "Pull request fusionnée dans un dépôt du club par une autre personne que son auteur."
+    limit_fr: "3 maximum par mois."
 
   - id: open_source
     category: build
@@ -161,6 +202,9 @@ rules:
     recorded_by: member
     verified_by: organizer
     limit: "Max 2 per calendar month."
+    name_fr: "Contribuer à l'open source"
+    trigger_fr: "Lien vers une pull request fusionnée dans un dépôt public qui n'appartient pas au membre."
+    limit_fr: "2 maximum par mois."
 
   # ---------- Learn ----------
   - id: skill_badge
@@ -170,6 +214,8 @@ rules:
     trigger: "Public credential link submitted."
     recorded_by: member
     verified_by: organizer
+    name_fr: "Terminer un study jam ou un skill badge"
+    trigger_fr: "Lien public vers le badge envoyé."
 
   - id: certification
     category: learn
@@ -178,6 +224,8 @@ rules:
     trigger: "Verifiable credential link submitted (e.g. Credly, Google Cloud)."
     recorded_by: member
     verified_by: organizer
+    name_fr: "Obtenir une certification professionnelle"
+    trigger_fr: "Lien vérifiable vers la certification envoyé (ex. Credly, Google Cloud)."
 
   # ---------- Help ----------
   - id: mentoring
@@ -188,6 +236,9 @@ rules:
     recorded_by: member
     verified_by: organizer
     limit: "Max 1 per week per mentor/mentee pair. Points go to the mentor."
+    name_fr: "Séance de mentorat"
+    trigger_fr: "Le mentor et le mentoré confirment TOUS LES DEUX la séance sur la plateforme."
+    limit_fr: "1 maximum par semaine et par binôme. Les points vont au mentor."
 
 # --------------------------------------------------------------
 # VERIFICATION OF MEMBER SUBMISSIONS
@@ -210,6 +261,17 @@ verification:
   review_within_days: 7
   appeal: "A rejected member can ask a second organizer to review once. The second decision is final."
   public: "Every submission, decision, reviewer and reason appears in the club log."
+  fr:
+    not_needed_for: "Les enregistrements (code de séance) et les contributions fusionnées dans les dépôts du club (détectées sur GitHub)."
+    reviewer: "N'importe quel organisateur, sauf la personne qui a envoyé la preuve ou toute personne concernée (par ex. le mentoré)."
+    reject_reasons:
+      - "Lien cassé ou privé"
+      - "La preuve n'appartient pas à ce membre"
+      - "La preuve ne correspond pas à la règle"
+      - "Déjà comptée (doublon)"
+      - "Au-delà de la limite de la règle"
+    appeal: "Un membre refusé peut demander un second avis à un autre organisateur, une seule fois. La seconde décision est définitive."
+    public: "Chaque envoi, décision, vérificateur et motif apparaît dans le journal du club."
 
 # --------------------------------------------------------------
 # MULTIPLIERS
@@ -219,6 +281,7 @@ multipliers:
     factor: 2
     applies_to: [compete_enter, compete_place_solo, compete_place_team]
     trigger: "Event marked as double-points on the schedule BEFORE it starts."
+    trigger_fr: "Événement indiqué « points doubles » au programme AVANT son début."
 
 # --------------------------------------------------------------
 # RANKS (BANDANAS)
@@ -247,7 +310,7 @@ ranks:
     bandana: "#ea4335"
     requires: { lifetime_points: 100, ship_project_or_workshop: 1 }
   - id: black
-    name: "Code Ninja"
+    name: "Ninja"
     bandana: "#2d2d2f"
     requires: { lifetime_points: 150, workshop: 1, mentoring: 5, seasons_active: 2 }
 
@@ -270,9 +333,9 @@ accessories:
   max_worn: 2                 # e.g. one hat + glasses
   free: [beanie, cap, party_hat, cat_ears, headphones, glasses, flower, mustache, beard]
   earned:
-    - { id: shades, unlocked_by: "badge: first_blood" }
-    - { id: halo,   unlocked_by: "badge: sensei" }
-    - { id: crown,  unlocked_by: "Current Season Champion (most season points). Passes on at the start of each season." }
+    - { id: shades, unlocked_by: "badge: first_blood", unlocked_by_fr: "Badge : First Blood" }
+    - { id: halo,   unlocked_by: "badge: sensei", unlocked_by_fr: "Badge : Sensei" }
+    - { id: crown,  unlocked_by: "Current Season Champion (most season points). Passes on at the start of each season.", unlocked_by_fr: "Champion de la saison en cours (le plus de points de la saison). Change de tête à chaque saison." }
 
 # --------------------------------------------------------------
 # INTEGRITY
@@ -284,3 +347,12 @@ integrity:
   after_lock: "Corrections after 48 hours are added as new log entries with a reason."
   errors: "A wrong result is treated as a bug: the rule or data is fixed and everyone's points are recomputed."
   organizers: "Organizers earn points under exactly the same rules as everyone else."
+
+# French text for the integrity guarantees above (same order).
+integrity_fr:
+  visibility: "Tous les points, preuves et journaux sont visibles par chaque membre connecté."
+  self_scoring: "Un organisateur qui a participé à une compétition ne peut pas en saisir les résultats."
+  edit_window_hours: 48
+  after_lock: "Après 48 heures, les corrections sont ajoutées comme nouvelles entrées du journal, avec un motif."
+  errors: "Un résultat faux est traité comme un bug : on corrige la règle ou la donnée et on recalcule les points de tout le monde."
+  organizers: "Les organisateurs gagnent des points selon exactement les mêmes règles que tout le monde."

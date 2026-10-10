@@ -109,15 +109,15 @@ function computeMember(rb, uid, facts, regularSessions, today) {
   const reqDone = (req) => {
     const items = [];
     for (const [k, v] of Object.entries(req)) {
-      if (k === 'lifetime_points') items.push({ key: k, label: `${v} lifetime points`, done: lifetime >= v, have: lifetime, need: v });
-      else if (k === 'first_check_in') items.push({ key: k, label: 'Check in at a session', done: counts.attend >= 1 });
-      else if (k === 'compete_enter') items.push({ key: k, label: `Enter ${v} competition${v > 1 ? 's' : ''}`, done: counts.compete_enter >= v });
-      else if (k === 'talk_or_workshop') items.push({ key: k, label: `Give ${v} talk or workshop`, done: counts.talk + counts.workshop >= v });
-      else if (k === 'ship_project_or_workshop') items.push({ key: k, label: `Ship ${v} project or give ${v} workshop`, done: counts.ship_project + counts.workshop >= v });
-      else if (k === 'workshop') items.push({ key: k, label: `Give ${v} workshop`, done: counts.workshop >= v });
-      else if (k === 'mentoring') items.push({ key: k, label: `${v} mentoring sessions (${counts.mentoring}/${v})`, done: counts.mentoring >= v });
-      else if (k === 'seasons_active') items.push({ key: k, label: `Active ${v} seasons (${seasonsActive}/${v})`, done: seasonsActive >= v });
-      else items.push({ key: k, label: k, done: false });
+      if (k === 'lifetime_points') items.push({ key: k, v, label: `${v} lifetime points`, done: lifetime >= v, have: lifetime, need: v });
+      else if (k === 'first_check_in') items.push({ key: k, v, label: 'Check in at a session', done: counts.attend >= 1 });
+      else if (k === 'compete_enter') items.push({ key: k, v, label: `Enter ${v} competition${v > 1 ? 's' : ''}`, done: counts.compete_enter >= v });
+      else if (k === 'talk_or_workshop') items.push({ key: k, v, label: `Give ${v} talk or workshop`, done: counts.talk + counts.workshop >= v });
+      else if (k === 'ship_project_or_workshop') items.push({ key: k, v, label: `Ship ${v} project or give ${v} workshop`, done: counts.ship_project + counts.workshop >= v });
+      else if (k === 'workshop') items.push({ key: k, v, label: `Give ${v} workshop`, done: counts.workshop >= v });
+      else if (k === 'mentoring') items.push({ key: k, v, label: `${v} mentoring sessions (${counts.mentoring}/${v})`, done: counts.mentoring >= v });
+      else if (k === 'seasons_active') items.push({ key: k, v, label: `Active ${v} seasons (${seasonsActive}/${v})`, done: seasonsActive >= v });
+      else items.push({ key: k, v, label: k, done: false });
     }
     return items;
   };

@@ -8,7 +8,7 @@ THEME = {"white": ("#f6f2ff", "#cfc8ee", "#9a9cd4"), "yellow": ("#ffe9b8", "#f2c
 FLAG = {"white": "#ffffff", "yellow": "#f9ab00", "green": "#34a853", "blue": "#4285f4", "red": "#ea4335", "black": "#2d2d2f"}
 PEAKS = [("white", 170, 470, 240, False), ("yellow", 420, 395, 260, False), ("green", 680, 320, 280, False),
          ("blue", 935, 250, 280, True), ("red", 1180, 180, 280, True), ("black", 1405, 105, 250, True)]
-NAMES = {"white": "Hello World", "yellow": "Debugger", "green": "Builder", "blue": "Shipper", "red": "Mentor", "black": "Code Ninja"}
+NAMES = {"white": "Hello World", "yellow": "Debugger", "green": "Builder", "blue": "Shipper", "red": "Mentor", "black": "Ninja"}
 
 
 def cr(pts):

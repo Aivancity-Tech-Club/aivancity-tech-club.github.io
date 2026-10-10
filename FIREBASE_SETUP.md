@@ -1,5 +1,7 @@
 # Turning on the Mountain (Firebase setup)
 
+After any change to `firestore.rules`, paste it into **Firestore → Rules** again and **Publish**.
+
 Until these steps are done, `/mountain` runs in **demo mode**: sample members, saved only in your own browser.
 Firebase's free plan (Spark) covers a club of this size. No credit card needed.
 
@@ -26,12 +28,48 @@ Takes about 15 minutes. Do it signed in with a Google account the club will keep
 3. Open `assets/platform/config.js`, replace `FIREBASE: null,` with `FIREBASE: { ...the values you copied... },`
 4. Commit and push. These values are safe to publish: they identify the project, and the security rules decide who can read or write.
 
-## 5. Make the first organizers
-1. Each organizer signs in once at `/mountain` and creates their profile.
-2. In **Firestore Database → Data → members**, open their document and add a field `role` (string) = `organizer`.
-   Members can't give themselves this role; only someone with console access can.
+## 5. Who is a member
+The Mountain is members only. A verified `@aivancity.education` account becomes a member **automatically when it sends the
+`/apply` form**. Organizers can also add people by hand with the **roster** (useful for yourself and other organizers).
 
-## 6. Every Thursday: the check-in code
+**Add yourself first** (you need to be on the roster to do anything else):
+1. **Firestore Database → Data → Start collection** named `roster`.
+2. **Document ID:** your school email in lower case, e.g. `REDACTED`.
+3. Add a field `addedBy` (string) with your name, then **Save**.
+
+**Make yourself an organizer:** sign in at `/mountain`, create your profile, then open
+**members → your document** and add the field `role` (string) = `organizer`.
+
+**Adding someone by hand:** add one `roster` document per member email, the same way.
+**Removing someone:** delete their `roster` document (if any) and, in `requests`, set `status` (string) = `removed` on theirs.
+They lose access straight away; their history stays in the log, and they can't re-apply on their own.
+
+## 6. Joining the WhatsApp group (the `/apply` form)
+New people fill in the form at `/apply` (school email sign-in, then name, program, WhatsApp number, interests, level).
+Their answers land in the `requests` collection, one document per person. Only organizers can read them.
+
+**Set the invite link once** (it is never stored in this public repository):
+1. In WhatsApp: **Group info → Group settings → Approve new participants → On.**
+   Then **Group info → Invite via link** and copy the link.
+2. **Firestore → Data → Start collection** named `invites`, **Document ID** `whatsapp`,
+   field `link` (string) = the link you copied.
+
+After sending the form, the person sees a **Join the WhatsApp group** button. Because approval is on,
+an organizer still accepts each person inside WhatsApp, so the link is useless to anyone who skipped the form.
+The link never expires, so there is nothing to renew. If it leaks, reset it in WhatsApp (**Invite via link → Reset link**) and paste the new one into `invites/whatsapp`.
+
+Sending the form also makes the person a club member straight away: they can sign in at `/mountain`,
+pick their display name and track their bandana and badges. Nobody has to add them to the roster.
+Leave `invites/whatsapp` empty (or delete it) to switch to manual invites: the page then tells people an organizer will send the invite.
+
+## 7. Feedback (the `/feedback` form)
+Anyone can send feedback, signed in or not, anonymously unless they leave an email.
+It lands in the `feedback` collection: topic, optional 1–5 rating, message, optional contact, language and time.
+Only organizers can read it; nobody can edit it.
+
+The organizer screens (next build) will turn all of this into buttons: approve requests, manage the roster, read feedback.
+
+## 8. Every Thursday: the check-in code
 Until the organizer screens are built (next step of the project), create the code in the console:
 1. **Firestore → Data → Start collection** (first time) named `checkinCodes`.
 2. **Add document** with the code as the **Document ID**, for example `K7Q2`, and these fields:
@@ -42,7 +80,7 @@ Until the organizer screens are built (next step of the project), create the cod
 3. Show the code on the projector. Members type it in **My climb → Thursday check-in**.
 
 ## How the data is protected
-- Only verified `@aivancity.education` accounts can read anything.
+- Only verified `@aivancity.education` accounts **on the club roster** can read anything.
 - Members can only add their own check-in (with a valid code, during the session) and their own proof submissions, which start as **pending**.
 - Organizers can record results and approve or reject submissions, but never for themselves.
 - Nothing is ever deleted. Corrections are new records, so the history stays complete.

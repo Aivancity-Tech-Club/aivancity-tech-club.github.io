@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Feedback · aivancity Tech Club</title>
+  <meta name="description" content="Tell the aivancity Tech Club organizers what to keep, change or try. Anonymous if you like.">
+  <meta name="theme-color" content="#f0f0f0">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="aivancity Tech Club">
+  <meta property="og:title" content="Feedback · aivancity Tech Club">
+  <meta property="og:description" content="Tell the aivancity Tech Club organizers what to keep, change or try. Anonymous if you like.">
+  <meta property="og:image" content="https://aivancity-tech-club.github.io/assets/tech-club-logo.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css?v=20261010f">
+  <script src="assets/i18n.js?v=20261010f"></script>
+</head>
+<body data-i18n-title="fb.title">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/">
+        <img src="assets/tech-club-logo.svg" alt="">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="/about" data-i18n="nav.about">About</a>
+        <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
+        <a href="/rules" data-i18n="nav.rules">Rules</a>
+        <a href="/join" data-i18n="nav.join">Join</a>
+        <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
+        <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-head">
+      <div class="wrap">
+        <p class="eyebrow">&lt;feedback /&gt;</p>
+        <h1 data-i18n="fb.h1">Help us <b>improve</b></h1>
+        <p class="lede" data-i18n="fb.lede"></p>
+      </div>
+    </section>
+
+    <section style="padding-top:24px">
+      <div class="wrap form-layout">
+        <div class="form-card" aria-live="polite">
+          <form id="fbForm" class="form-grid" novalidate>
+            <fieldset>
+              <legend data-i18n="fb.about">What is it about?</legend>
+              <div class="choices" id="topics"></div>
+            </fieldset>
+            <fieldset>
+              <legend><span data-i18n="fb.rating">How is the club going for you?</span> <span class="help" style="font-weight:400" data-i18n="fb.rating.skip">Optional</span></legend>
+              <div class="rating" id="rating"></div>
+            </fieldset>
+            <div class="field">
+              <label for="message" data-i18n="fb.message">Your message</label>
+              <textarea class="textarea" id="message" maxlength="2000" required data-i18n-attr="placeholder:fb.message.ph"></textarea>
+              <p class="help"><span id="count">0</span> / 2000</p>
+            </div>
+            <div class="field">
+              <label for="contact" data-i18n="fb.contact">Email, if you'd like a reply (optional)</label>
+              <input class="input" id="contact" type="email" autocomplete="email" maxlength="120" aria-describedby="anonHelp">
+              <p class="help" id="anonHelp" data-i18n="fb.anon"></p>
+            </div>
+            <p class="notice bad form-msg" id="fbMsg" role="alert"></p>
+            <div><button class="btn btn-primary" type="submit" id="fbBtn" data-i18n="fb.send">Send feedback</button></div>
+          </form>
+          <div id="fbDone" class="form-grid" hidden>
+            <p class="notice ok" id="fbDoneMsg"></p>
+            <div class="btns" style="margin:0"><button class="btn btn-ghost" type="button" id="again" data-i18n="fb.again">Send another</button>
+              <a class="btn btn-ghost" href="/" data-i18n="404.home">Back to the start →</a></div>
+          </div>
+        </div>
+        <aside class="form-side">
+          <div class="form-card" style="padding:22px">
+            <h3 style="margin:0 0 6px" data-i18n="apply.priv.h"></h3>
+            <p class="help" style="font-size:.95rem" data-i18n="fb.private"></p>
+          </div>
+          <img src="assets/ninjas/ninja-white.svg" alt="" style="width:min(200px,50%);justify-self:center">
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
+    </div>
+  </footer>
+
+  <script src="assets/platform/config.js?v=20261010f"></script>
+  <script src="assets/platform/data.js?v=20261010f"></script>
+  <script>
+  (() => {
+    const $ = id => document.getElementById(id), T = k => I18N.t(k);
+    const TOPICS = ["sessions", "platform", "club", "idea", "problem", "other"];
+    const pre = new URLSearchParams(location.search).get("topic");
+    $("topics").innerHTML = TOPICS.map(k => `<label class="choice"><input type="radio" name="topic" value="${k}"${k === (TOPICS.includes(pre) ? pre : "club") ? " checked" : ""}><span data-i18n="fb.t.${k}"></span></label>`).join("");
+    $("rating").innerHTML = [1, 2, 3, 4, 5].map(n => `<label class="choice"><input type="radio" name="rating" value="${n}"><span><b>${n}</b><small data-i18n="fb.r${n}"></small></span></label>`).join("");
+    I18N.apply($("topics")); I18N.apply($("rating"));
+    // a second click on the chosen rating clears it (rating is optional)
+    let last = null;
+    $("rating").addEventListener("click", e => { const i = e.target.closest("input"); if (!i) return; if (last === i.value) { i.checked = false; last = null; } else last = i.value; });
+    $("message").addEventListener("input", () => { $("count").textContent = $("message").value.length; });
+
+    const data = ClubData.create();
+    const ready = data.init().catch(e => e);
+    const msg = (t, kind) => { $("fbMsg").className = "notice form-msg " + (kind || "bad"); $("fbMsg").textContent = t || ""; };
+
+    $("fbForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const message = $("message").value.trim(), contact = $("contact").value.trim();
+      $("message").removeAttribute("aria-invalid");
+      if (!message) { msg(T("fb.err.message")); $("message").setAttribute("aria-invalid", "true"); $("message").focus(); return; }
+      msg("");
+      const btn = $("fbBtn"); btn.disabled = true;
+      const err = await ready;
+      if (err instanceof Error) { msg(T("err.generic") + " (" + err.message + ")"); btn.disabled = false; return; }
+      const r = await data.sendFeedback({
+        topic: (document.querySelector("[name=topic]:checked") || {}).value || "other",
+        rating: Number((document.querySelector("[name=rating]:checked") || {}).value) || 0,
+        message, contact, lang: I18N.lang,
+      });
+      btn.disabled = false;
+      if (!r.ok) { msg(r.message); return; }
+      $("fbDoneMsg").textContent = T(r.demo ? "fb.demo" : "fb.sent");
+      $("fbForm").hidden = true; $("fbDone").hidden = false;
+    });
+    $("again").addEventListener("click", () => {
+      $("fbForm").reset(); last = null; $("count").textContent = "0";
+      $("fbDone").hidden = true; $("fbForm").hidden = false; $("message").focus();
+    });
+  })();
+  </script>
+</body>
+</html>

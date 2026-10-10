@@ -193,17 +193,54 @@ async function create(opts) {
   const vignette = new PIXI.Sprite(vignetteTex); vignette.width = W; vignette.height = H; world.addChild(vignette);
   const grain = new PIXI.TilingSprite(grainTex, W, H); grain.alpha = 0.05; grain.blendMode = PIXI.BLEND_MODES.MULTIPLY; world.addChild(grain);
 
-  /* ---------- peak labels ---------- */
+  /* ---------- peak plaques: painted onto each mountain, so they move rigidly with it ---------- */
+  const BAND = { white: '#f4f4f4', yellow: '#f9ab00', green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#2d2d2f' };
+  const plaqueBack = layer(0.3, world), plaqueFront = layer(0.45, world);
+  world.setChildIndex(plaqueBack, world.getChildIndex(scene) + 1); world.setChildIndex(plaqueFront, world.getChildIndex(plaqueBack) + 1);
+  function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  function plaqueTexture(p, count) {
+    const S = 3, name = peakTitle(p);
+    const sub = opts.peakText ? opts.peakText(p, count) : (p.id === 'black' && !count ? 'summit · no one yet' : `${count} climber${count === 1 ? '' : 's'}`);
+    const c = document.createElement('canvas'), g = c.getContext('2d');
+    const f1 = `800 ${15 * S}px "Google Sans", Figtree, system-ui, sans-serif`, f2 = `400 ${11 * S}px "Google Sans Code", ui-monospace, Menlo, monospace`;
+    g.font = f1; const w1 = g.measureText(name).width; g.font = f2; const w2 = g.measureText(sub).width;
+    const w = Math.ceil(Math.max(w1, w2) + 44 * S), h = 44 * S; c.width = w + 4 * S; c.height = h + 6 * S;
+    const dark = p.id === 'black';
+    g.fillStyle = 'rgba(20,20,60,.22)'; rr(g, 2 * S, 5 * S, w, h, 13 * S); g.fill();
+    g.fillStyle = dark ? '#2a2d4f' : 'rgba(255,255,255,.96)'; rr(g, 2 * S, 2 * S, w, h, 13 * S); g.fill();
+    g.lineWidth = 2 * S; g.strokeStyle = '#1e1e1e'; g.stroke();
+    g.fillStyle = BAND[p.id]; rr(g, 12 * S, 2 * S + h / 2 - 9 * S, 10 * S, 18 * S, 5 * S); g.fill(); g.lineWidth = 1.5 * S; g.strokeStyle = dark ? '#ffffff' : '#1e1e1e'; g.stroke();
+    g.fillStyle = dark ? '#ffffff' : '#1e1e1e'; g.font = f1; g.fillText(name, 30 * S, 21 * S);
+    g.globalAlpha = 0.75; g.font = f2; g.fillText(sub, 30 * S, 37 * S); g.globalAlpha = 1;
+    const t = PIXI.Texture.from(c); t.k = S; return t;
+  }
+  // text comes from the page (translated) when it provides it
+  const peakTitle = (p) => (opts.peakTitle ? opts.peakTitle(p) : p.id[0].toUpperCase() + p.id.slice(1) + ' · ' + p.name);
+  const counts = {};
+  const plaques = {};
+  const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(() => {}) : Promise.resolve();
+  await fontsReady;
+  for (const p of PEAKS) {
+    const parent = p.back ? plaqueBack : plaqueFront;
+    const s = sprite(plaqueTexture(p, 0), parent, p.x, p.y + (HZ - p.y) * 0.3, 0.5, 0.5);
+    s.eventMode = 'static'; s.cursor = 'pointer';
+    s.on('pointertap', () => { if (!dragMoved && opts.onPeakClick) opts.onPeakClick(p.id); });
+    plaques[p.id] = s;
+  }
+  // keyboard and screen-reader access to the same peaks
   const labelsEl = opts.labelsEl;
-  const labels = PEAKS.map(p => {
-    const a = document.createElement('a'); a.href = '#' + p.id; a.className = 'peak ' + p.id;
-    a.innerHTML = `${p.id[0].toUpperCase() + p.id.slice(1)} · ${p.name}<small></small>`;
-    a.addEventListener('click', e => { e.preventDefault(); opts.onPeakClick && opts.onPeakClick(p.id); });
-    labelsEl && labelsEl.appendChild(a);
-    return { el: a, small: a.querySelector('small'), p, parent: p.back ? back : front, w: 0, h: 0 };
-  });
-  const youTag = document.createElement('div'); youTag.className = 'you-tag'; youTag.textContent = 'You'; youTag.hidden = true; labelsEl && labelsEl.appendChild(youTag);
-  const measure = () => labels.forEach(l => { l.w = l.el.offsetWidth; l.h = l.el.offsetHeight; });
+  if (labelsEl) for (const p of PEAKS) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'peak-sr';
+    b.dataset.peak = p.id; b.textContent = opts.peakLabel ? opts.peakLabel(p) : `${p.id[0].toUpperCase() + p.id.slice(1)} peak · ${p.name}`;
+    b.addEventListener('click', () => opts.onPeakClick && opts.onPeakClick(p.id)); labelsEl.appendChild(b);
+  }
+  function youTexture() {
+    const S = 3, c = document.createElement('canvas'), g = c.getContext('2d'); c.width = 52 * S; c.height = 26 * S;
+    g.fillStyle = '#f9ab00'; rr(g, 2 * S, 2 * S, 48 * S, 22 * S, 11 * S); g.fill(); g.lineWidth = 2 * S; g.strokeStyle = '#1e1e1e'; g.stroke();
+    g.fillStyle = '#1e1e1e'; g.font = `800 ${13 * S}px "Google Sans", Figtree, system-ui, sans-serif`; g.textAlign = 'center'; g.fillText(opts.youText ? opts.youText() : 'You', 26 * S, 18 * S);
+    const t = PIXI.Texture.from(c); t.k = S; return t;
+  }
+  const youSprite = sprite(youTexture(), plaqueFront, 0, 0, 0.5, 1); youSprite.visible = false;
 
   /* ---------- members on their peaks ---------- */
   const texCache = new Map();
@@ -217,12 +254,20 @@ async function create(opts) {
     const swing = Math.sin(t * Math.PI * 2.6 + p.x * 0.01) * p.hw * 0.38 * (1 - t * 0.85);
     return { x: p.x + swing + jit * (1 - t) * 34, y };
   }
+  function redrawPlaques() {
+    for (const p of PEAKS) {
+      const sp = plaques[p.id], old = sp.texture; sp.texture = plaqueTexture(p, counts[p.id] || 0); old.destroy(true);
+      // keep the whole plaque inside the world, so the edge peaks are readable when panned all the way
+      const half = sp.width / 2 + 12; sp.x = Math.max(half, Math.min(W - half, p.x));
+    }
+  }
   let memberSprites = [], meSprite = null;
   async function setMembers(list) {
     for (const s of memberSprites) s.destroy(); memberSprites = []; meSprite = null;
     const byPeak = {};
     for (const m of list) (byPeak[m.rank] = byPeak[m.rank] || []).push(m);
-    for (const l of labels) { const n = (byPeak[l.p.id] || []).length; l.small.textContent = l.p.id === 'black' && !n ? 'summit · no one yet' : `${n} climber${n === 1 ? '' : 's'}`; }
+    for (const p of PEAKS) counts[p.id] = (byPeak[p.id] || []).length;
+    redrawPlaques();
     const placed = [];
     for (const m of list) {
       const p = PEAKS.find(x => x.id === m.rank) || PEAKS[0];
@@ -233,14 +278,14 @@ async function create(opts) {
       const s = sprite(texr, parent, pos.x, pos.y, 0.5, 1, m.isMe ? 0.2 : 0.14);
       s.by = pos.y; s.ph = hash(m.id + 'b') * 6.28; s.member = m;
       s.eventMode = 'static'; s.cursor = 'pointer';
-      s.on('pointertap', (e) => opts.onNinjaClick && opts.onNinjaClick(m, e.global));
+      s.on('pointertap', (e) => { if (!dragMoved && opts.onNinjaClick) opts.onNinjaClick(m, e.global); });
       memberSprites.push(s); placed.push(s);
       if (m.isMe) meSprite = s;
     }
     for (const c of [frontMembers, backMembers]) c.children.sort((a, b) => a.by - b.by);
     if (meSprite) { const par = meSprite.parent; par.removeChild(meSprite); par.addChild(meSprite); }
-    youTag.hidden = !meSprite;
-    measure();
+    if (meSprite) { const pk = PEAKS.find(x => x.id === meSprite.member.rank); youSprite.parent && youSprite.parent.removeChild(youSprite); (pk.back ? plaqueBack : plaqueFront).addChild(youSprite); }
+    youSprite.visible = !!meSprite;
   }
 
   /* ---------- fit + look-around ---------- */
@@ -248,12 +293,41 @@ async function create(opts) {
   function fit() {
     const s = Math.max(app.screen.width / W, app.screen.height / H) * 1.04;
     world.scale.set(s); overflowX = Math.max(0, W * s - app.screen.width); world.y = (app.screen.height - H * s) / 2;
-    portrait = app.screen.width < app.screen.height; measure();
+    portrait = app.screen.width < app.screen.height;
   }
   fit(); app.renderer.on('resize', fit);
   let tx = 0, ty = 0, cx = 0, cy = 0, lastInput = -1e9;
-  const onMove = (e) => { const r = opts.container.getBoundingClientRect(); tx = ((e.clientX - r.left) / r.width) * 2 - 1; ty = ((e.clientY - r.top) / r.height) * 2 - 1; lastInput = performance.now(); opts.onLook && opts.onLook(); };
-  opts.container.addEventListener('pointermove', onMove, { passive: true }); opts.container.addEventListener('pointerdown', onMove, { passive: true });
+  // Mouse: the view leans toward the pointer. Touch (and any narrow screen): drag to pan, like a photo.
+  // `hold` is a camera position chosen by a drag or panTo(); it stays put while the person is looking around.
+  let drag = null, dragMoved = false, hold = null;
+  const clamp1 = (v) => Math.max(-1, Math.min(1, v));
+  const onMove = (e) => {
+    if (drag) {
+      const dx = e.clientX - drag.x;
+      if (Math.abs(dx) > 8) dragMoved = true;
+      if (overflowX > 0) hold = clamp1(drag.cx - (2 * dx) / overflowX);
+      lastInput = performance.now(); return;
+    }
+    if (e.pointerType !== 'mouse') return;
+    const r = opts.container.getBoundingClientRect(); tx = ((e.clientX - r.left) / r.width) * 2 - 1; ty = ((e.clientY - r.top) / r.height) * 2 - 1;
+    if (!portrait) hold = null;
+    lastInput = performance.now(); opts.onLook && opts.onLook();
+  };
+  const onDown = (e) => {
+    dragMoved = false;
+    if (e.pointerType === 'mouse' && !portrait) return onMove(e);
+    drag = { x: e.clientX, cx: hold != null ? hold : cx }; lastInput = performance.now();
+  };
+  const onUp = () => { drag = null; };
+  opts.container.addEventListener('pointerdown', onDown, { passive: true });
+  window.addEventListener('pointermove', onMove, { passive: true });
+  window.addEventListener('pointerup', onUp, { passive: true }); window.addEventListener('pointercancel', onUp, { passive: true });
+  // center the camera on a peak (used by the peak buttons on phones)
+  function panTo(id) {
+    const p = PEAKS.find(x => x.id === id); if (!p || overflowX <= 0) return;
+    const sx = world.scale.x, want = app.screen.width / 2 - p.x * sx;
+    hold = clamp1((-2 * want - overflowX) / overflowX); lastInput = performance.now();
+  }
 
   /* ---------- look per time of day ---------- */
   const cur = JSON.parse(JSON.stringify(MODES[mode]));
@@ -372,11 +446,13 @@ async function create(opts) {
   app.ticker.add((dt) => {
     const step = motion ? dt : 0; t += step / 60; frame++;
     blendLook(Math.min(1, 0.022 * dt)); applyLook();
-    const idle = performance.now() - lastInput > 3000;
-    const gx = idle ? Math.sin(t * (portrait ? 0.07 : 0.13)) * (portrait ? 0.95 : 0.55) : (portrait ? -tx : tx), gy = idle ? Math.sin(t * 0.09) * 0.25 : ty;
-    const k = motion ? 0.045 : 1; cx += (gx - cx) * k; cy += (gy - cy) * k;
+    // after a drag or a jump to a peak, stay there for 25 s before drifting again
+    const quiet = performance.now() - lastInput, idle = quiet > (hold != null ? 25000 : 3000);
+    if (idle && hold != null) hold = null;
+    const gx = hold != null ? hold : idle ? Math.sin(t * (portrait ? 0.06 : 0.08)) * (portrait ? 0.95 : 0.3) : tx, gy = hold != null ? cy * 0.98 : idle ? Math.sin(t * 0.07) * 0.12 : ty * 0.6;
+    const k0 = !motion ? 1 : drag ? 0.35 : hold != null ? 0.08 : 0.03, k = 1 - Math.pow(1 - k0, Math.min(dt, 6)); cx += (gx - cx) * k; cy += (gy - cy) * k;
     world.x = -overflowX / 2 - cx * overflowX / 2;
-    for (const c of parallax) { c.x = -cx * 46 * c.depth; c.y = -cy * 16 * c.depth; }
+    for (const c of parallax) { c.x = Math.round(-cx * 30 * c.depth * 2) / 2; c.y = Math.round(-cy * 10 * c.depth * 2) / 2; }
     if (motion) {
       for (const s of stars) s.alpha = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * s.sp * 2 + s.ph));
       for (const r of rays) { r.rotation = r.base + Math.sin(t * 0.2 + r.ph) * 0.04; r.alpha = cur.rays * (0.6 + 0.4 * Math.sin(t * 0.5 + r.ph)); }
@@ -399,17 +475,18 @@ async function create(opts) {
       for (let i = events.length - 1; i >= 0; i--) if (!events[i].update()) events.splice(i, 1);
     }
     if (frame % 2 === 0 || !motion) app.renderer.render(scene, { renderTexture: rt, clear: true });
-    const yMin = opts.labelTop ? opts.labelTop() : 96;
-    for (const l of labels) {
-      pt.set(l.p.x, l.p.y - 50); const g = l.parent.toGlobal(pt);
-      l.el.style.transform = `translate3d(${Math.round(g.x - l.w / 2)}px, ${Math.round(Math.max(g.y, yMin + l.h) - l.h)}px, 0)`;
-    }
-    if (meSprite) { pt.set(meSprite.x, meSprite.y - meSprite.height - 6); const g = meSprite.parent.toGlobal(pt);
-      youTag.style.transform = `translate3d(${Math.round(g.x - youTag.offsetWidth / 2)}px, ${Math.round(g.y - youTag.offsetHeight)}px, 0)`; }
+    if (meSprite) { youSprite.x = meSprite.x; youSprite.y = meSprite.y - meSprite.height - 4; }
   });
 
   return {
     setMembers,
+    panTo,
+    // after a language change: repaint plaque text, the You tag and the keyboard buttons
+    refreshText() {
+      redrawPlaques();
+      const old = youSprite.texture; youSprite.texture = youTexture(); old.destroy(true);
+      if (labelsEl) labelsEl.querySelectorAll('.peak-sr').forEach(b => { const p = PEAKS.find(x => x.id === b.dataset.peak); if (p && opts.peakLabel) b.textContent = opts.peakLabel(p); });
+    },
     setMode(m) { if (MODES[m]) mode = m; },
     getMode: () => mode,
     setMotion(v) { motion = !!v; },
