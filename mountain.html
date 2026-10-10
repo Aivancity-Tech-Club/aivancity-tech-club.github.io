@@ -144,7 +144,7 @@ label { font-weight: 700; font-size: 14px; }
 <div class="veil" id="signin" hidden>
   <form class="card" id="signinForm" novalidate>
     <h1>Start your <b>climb</b></h1>
-    <p>Members only. We'll email you a sign-in link. No password, and you stay signed in on this device.</p>
+    <p>Members only. We'll email you a sign-in link. No password, and you stay signed in on this device. The email can land in <b>Junk</b>, so check there too.</p>
     <div class="field">
       <label for="email">School email</label>
       <div class="suffix"><input id="email" name="email" autocomplete="username" placeholder="first.last" required><span>@aivancity.education</span></div>
@@ -369,7 +369,7 @@ label { font-weight: 700; font-size: 14px; }
     $('signinBtn').disabled = true;
     try {
       if (data.pendingLink) { await data.completeLink(v); }
-      else { const r = await data.sendLink(v); show($('signinMsg'), r.message, r.ok); }
+      else { const r = await data.sendLink(v); show($('signinMsg'), r.ok ? r.message + ' Not there? Check your Junk folder: it comes from noreply@aivancity-tech-club.firebaseapp.com. Open it in this browser, right away.' : r.message, r.ok); }
     } catch (err) { show($('signinMsg'), err.message || 'Something went wrong. Try again.', false); }
     $('signinBtn').disabled = false;
   });
