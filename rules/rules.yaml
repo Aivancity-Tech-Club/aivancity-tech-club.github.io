@@ -1,0 +1,286 @@
+# ==============================================================
+#  aivancity Tech Club · GDG on Campus aivancity
+#  OFFICIAL POINTS & RANKS RULEBOOK. THIS FILE IS THE SOURCE OF TRUTH.
+#
+#  The website and the points platform read this file directly.
+#  If a rule is not in this file, it does not exist.
+#
+#  How this file changes (see rules/GOVERNANCE.md):
+#   - Only through a pull request, approved by at least 2 organizers.
+#   - Changes take effect at the start of the NEXT season.
+#   - A change can never remove points or a bandana already earned.
+# ==============================================================
+
+version: "1.1.0"
+effective_from: "2026-10-15"     # first Thursday session of Fall 2026
+
+# --------------------------------------------------------------
+# SEASONS
+# Lifetime points decide your bandana and never reset.
+# Season points reset each semester and decide the Season Champion.
+# --------------------------------------------------------------
+seasons:
+  - id: fall-2026
+    name: "Fall 2026"
+    start: "2026-09-01"
+    end: "2027-01-31"
+  - id: spring-2027
+    name: "Spring 2027"
+    start: "2027-02-01"
+    end: "2027-08-31"
+
+# --------------------------------------------------------------
+# SESSIONS
+# --------------------------------------------------------------
+sessions:
+  regular:
+    day: thursday
+    start: "13:00"
+    end: "14:00"
+    timezone: "Europe/Paris"
+    room: "AIClinic – Room 107"
+  check_in:
+    # A new code is shown on screen at every session.
+    # In-person and remote attendance count the same.
+    remote_allowed: true
+    code_valid_from: "13:00"
+    code_valid_until: "14:15"
+  point_cap_per_regular_session: 15   # does not apply to double-points events
+
+# --------------------------------------------------------------
+# POINT RULES
+# Every rule names the FACT that triggers it and WHO records it.
+# Organizers record facts. They never choose point amounts.
+# --------------------------------------------------------------
+rules:
+
+  # ---------- Show up ----------
+  - id: attend
+    category: show_up
+    name: "Attend a session"
+    points: 1
+    trigger: "Valid check-in code entered during the check-in window."
+    recorded_by: member
+    limit: "Once per session."
+
+  - id: streak
+    category: show_up
+    name: "Attendance streak"
+    points: 2
+    trigger: "Every 4th consecutive regular session attended."
+    recorded_by: automatic
+    notes: "Cancelled sessions do not break a streak."
+
+  - id: referral
+    category: show_up
+    name: "Bring a new member"
+    points: 2
+    trigger: "A new member names you as referrer at their first check-in."
+    recorded_by: automatic
+    limit: "Once per new member."
+
+  # ---------- Compete ----------
+  - id: compete_enter
+    category: compete
+    name: "Enter a competition"
+    points: 2
+    trigger: "Member appears on the final results of a competition."
+    recorded_by: organizer
+
+  - id: compete_place_solo
+    category: compete
+    name: "Place in a solo competition"
+    points: { 1: 10, 2: 6, 3: 4 }
+    trigger: "Final ranking entered for a solo competition."
+    recorded_by: organizer
+    notes: "Tied players each receive the points of the higher place. Added on top of the points for entering."
+
+  - id: compete_place_team
+    category: compete
+    name: "Place in a team competition"
+    points: { 1: 8, 2: 5, 3: 3 }
+    trigger: "Final ranking entered for a team competition."
+    recorded_by: organizer
+    notes: "Every registered team member receives the points. Teams must be registered before the start."
+
+  # ---------- Share ----------
+  - id: talk_lightning
+    category: share
+    name: "Give a lightning talk or demo"
+    points: 5
+    trigger: "Talk of 10 minutes or less, delivered at a session."
+    recorded_by: organizer
+    conditions:
+      - "Listed on the published schedule at least 3 days before."
+      - "At least 5 check-ins at that session."
+
+  - id: workshop
+    category: share
+    name: "Give a workshop"
+    points: 10
+    trigger: "Session of 30 minutes or more led by the member."
+    recorded_by: organizer
+    conditions:
+      - "Listed on the published schedule at least 3 days before."
+      - "At least 5 check-ins at that session."
+
+  - id: host_event
+    category: share
+    name: "Host an event"
+    points: 10
+    trigger: "Member is named as host of an event on the published schedule."
+    recorded_by: organizer
+    conditions:
+      - "At least 10 check-ins at the event (remote included)."
+
+  # ---------- Build ----------
+  - id: ship_project
+    category: build
+    name: "Ship a project"
+    points: 8
+    trigger: "Public GitHub repository presented in a demo slot."
+    recorded_by: member
+    verified_by: organizer
+    conditions:
+      - "Demo slot follows the same conditions as a lightning talk."
+    limit: "Once per repository."
+
+  - id: club_contribution
+    category: build
+    name: "Contribute to a club repository"
+    points: 3
+    trigger: "Pull request merged into a club repository by someone other than its author."
+    recorded_by: automatic
+    limit: "Max 3 per calendar month."
+
+  - id: open_source
+    category: build
+    name: "Contribute to open source"
+    points: 5
+    trigger: "Link to a merged pull request in a public repository the member does not own."
+    recorded_by: member
+    verified_by: organizer
+    limit: "Max 2 per calendar month."
+
+  # ---------- Learn ----------
+  - id: skill_badge
+    category: learn
+    name: "Complete a study jam or skill badge"
+    points: 3
+    trigger: "Public credential link submitted."
+    recorded_by: member
+    verified_by: organizer
+
+  - id: certification
+    category: learn
+    name: "Earn a professional certification"
+    points: 15
+    trigger: "Verifiable credential link submitted (e.g. Credly, Google Cloud)."
+    recorded_by: member
+    verified_by: organizer
+
+  # ---------- Help ----------
+  - id: mentoring
+    category: help
+    name: "Mentoring session"
+    points: 3
+    trigger: "Mentor and mentee BOTH confirm the session on the platform."
+    recorded_by: member
+    verified_by: organizer
+    limit: "Max 1 per week per mentor/mentee pair. Points go to the mentor."
+
+# --------------------------------------------------------------
+# VERIFICATION OF MEMBER SUBMISSIONS
+# Anything a member submits (rules marked "verified_by: organizer")
+# stays PENDING and earns nothing until an organizer verifies it.
+# Organizers only answer one question: "Does this proof match the rule?"
+# They never choose the number of points.
+# --------------------------------------------------------------
+verification:
+  applies_to: [ship_project, open_source, skill_badge, certification, mentoring]
+  not_needed_for: "Check-ins (session code) and changes merged into club repositories (detected from GitHub)."
+  reviewer: "Any organizer except the person who submitted it, or anyone who is part of that fact (e.g. the mentee)."
+  decision: [approve, reject]
+  reject_reasons:
+    - "Proof link is broken or private"
+    - "Proof does not belong to this member"
+    - "Proof does not match the rule"
+    - "Already counted (duplicate)"
+    - "Over the rule's limit"
+  review_within_days: 7
+  appeal: "A rejected member can ask a second organizer to review once. The second decision is final."
+  public: "Every submission, decision, reviewer and reason appears in the club log."
+
+# --------------------------------------------------------------
+# MULTIPLIERS
+# --------------------------------------------------------------
+multipliers:
+  - id: double_event
+    factor: 2
+    applies_to: [compete_enter, compete_place_solo, compete_place_team]
+    trigger: "Event marked as double-points on the schedule BEFORE it starts."
+
+# --------------------------------------------------------------
+# RANKS (BANDANAS)
+# A rank is reached when ALL its requirements are met.
+# Ranks are never lost.
+# --------------------------------------------------------------
+ranks:
+  - id: white
+    name: "Hello World"
+    bandana: "#f0f0f0"
+    requires: { lifetime_points: 0, first_check_in: true }
+  - id: yellow
+    name: "Debugger"
+    bandana: "#f9ab00"
+    requires: { lifetime_points: 10 }
+  - id: green
+    name: "Builder"
+    bandana: "#34a853"
+    requires: { lifetime_points: 30, compete_enter: 1 }
+  - id: blue
+    name: "Shipper"
+    bandana: "#4285f4"
+    requires: { lifetime_points: 60, talk_or_workshop: 1 }
+  - id: red
+    name: "Mentor"
+    bandana: "#ea4335"
+    requires: { lifetime_points: 100, ship_project_or_workshop: 1 }
+  - id: black
+    name: "Code Ninja"
+    bandana: "#2d2d2f"
+    requires: { lifetime_points: 150, workshop: 1, mentoring: 5, seasons_active: 2 }
+
+# --------------------------------------------------------------
+# BADGES (shown on profiles, do not affect rank)
+# --------------------------------------------------------------
+badges:
+  - { id: first_blood, name: "First Blood", requires: "1st place in any competition" }
+  - { id: mic_drop,    name: "Mic Drop",    requires: "First talk or workshop" }
+  - { id: on_fire,     name: "On Fire",     requires: "8 consecutive regular sessions" }
+  - { id: sensei,      name: "Sensei",      requires: "5 confirmed mentoring sessions" }
+  - { id: shipped_it,  name: "Shipped It",  requires: "First shipped project" }
+  - { id: certified,   name: "Certified",   requires: "First certification" }
+  - { id: founding,    name: "Founding Ninja", requires: "Checked in during the Fall 2026 season" }
+
+# --------------------------------------------------------------
+# NINJA ACCESSORIES (cosmetic only, never hide the bandana color)
+# --------------------------------------------------------------
+accessories:
+  max_worn: 2                 # e.g. one hat + glasses
+  free: [beanie, cap, party_hat, cat_ears, headphones, glasses, flower, mustache, beard]
+  earned:
+    - { id: shades, unlocked_by: "badge: first_blood" }
+    - { id: halo,   unlocked_by: "badge: sensei" }
+    - { id: crown,  unlocked_by: "Current Season Champion (most season points). Passes on at the start of each season." }
+
+# --------------------------------------------------------------
+# INTEGRITY
+# --------------------------------------------------------------
+integrity:
+  visibility: "All points, proofs and logs are visible to every signed-in member."
+  self_scoring: "An organizer who took part in a competition cannot enter its results."
+  edit_window_hours: 48
+  after_lock: "Corrections after 48 hours are added as new log entries with a reason."
+  errors: "A wrong result is treated as a bug: the rule or data is fixed and everyone's points are recomputed."
+  organizers: "Organizers earn points under exactly the same rules as everyone else."

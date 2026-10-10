@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule · aivancity Tech Club</title>
+  <meta name="description" content="Upcoming sessions of the aivancity Tech Club and GDG on Campus aivancity. Every Thursday, 1–2 PM, AIClinic – Room 107.">
+  <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./">
+        <img src="assets/tech-club-logo.svg" alt="Tech Club logo">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="./#about">About</a>
+        <a href="schedule.html" aria-current="page">Schedule</a>
+        <a href="rules.html">Rules</a>
+        <a href="./#join">Join</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-head">
+      <div class="wrap">
+        <p class="eyebrow">&lt;schedule /&gt;</p>
+        <h1>Every Thursday, <b>1–2 PM</b></h1>
+        <p class="lede" style="font-size:1.15rem;color:var(--ink-soft);margin:0">AIClinic – Room 107 · open to all aivancity students</p>
+        <div class="legend" aria-label="Legend">
+          <span><i style="background:var(--p-blue)"></i>Tech Club</span>
+          <span><i style="background:var(--p-green)"></i>GDG on Campus</span>
+          <span><i style="background:var(--p-red)"></i>Special event</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding-top:24px">
+      <div class="wrap">
+        <div class="session-list" id="schedule-list"></div>
+
+        <div id="past-sessions" hidden style="margin-top:56px">
+          <h2 style="font-size:1.8rem;margin-bottom:18px">Past sessions</h2>
+          <div class="session-list"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <span class="mono">#GDGOnCampus</span>
+    </div>
+  </footer>
+
+  <script src="assets/schedule.js"></script>
+  <script>
+    renderSchedule(document.getElementById("schedule-list"), { showPast: true });
+    document.getElementById("yr").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

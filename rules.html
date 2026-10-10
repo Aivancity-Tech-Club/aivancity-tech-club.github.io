@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rules · aivancity Tech Club</title>
+  <meta name="description" content="The official points and bandana rules of the aivancity Tech Club and GDG on Campus aivancity.">
+  <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+  <style>
+    .ranks { display: grid; gap: 12px; }
+    .rank { display: grid; grid-template-columns: 64px 1fr auto; gap: 18px; align-items: center;
+            background: var(--surface); border: var(--stroke) solid var(--line); border-radius: 22px; padding: 14px 20px; }
+    .bandana { width: 64px; height: 28px; border-radius: 999px; border: var(--stroke) solid var(--black); }
+    .rank h3 { margin: 0; font-size: 1.25rem; }
+    .rank .req { font-family: var(--mono); font-size: .85rem; color: var(--ink-soft); margin: 2px 0 0; }
+    .rank .pts { font-weight: 700; font-size: 1.4rem; white-space: nowrap; }
+    .cat { margin-top: 40px; }
+    .cat h3 { font-size: 1.4rem; margin: 0 0 12px; text-transform: capitalize; }
+    .rule { display: grid; grid-template-columns: 1fr auto; gap: 16px; padding: 16px 0; border-top: 1.5px solid var(--line); }
+    .rule h4 { margin: 0 0 4px; font-size: 1.1rem; }
+    .rule p { margin: 2px 0; color: var(--ink-soft); font-size: .98rem; }
+    .rule ul { margin: 4px 0 0; padding-left: 1.1em; color: var(--ink-soft); font-size: .95rem; }
+    .rule .pts { font-weight: 700; font-size: 1.25rem; white-space: nowrap; text-align: right; }
+    .by { font-family: var(--mono); font-size: .78rem; border: 1.5px solid var(--line); border-radius: 999px; padding: 1px 9px; margin-left: 6px; vertical-align: 2px; font-weight: 400; }
+    .meta { font-family: var(--mono); font-size: .9rem; color: var(--ink-soft); }
+    .integrity li { margin-bottom: 6px; }
+    .err { background: var(--p-red); color: var(--black); border: var(--stroke) solid var(--black); border-radius: 18px; padding: 16px 20px; }
+    @media (max-width: 820px) { .rank { grid-template-columns: 48px 1fr; } .rank .pts { grid-column: 2; } .bandana { width: 48px; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./">
+        <img src="assets/tech-club-logo.svg" alt="Tech Club logo">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="./#about">About</a>
+        <a href="schedule.html">Schedule</a>
+        <a href="rules.html" aria-current="page">Rules</a>
+        <a href="./#join">Join</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-head">
+      <div class="wrap">
+        <p class="eyebrow">&lt;rules /&gt;</p>
+        <h1>The climb to <b>Code Ninja</b></h1>
+        <p class="lede" style="font-size:1.15rem;color:var(--ink-soft);margin:0;max-width:60ch">
+          Every point comes from a fact anyone can check. Organizers record what happened; the rules below decide the points.
+        </p>
+        <p class="meta" id="meta" style="margin-top:16px"></p>
+      </div>
+    </section>
+
+    <section style="padding-top:24px">
+      <div class="wrap">
+        <div id="out"><p class="meta">Loading the rulebook…</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>Source of truth: <a href="rules/rules.yaml">rules/rules.yaml</a> · <a href="rules/GOVERNANCE.md">how rules change</a></span>
+      <span class="mono">#GDGOnCampus</span>
+    </div>
+  </footer>
+
+  <script src="assets/js-yaml.min.js"></script>
+  <script>
+    const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const BY = { member: "you submit", organizer: "organizer records", automatic: "automatic" };
+    const byLabel = r => r.verified_by ? "you submit · organizer verifies" : (BY[r.recorded_by] || r.recorded_by);
+
+    function ptsLabel(p) {
+      if (typeof p === "number") return `+${p}`;
+      return Object.entries(p).map(([k, v]) => `${k}${k == 1 ? "st" : k == 2 ? "nd" : "rd"} +${v}`).join(" · ");
+    }
+
+    function reqLabel(r) {
+      const map = {
+        first_check_in: () => "first check-in",
+        compete_enter: n => `${n} competition entered`,
+        talk_or_workshop: n => `${n} talk or workshop given`,
+        ship_project_or_workshop: n => `${n} project shipped or workshop given`,
+        workshop: n => `${n} workshop given`,
+        mentoring: n => `${n} mentoring sessions`,
+        seasons_active: n => `active ${n} seasons`,
+      };
+      return Object.entries(r).filter(([k]) => k !== "lifetime_points")
+        .map(([k, v]) => (map[k] ? map[k](v) : `${k}: ${v}`)).join(" · ") || "points only";
+    }
+
+    fetch("rules/rules.yaml", { cache: "no-cache" })
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(txt => {
+        const R = jsyaml.load(txt);
+        document.getElementById("meta").textContent =
+          `Rulebook v${R.version} · in effect from ${R.effective_from} · cap ${R.sessions.point_cap_per_regular_session} pts per regular session`;
+
+        const ranks = R.ranks.map(k => `
+          <div class="rank">
+            <span class="bandana" style="background:${esc(k.bandana)}" aria-hidden="true"></span>
+            <div><h3>${esc(k.name)} <span class="by">${esc(k.id)}</span></h3><p class="req">${esc(reqLabel(k.requires))}</p></div>
+            <span class="pts">${k.requires.lifetime_points} pts</span>
+          </div>`).join("");
+
+        const cats = {};
+        R.rules.forEach(r => (cats[r.category] ||= []).push(r));
+        const rules = Object.entries(cats).map(([c, list]) => `
+          <div class="cat"><h3>${esc(c.replace("_", " "))}</h3>
+            ${list.map(r => `
+              <div class="rule">
+                <div>
+                  <h4>${esc(r.name)}<span class="by">${esc(byLabel(r))}</span></h4>
+                  <p>${esc(r.trigger)}</p>
+                  ${r.conditions ? `<ul>${r.conditions.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+                  ${r.limit ? `<p><b>Limit:</b> ${esc(r.limit)}</p>` : ""}
+                  ${r.notes ? `<p>${esc(r.notes)}</p>` : ""}
+                </div>
+                <span class="pts">${esc(ptsLabel(r.points))}</span>
+              </div>`).join("")}
+          </div>`).join("");
+
+        const mult = (R.multipliers || []).map(m => `<li><b>×${m.factor}</b>: ${esc(m.trigger)}</li>`).join("");
+        const integ = Object.values(R.integrity).map(v => `<li>${esc(typeof v === "number" ? v + " h edit window" : v)}</li>`).join("");
+
+        const V = R.verification;
+        const ver = V ? `<div class="cat"><h3 style="text-transform:none">Verification of submissions</h3>
+            <p class="meta" style="margin:0 0 10px">Submitted proofs stay <b>pending</b> and earn nothing until an organizer checks that the proof matches the rule. Organizers never choose the points.</p>
+            <ul><li><b>Who reviews:</b> ${esc(V.reviewer)}</li><li><b>Not needed for:</b> ${esc(V.not_needed_for)}</li>
+            <li><b>Rejecting needs one of these reasons:</b> ${V.reject_reasons.map(esc).join(" · ")}</li>
+            <li><b>Reviewed within:</b> ${V.review_within_days} days</li><li><b>Appeal:</b> ${esc(V.appeal)}</li><li>${esc(V.public)}</li></ul></div>` : "";
+        const AC = R.accessories;
+        const acc = AC ? `<div class="cat"><h3 style="text-transform:none">Ninja accessories</h3><p class="meta" style="margin:0 0 10px">Cosmetic only. Wear up to ${AC.max_worn}. Your bandana color always stays visible.</p>
+            <ul><li><b>Free for everyone:</b> ${AC.free.map(x=>esc(x.replace("_"," "))).join(", ")}</li>
+            ${AC.earned.map(e=>`<li><b>${esc(e.id)}:</b> ${esc(e.unlocked_by)}</li>`).join("")}</ul></div>` : "";
+        document.getElementById("out").innerHTML = `
+          <h2>Six <b>bandanas</b></h2>
+          <p class="meta" style="margin:8px 0 20px">A bandana is earned when all its requirements are met, and it is never lost.</p>
+          <div class="ranks">${ranks}</div>
+          <h2 style="margin-top:56px">How to earn <b>points</b></h2>
+          ${rules}
+          ${mult ? `<div class="cat"><h3>Multipliers</h3><ul>${mult}</ul></div>` : ""}
+          ${ver}${acc}
+          <div class="cat integrity"><h3>Fair play</h3><ul>${integ}</ul></div>`;
+      })
+      .catch(e => {
+        document.getElementById("out").innerHTML =
+          `<div class="err">Couldn't load the rulebook (${esc(e.message)}). If you opened this file directly from your computer, view it through GitHub Pages or a local server instead.</div>`;
+      });
+  </script>
+</body>
+</html>

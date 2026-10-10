@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>aivancity Tech Club · GDG on Campus aivancity</title>
+  <meta name="description" content="The aivancity Tech Club and GDG on Campus aivancity meet every Thursday, 1–2 PM, in AIClinic – Room 107.">
+  <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./">
+        <img src="assets/tech-club-logo.svg" alt="Tech Club logo">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="#about">About</a>
+        <a href="schedule.html">Schedule</a>
+        <a href="rules.html">Rules</a>
+        <a href="#join">Join</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <p class="eyebrow">&lt;/&gt; aivancity Tech Club · GDG on Campus aivancity</p>
+          <h1>Build, learn &amp; <b>ship together.</b></h1>
+          <p class="lede">A student community for anyone curious about code, AI and Google developer technologies. Every level is welcome.</p>
+          <div class="btns">
+            <a class="btn btn-primary" href="schedule.html">View the schedule →</a>
+            <a class="btn btn-ghost" href="#about">What we do</a>
+          </div>
+        </div>
+
+        <aside class="meet-card" aria-label="Weekly meeting">
+          <p class="label">// we meet every week</p>
+          <p class="day">Thursdays</p>
+          <p class="time">1:00 – 2:00 PM</p>
+          <span class="room">📍 AIClinic – Room 107</span>
+          <div class="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="about">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>One club, <b>two ways in.</b></h2>
+        </div>
+        <div class="groups">
+          <article class="group tech">
+            <img class="logo-tech" src="assets/tech-club-logo.svg" alt="">
+            <h3>aivancity Tech Club</h3>
+            <p>The home base. Weekly sessions where we pick up new tools, work on projects and help each other get unstuck.</p>
+            <ul>
+              <li>Hands-on workshops</li>
+              <li>Team projects &amp; hack nights</li>
+              <li>Peer help and code reviews</li>
+            </ul>
+          </article>
+          <article class="group gdg">
+            <div class="gdg-lockup">
+              <img src="assets/gdg-mark.svg" alt="">
+              <div>
+                <div class="t1">Google Developer Groups</div>
+                <div class="t2">On Campus · aivancity</div>
+              </div>
+            </div>
+            <h3>GDG on Campus aivancity</h3>
+            <p>Our Google Developer Group on Campus, run inside the Tech Club. It connects us to the global GDG network.</p>
+            <ul>
+              <li>Sessions on Google technologies (Cloud, Android, Flutter, Gemini…)</li>
+              <li>Study jams and certification prep</li>
+              <li>Events with the wider GDG community</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="upcoming">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Coming <b>up next</b></h2>
+          <a class="btn btn-ghost" href="schedule.html">Full schedule →</a>
+        </div>
+        <div class="session-list" id="upcoming-list"></div>
+      </div>
+    </section>
+
+    <section id="join">
+      <div class="wrap">
+        <div class="join">
+          <div>
+            <h2><b>Just show up.</b></h2>
+            <p>No sign-up needed. Come to AIClinic – Room 107 on any Thursday from 1 to 2 PM, bring a laptop if you have one, and say hi.</p>
+          </div>
+          <a class="btn" href="schedule.html">See this week's session →</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <span class="mono">#GDGOnCampus</span>
+    </div>
+  </footer>
+
+  <script src="assets/schedule.js"></script>
+  <script>
+    renderSchedule(document.getElementById("upcoming-list"), { limit: 3 });
+    document.getElementById("yr").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
