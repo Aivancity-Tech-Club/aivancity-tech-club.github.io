@@ -1,0 +1,32 @@
+# AI assistant / editor settings
+.claude/
+.cursor/
+.vscode/
+.idea/
+*.code-workspace
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets and local config (never commit tokens or keys)
+.env
+.env.*
+*.pem
+*.key
+.ghtok
+
+# Python (tools/ scripts)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node, if added later
+node_modules/
+
+# Local test files and archives
+*.zip
+test.html
+*.log
