@@ -9,6 +9,7 @@
      description one or two sentences, written for students
      planned     true = the plan may still change (shown as "Planned")
      time / room override the defaults below when needed
+     link, linkText  optional button, e.g. a sign-up form (hidden once the session is past)
      *_fr        French version of title, type, description, time (shown when the site is in French)
 
    Past sessions stay on the site automatically, so people can see
@@ -58,10 +59,15 @@ const SESSIONS = [
     type_fr: "Atelier + build",
     title_fr: "Ship-It Night : spécial Halloween",
     description_fr: "Une courte démo pour créer un petit jeu, puis chacun construit et publie quelque chose sur le thème d'Halloween." },
-  { date: "2026-10-29", track: "break", title: "Toussaint break: no session",
-    description: "The club is back on Thursday 5 November.",
-    title_fr: "Vacances de la Toussaint : pas de séance",
-    description_fr: "Le club reprend le jeudi 5 novembre." },
+  { date: "2026-10-29", track: "event", type: "Field trip · Beginners", title: "Learn to code in Swift at Apple",
+    description: "No session at school this week (Toussaint break): instead we visit Apple's office on the Champs-Élysées, where an iOS engineer teaches beginners Swift, the language behind iPhone, iPad and Mac apps, using Swift Playgrounds. The session is in French. Bring your iPad if you have one; we've asked for iPads for everyone else. Apple is also launching the iPhone Duo there that day, so you may get to try it. Places are counted by name: confirm only if you're 100% sure you'll come.",
+    time: "5:00 – 6:00 PM", room: "Apple Office, Champs-Élysées",
+    link: "https://forms.cloud.microsoft/e/16AcR8eukd", linkText: "Confirm your attendance",
+    type_fr: "Sortie · Débutants",
+    title_fr: "Apprendre à coder en Swift chez Apple",
+    description_fr: "Pas de séance à l'école cette semaine (vacances de la Toussaint) : on se rend dans les bureaux d'Apple sur les Champs-Élysées, où un ingénieur iOS initie les débutants à Swift, le langage des apps iPhone, iPad et Mac, avec Swift Playgrounds. La séance est en français. Apportez votre iPad si vous en avez un ; nous avons demandé des iPad pour les autres. Apple lance aussi l'iPhone Duo sur place ce jour-là, vous pourrez peut-être l'essayer. Les places sont nominatives : ne confirmez que si vous êtes sûr(e) à 100 % de venir.",
+    time_fr: "17 h – 18 h", room_fr: "Bureaux d'Apple, Champs-Élysées",
+    linkText_fr: "Confirmer ma présence" },
 
   // ---------- November: going deeper ----------
   { date: "2026-11-05", track: "tech", type: "Discussion", title: "Speaker Spotlight", planned: true,
@@ -149,7 +155,7 @@ function sessionHTML(s, { next = false, past = false } = {}) {
         ${desc ? `<p>${esc(desc)}</p>` : ""}
         ${s.speaker ? `<p class="speaker">${esc(s.speaker)}</p>` : ""}
         <p class="where">${esc(Wk)} · ${esc(F(s, "time") || L("sched.time"))} · ${esc(F(s, "room") || L("sched.room"))}</p>
-        ${s.link ? `<a class="session-link" href="${esc(s.link)}">→</a>` : ""}
+        ${s.link && !past ? `<p><a class="btn btn-primary session-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${esc(F(s, "linkText") || L("sched.more"))} ↗</a></p>` : ""}
       </div>
     </article>`;
 }

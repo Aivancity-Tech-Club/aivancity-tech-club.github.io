@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261010f"></script>
+<script src="assets/i18n.js?v=20261010i"></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,7 +24,7 @@
 html, body { height: 100%; margin: 0; }
 html { -webkit-text-size-adjust: 100%; }
 /* 16px inputs stop iPhones from zooming in when a field is focused */
-.input, .suffix input, select { font-size: 16px; }
+.input, select { font-size: 16px; }
 button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 [hidden] { display: none !important; }
 body { background: #79b8f2; color: var(--ink); font-family: var(--display); overflow: hidden; }
@@ -73,9 +73,6 @@ button, input, select { font: inherit; color: inherit; }
 label { font-weight: 700; font-size: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .input { height: 48px; border: 2px solid var(--ink); border-radius: 14px; padding: 0 14px; background: var(--paper); width: 100%; }
-.suffix { display: flex; align-items: center; border: 2px solid var(--ink); border-radius: 14px; overflow: hidden; }
-.suffix input { border: 0; height: 44px; padding: 0 12px; flex: 1; min-width: 0; outline: 0; }
-.suffix span { padding: 0 12px; color: var(--ink-soft); font-size: 14px; white-space: nowrap; }
 .btn { min-height: 48px; border: 2px solid var(--ink); border-radius: 999px; background: var(--blue); color: var(--on-dark); font-weight: 800; padding: 0 18px; cursor: pointer; }
 .btn.ghost { background: var(--paper); color: var(--ink); }
 .btn:disabled { opacity: 0.5; cursor: default; }
@@ -127,7 +124,13 @@ label { font-weight: 700; font-size: 14px; }
 .climber .mini { height: 6px; border-radius: 999px; background: #e3e3e3; overflow: hidden; margin-top: 3px; }
 .climber .mini i { display: block; height: 100%; background: var(--green); }
 .pop { position: fixed; z-index: 7; background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 10px 14px; font-size: 13px; pointer-events: none; transform: translate(-50%, -110%); white-space: nowrap; }
-.loading { position: fixed; inset: 0; display: grid; place-items: center; color: #fff; font-family: var(--mono); z-index: 1; }
+.loading { position: fixed; inset: 0; display: grid; place-items: center; color: #fff; font-family: var(--mono); z-index: 1;
+  background: linear-gradient(#79b8f2, #bfe0fb 70%, #e8f4ff); animation: nw-wait 0.25s 0.6s both; }
+/* only show the "painting" message when loading actually takes a while */
+@keyframes nw-wait { from { color: transparent; } to { color: #fff; } }
+#stage canvas { animation: nw-in 0.5s ease-out both; }
+@keyframes nw-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .loading, #stage canvas { animation: none; } }
 /* phones: a row of peak buttons at the bottom (the world is wider than the screen; swipe or tap to move) */
 .peaks-strip { display: none; }
 @media (max-width: 720px) {
@@ -183,7 +186,7 @@ label { font-weight: 700; font-size: 14px; }
     <p data-i18n="m.signin.p">Members only. We'll email you a sign-in link. No password, and you stay signed in on this device. The email can land in <b>Junk</b>, so check there too.</p>
     <div class="field">
       <label for="email" data-i18n="m.signin.email">School email</label>
-      <div class="suffix"><input id="email" name="email" autocomplete="username" placeholder="first.last" required><span>@aivancity.education</span></div>
+      <input class="input" id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" required>
     </div>
     <button class="btn" type="submit" id="signinBtn" data-i18n="m.signin.btn">Email me a sign-in link</button>
     <div class="msg" id="signinMsg" hidden></div>
@@ -265,13 +268,13 @@ label { font-weight: 700; font-size: 14px; }
 <div class="pop" id="pop" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261010f"></script>
-<script src="assets/world/world.js?v=20261010f"></script>
-<script src="assets/js-yaml.min.js?v=20261010f"></script>
-<script src="assets/schedule.js?v=20261010f"></script>
-<script src="assets/platform/config.js?v=20261010f"></script>
-<script src="assets/platform/engine.js?v=20261010f"></script>
-<script src="assets/platform/data.js?v=20261010f"></script>
+<script src="assets/world/world-data.js?v=20261010i"></script>
+<script src="assets/world/world.js?v=20261010i"></script>
+<script src="assets/js-yaml.min.js?v=20261010i"></script>
+<script src="assets/schedule.js?v=20261010i"></script>
+<script src="assets/platform/config.js?v=20261010i"></script>
+<script src="assets/platform/engine.js?v=20261010i"></script>
+<script src="assets/platform/data.js?v=20261010i"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -310,9 +313,9 @@ label { font-weight: 700; font-size: 14px; }
   new MutationObserver(barH).observe($('meBtn'), { attributes: true, attributeFilter: ['hidden'] });
 
   /* ---------- data + rulebook ---------- */
+  // the database connects while the world is being painted
   const data = ClubData.create();
-  try { await data.init(); } catch (e) { console.error(e); $('loading').textContent = T('m.dberror', { e: (e && (e.code || e.message)) || '?' }); return; }
-  if (data.mode === 'demo') $('demoBar').hidden = false;
+  const dataReady = data.init().then(() => null, (e) => e || new Error('unknown error'));
   const rulebook = jsyaml.load(await (await fetch('rules/rules.yaml', { cache: 'no-cache' })).text());
   const today = ClubData.todayStr();
   const rankName = (id) => { const r = (rulebook.ranks || []).find(x => x.id === id); return r ? I18N.pick(r, 'name') : ''; };
@@ -347,6 +350,10 @@ label { font-weight: 700; font-size: 14px; }
   const applyMode = () => { modeBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === choice))); world && world.setMode(choice === 'auto' ? NinjaWorld.modeForClock() : choice); };
   modeBtns.forEach(b => b.addEventListener('click', () => { choice = b.dataset.mode; try { localStorage.setItem('nw-mode', choice); } catch (e) {} applyMode(); }));
   setInterval(() => choice === 'auto' && applyMode(), 30000); applyMode();
+
+  const initErr = await dataReady;
+  if (initErr) { console.error(initErr); $('loading').hidden = false; $('loading').textContent = T('m.dberror', { e: initErr.code || initErr.message || '?' }); return; }
+  if (data.mode === 'demo') $('demoBar').hidden = false;
 
   /* ---------- state ---------- */
   let me = null, profile = null, members = [], facts = [], result = null, worn = [];
@@ -453,7 +460,7 @@ label { font-weight: 700; font-size: 14px; }
 
   $('signinForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    let v = $('email').value.trim(); if (v && !v.includes('@')) v += '@' + ClubData.DOMAIN;
+    const v = $('email').value.trim();
     $('signinBtn').disabled = true;
     try {
       if (data.pendingLink) { await data.completeLink(v); }

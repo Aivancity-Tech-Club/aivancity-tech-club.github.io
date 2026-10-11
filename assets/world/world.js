@@ -30,6 +30,34 @@ async function svgTexture(str, scale = 1) {
   c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
   const t = PIXI.Texture.from(c); t.k = scale; return t;
 }
+/* Painted-texture cache. Turning the SVG layers into bitmaps is the slow part of opening the Mountain,
+   so after the first visit the bitmaps are kept in the browser (Cache Storage) and simply reloaded.
+   The cache name follows the artwork, so new artwork automatically replaces old bitmaps. */
+async function openTexCache(L) {
+  if (!('caches' in window) || !window.createImageBitmap || !window.isSecureContext) return null;
+  try {
+    const name = 'nw-tex-' + Math.floor(hash(Object.keys(L).map(k => k + ':' + L[k].length).join('|')) * 1e9);
+    const cache = await caches.open(name);
+    caches.keys().then(ks => ks.filter(k => k.startsWith('nw-tex-') && k !== name).forEach(k => caches.delete(k))).catch(() => {});
+    const missing = [], url = (k, sc) => '/__nw-tex/' + k + '@' + sc;
+    return {
+      missing,
+      async get(k, sc) {
+        try {
+          const r = await cache.match(url(k, sc));
+          if (!r) { missing.push(k); return null; }
+          const t = PIXI.Texture.from(await createImageBitmap(await r.blob())); t.k = sc; return t;
+        } catch (e) { missing.push(k); return null; }
+      },
+      save(k, sc, canvas) {
+        return new Promise((res) => {
+          try { canvas.toBlob((b) => { if (!b) return res(); cache.put(url(k, sc), new Response(b, { headers: { 'content-type': b.type } })).then(res, res); }, 'image/webp', 0.95); }
+          catch (e) { res(); }
+        });
+      },
+    };
+  } catch (e) { return null; }
+}
 function noiseField(size, freq, octaves, seed) {
   const r = rng(seed), out = new Float32Array(size * size); let amp = 1, total = 0;
   for (let o = 0; o < octaves; o++) {
@@ -67,7 +95,19 @@ async function create(opts) {
 
   const hiRes = ['pine0', 'pine1', 'pine2', 'broad', 'sakura', 'grass0', 'grass1', 'grass2', 'daisy', 'bell', 'fish', 'mermaid', 'tail', 'boat', 'oar', 'raft', 'bird', 'moon'];
   const tex = {};
-  await Promise.all(Object.keys(L).map(async k => { tex[k] = await svgTexture(L[k], hiRes.includes(k) ? 2 : 1); }));
+  const scaleOf = (k) => (hiRes.includes(k) ? 2 : 1);
+  const layerCache = await openTexCache(L);
+  await Promise.all(Object.keys(L).map(async k => { tex[k] = (layerCache && await layerCache.get(k, scaleOf(k))) || await svgTexture(L[k], scaleOf(k)); }));
+  // first visit: store the painted layers once the page is idle, so the next visit skips painting
+  if (layerCache && layerCache.missing.length) {
+    // toBlob encodes off the main thread, so this doesn't slow the animation down
+    setTimeout(() => {
+      Promise.all(layerCache.missing.map((k) => {
+        const src = tex[k] && tex[k].baseTexture.resource && tex[k].baseTexture.resource.source;
+        return src && src.toBlob ? layerCache.save(k, scaleOf(k), src) : null;
+      })).catch(() => {});
+    }, 1200);
+  }
 
   /* generated textures */
   const n1 = noiseField(256, 4, 4, 7), n2 = noiseField(256, 4, 4, 13);
@@ -84,7 +124,7 @@ async function create(opts) {
     gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,0.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
   const softTex = canvasTex(256, 256, (g) => { const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
     gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.3, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); });
-  const cloudTex = canvasTex(512, 220, (g) => {
+  const cloudTex = canvasTex(512, 260, (g) => {
     for (const [x, y, r] of [[120, 140, 80], [200, 105, 95], [290, 120, 90], [370, 145, 70], [250, 160, 90], [160, 165, 70], [330, 170, 70]]) {
       const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.6, 'rgba(255,255,255,0.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); } });
@@ -121,7 +161,7 @@ async function create(opts) {
   const sunCore = sprite(glowTex, sunL, 0, 0, 0.5, 0.5, 2.2);
   const moon = sprite(tex.moon, sunL, 0, 0, 0.5, 0.5, 0.75);
   const raysL = layer(0.06, scene), rays = [];
-  for (let i = 0; i < 7; i++) { const r = sprite(rayTex, raysL, 0, 0, 0.5, 0); r.blendMode = PIXI.BLEND_MODES.ADD; r.base = 0.5 + i * 0.28; r.scale.set(rand(0.9, 1.8), 1); r.ph = rand(0, 6.28); rays.push(r); }
+  for (let i = 0; i < 7; i++) { const r = sprite(rayTex, raysL, 0, 0, 0.5, 0); r.blendMode = PIXI.BLEND_MODES.ADD; r.base = 0.5 + i * 0.28; r.rotation = r.base; r.alpha = 0; r.scale.set(rand(0.9, 1.8), 1); r.ph = rand(0, 6.28); rays.push(r); }
   const cloudsHigh = layer(0.12, scene), clouds = [];
   const addCloud = (p, x, y, s, a, sp) => { const c = sprite(cloudTex, p, x, y, 0.5, 0.5, s); c.baseA = a; c.alpha = a; c.sp = sp; clouds.push(c); };
   addCloud(cloudsHigh, 380, 150, 1.1, 0.9, 0.12); addCloud(cloudsHigh, 900, 90, 0.8, 0.75, 0.08); addCloud(cloudsHigh, 1350, 200, 1.3, 0.7, 0.1); addCloud(cloudsHigh, -100, 250, 0.9, 0.6, 0.14);
@@ -342,7 +382,7 @@ async function create(opts) {
     sunHalo.position.set(sx, sy); sunCore.position.set(sx, sy); moon.position.set(sx, sy);
     sunHalo.tint = sunCore.tint = rgb(cur.sunCol); sunHalo.alpha = cur.sunA * 0.9; sunCore.alpha = cur.sunA * (1 - cur.moon);
     sunHalo.scale.set(3.2 * cur.sunS); sunCore.scale.set(2.2 * cur.sunS); moon.alpha = cur.moon;
-    for (const r of rays) r.position.set(sx, sy);
+    for (const r of rays) { r.position.set(sx, sy); if (!motion) { r.rotation = r.base; r.alpha = cur.rays * 0.8; } }
     const ct = rgb(cur.cloud); for (const c of clouds) c.tint = ct;
     const mt = rgb(cur.mist); for (const m of mists) { m.tint = mt; m.alpha = m.baseA * cur.mistA; }
     starsL.alpha = cur.stars;
