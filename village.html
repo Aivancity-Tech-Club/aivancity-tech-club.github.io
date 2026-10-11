@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Village board · aivancity Tech Club</title>
+  <meta name="description" content="Members only: missions, events and open-source projects shared by aivancity Tech Club members.">
+  <meta name="theme-color" content="#f0f0f0">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="aivancity Tech Club">
+  <meta property="og:title" content="Village board · aivancity Tech Club">
+  <meta property="og:description" content="Members only: missions, events and open-source projects shared by aivancity Tech Club members.">
+  <meta property="og:image" content="https://aivancity-tech-club.github.io/assets/tech-club-logo.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css?v=20261011h">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261011h">
+  <link rel="stylesheet" href="assets/village.css?v=20261011h">
+  <script src="assets/i18n.js?v=20261011h"></script>
+</head>
+<body data-i18n-title="vb.title">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/">
+        <img src="assets/tech-club-logo.svg" alt="">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="/about" data-i18n="nav.about">About</a>
+        <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
+        <a href="/rules" data-i18n="nav.rules">Rules</a>
+        <a href="/village" aria-current="page" data-member data-i18n="nav.board">Village</a>
+        <a href="/join" data-join data-i18n="nav.join">Join</a>
+        <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
+        <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <section class="page-head">
+      <div class="wrap">
+        <p class="eyebrow">&lt;village /&gt;</p>
+        <h1 data-i18n="vb.h1">The village <b>board</b></h1>
+        <p class="lede vb-lede" data-i18n="vb.lede"></p>
+      </div>
+    </section>
+
+    <section class="vb-section">
+      <div class="wrap">
+        <p class="help" id="vLoading">…</p>
+
+        <!-- not signed in -->
+        <form class="form-card gate form-grid" id="gSignin" hidden novalidate>
+          <h2 data-i18n="vb.signin.h">Sign in to see the <b>board</b></h2>
+          <p style="margin:0" data-i18n="m.signin.p"></p>
+          <div class="ms-block" hidden>
+            <button class="btn ms-btn" type="button"><svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg><span data-i18n="ms.btn">Sign in with Microsoft</span></button>
+            <p class="or"><span data-i18n="ms.or">or get a sign-in link by email</span></p>
+          </div>
+          <div class="field">
+            <label for="email" data-i18n="m.signin.email">School email</label>
+            <input class="input" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" required>
+          </div>
+          <p class="notice form-msg" id="signinMsg" role="status"></p>
+          <div><button class="btn btn-primary" type="submit" id="signinBtn" data-i18n="m.signin.btn">Email me a sign-in link</button></div>
+        </form>
+
+        <!-- signed in, not a member / no profile yet -->
+        <div class="form-card gate" id="gMember" hidden>
+          <p data-i18n="vb.gate.member"></p>
+          <a class="btn btn-primary" href="/apply" data-i18n="vb.gate.apply">Join the club →</a>
+        </div>
+        <div class="form-card gate" id="gProfile" hidden>
+          <p data-i18n="vb.gate.profile"></p>
+          <a class="btn btn-primary" href="/mountain" data-i18n="vb.gate.mountain">Go to the Mountain →</a>
+        </div>
+
+        <!-- the board -->
+        <div id="board" hidden>
+          <p class="notice info" id="demoNote" hidden data-i18n="vb.demo"></p>
+          <p class="notice" id="elderNote" hidden data-i18n="vb.elder"></p>
+
+          <section class="how" aria-labelledby="howH">
+            <h2 id="howH" data-i18n="vb.how.h">How missions work</h2>
+            <ul id="howList"></ul>
+          </section>
+
+          <div id="mine"></div>
+
+          <div class="vb-toolbar">
+            <div class="fgroup" role="group" id="filters"></div>
+            <button class="btn btn-primary" type="button" id="newBtn" aria-expanded="false" aria-controls="postForm" data-i18n="vb.new">New post</button>
+          </div>
+
+          <form class="form-card form-grid post-form" id="postForm" hidden novalidate>
+            <fieldset class="field"><legend data-i18n="vb.form.kind">What are you posting?</legend>
+              <div class="choices" id="kindChoices"></div></fieldset>
+            <fieldset class="field" id="mtypeField"><legend data-i18n="vb.form.mtype">Type of mission</legend>
+              <div class="choices" id="mtypeChoices"></div>
+              <p class="help" data-i18n="vb.form.techonly"></p></fieldset>
+            <div class="field"><label for="pTitle" data-i18n="vb.form.title">Title</label>
+              <input class="input" id="pTitle" maxlength="90" data-i18n-attr="placeholder:vb.form.title.ph" required></div>
+            <div class="field"><label for="pBody" data-i18n="vb.form.body">Details</label>
+              <textarea class="textarea" id="pBody" maxlength="800" data-i18n-attr="placeholder:vb.form.body.ph"></textarea></div>
+            <div class="vb-row" id="eventFields" hidden>
+              <div class="field"><label for="pDate" data-i18n="vb.form.date">Date</label><input class="input" id="pDate" type="date"></div>
+              <div class="field"><label for="pWhere" data-i18n="vb.form.where">Where</label><input class="input" id="pWhere" maxlength="80"></div>
+            </div>
+            <div class="field"><label for="pLink" data-i18n="vb.form.link">Link (optional)</label>
+              <input class="input" id="pLink" type="url" inputmode="url" maxlength="300" placeholder="https://"></div>
+            <p class="notice bad form-msg" id="formMsg" role="alert"></p>
+            <div class="btns" style="margin:0"><button class="btn btn-primary" type="submit" id="pSend" data-i18n="vb.publish">Post it</button>
+              <button class="btn btn-ghost" type="button" id="pCancel" data-i18n="vb.cancel">Cancel</button></div>
+          </form>
+
+          <p class="notice bad form-msg" id="msg" role="alert"></p>
+          <div class="posts" id="posts" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="wrap">
+      <span class="copy">© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
+      <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
+    </div>
+  </footer>
+  <script src="assets/js-yaml.min.js?v=20261011h"></script>
+  <script src="assets/schedule.js?v=20261011h"></script>
+  <script src="assets/platform/config.js?v=20261011h"></script>
+  <script src="assets/platform/engine.js?v=20261011h"></script>
+  <script src="assets/platform/data.js?v=20261011h"></script>
+  <script>
+  (async () => {
+    const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const DAY = 864e5, AUTO_HIDE = 3;
+    const gates = ["vLoading", "gSignin", "gMember", "gProfile", "board"];
+    const gate = (id) => gates.forEach(g => $(g).hidden = g !== id);
+    const say = (el, text, kind) => { el.className = "notice form-msg " + (kind || "bad"); el.textContent = text || ""; };
+    const errText = (r) => T(r.code || "err.generic") + (r.code === "err.generic" && r.detail ? " (" + r.detail + ")" : "");
+
+    const data = ClubData.create();
+    const ready = data.init().then(() => null, (e) => e);
+    const rb = jsyaml.load(await (await fetch("rules/rules.yaml", { cache: "no-cache" })).text());
+    const rule = (id) => (rb.rules || []).find(r => r.id === id) || {};
+    const fmtDate = (d) => new Date(d + "T12:00").toLocaleDateString(I18N.locale(), { day: "numeric", month: "long", year: "numeric" });
+    const today = ClubData.todayStr();
+    const missionPts = (mt) => { const r = rule(mt === "help" ? "mentoring" : "collab"); return { n: r.points || 0, from: r.from && today < r.from ? r.from : "" }; };
+
+    const err = await ready;
+    if (err) { gate("vLoading"); $("vLoading").textContent = T("m.dberror", { e: err.code || err.message || "?" }); return; }
+    if (data.mode === "demo") $("demoNote").hidden = false;
+
+    // ---------- sign-in gate (same flow as /apply) ----------
+    document.querySelectorAll(".ms-block").forEach(b => b.hidden = !data.microsoft);
+    document.querySelectorAll(".ms-btn").forEach(b => b.addEventListener("click", async () => {
+      b.disabled = true; const r = await data.signInMicrosoft(); b.disabled = false; if (!r.ok) say($("signinMsg"), r.message);
+    }));
+    $("gSignin").addEventListener("submit", async (e) => {
+      e.preventDefault(); $("signinBtn").disabled = true;
+      try {
+        if (data.pendingLink) await data.completeLink($("email").value);
+        else { const r = await data.sendLink($("email").value); say($("signinMsg"), r.message, r.ok ? "ok" : "bad"); }
+      } catch (x) { say($("signinMsg"), x.message || T("err.generic")); }
+      $("signinBtn").disabled = false;
+    });
+
+    // ---------- state ----------
+    let me = null, isOrg = false, names = {}, ranks = {}, posts = [], active = null;
+    const open = new Set(), comments = {};
+    const F = { kind: "", openOnly: false };
+    let armedDelete = null;
+
+    const nameOf = (uid) => (me && uid === me.uid ? T("vb.you") : (names[uid] || "—"));
+    const ninja = (uid) => `<img class="vb-ninja" src="assets/ninjas/ninja-${ranks[uid] || "white"}.svg" alt="">`;
+    const rel = (ms) => {
+      const f = new Intl.RelativeTimeFormat(I18N.locale(), { numeric: "auto" }), d = (ms - Date.now()) / 1000;
+      if (Math.abs(d) < 3600) return f.format(Math.round(d / 60), "minute");
+      if (Math.abs(d) < 86400) return f.format(Math.round(d / 3600), "hour");
+      return f.format(Math.round(d / 86400), "day");
+    };
+    const stale = (p) => p.status === "taken" && Date.now() - p.takenAtMs > 7 * DAY;
+
+    async function loadPeople() {
+      const [members, facts] = await Promise.all([data.loadMembers(), data.loadFacts()]);
+      names = Object.fromEntries(members.map(m => [m.uid, m.name]));
+      const regular = SESSIONS.filter(s => s.track !== "break" && parseDate(s.date).getDay() === 4 && s.date <= today).map(s => s.date).sort();
+      const res = PointsEngine.compute(rb, facts, members, regular, today);
+      ranks = Object.fromEntries(members.map(m => [m.uid, res.byUid[m.uid] && res.byUid[m.uid].isMember ? res.byUid[m.uid].rank : "white"]));
+    }
+    async function refresh() {
+      [posts, active] = await Promise.all([data.loadBoard(isOrg), data.myMission()]);
+      // a pointer to a mission that isn't ours any more doesn't count
+      const mine = posts.find(p => p.id === active);
+      if (!mine || mine.takenBy !== me.uid || mine.status !== "taken") active = null;
+      for (const id of open) comments[id] = await data.loadComments(id, isOrg);
+      render();
+    }
+
+    // ---------- rendering ----------
+    function renderHow() {
+      const h = missionPts("help"), b = missionPts("build");
+      $("howList").innerHTML = [
+        T("vb.how.help", { n: h.n }),
+        T("vb.how.build", { n: b.n, from: b.from ? T("vb.how.from", { d: fmtDate(b.from) }) : "" }),
+        T("vb.how.rules", { cap: (rb.missions && rb.missions.monthly_cap) || 10 }),
+      ].map(x => `<li>${x}</li>`).join("");
+    }
+    function renderFilters() {
+      const k = (v, label) => `<button type="button" class="fchip" data-kind="${v}" aria-pressed="${F.kind === v}">${esc(label)}</button>`;
+      $("filters").setAttribute("aria-label", T("vb.title"));
+      $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) +
+        `<button type="button" class="fchip" data-open aria-pressed="${F.openOnly}">${esc(T("vb.f.open"))}</button>`;
+    }
+    function statusLine(p) {
+      if (p.kind !== "mission") return "";
+      const key = { open: "vb.st.open", taken: "vb.st.taken", review: "vb.st.review", done: "vb.st.done", closed: "vb.st.closed" }[p.status] || "vb.st.open";
+      return `<span class="chip st-${esc(p.status)}">${esc(T(key, { name: nameOf(p.takenBy) }))}</span>` + (stale(p) ? `<span class="chip st-stale">${esc(T("vb.stale"))}</span>` : "");
+    }
+    function actions(p) {
+      const a = [], btn = (act, label, cls = "btn-ghost") => a.push(`<button type="button" class="btn ${cls} vb-act" data-act="${act}" data-id="${p.id}">${esc(label)}</button>`);
+      const mineP = p.by === me.uid, takenByMe = p.takenBy === me.uid;
+      if (p.kind === "mission") {
+        const pts = missionPts(p.mtype).n;
+        if (p.status === "open" && !mineP) { if (active) a.push(`<span class="help">${esc(T("vb.busy.note"))}</span>`); else btn("take", T("vb.a.take"), "btn-primary"); }
+        if (p.status === "taken" && takenByMe) { btn("finish", T("vb.a.finish"), "btn-primary"); btn("release", T("vb.a.release")); }
+        if (stale(p) && !takenByMe) btn("reopen", T("vb.a.reopen"));
+        if (p.status === "review" && (mineP || (isOrg && !takenByMe))) btn("confirm", T("vb.a.confirm", { n: pts, name: nameOf(p.takenBy) }), "btn-primary");
+        if (p.status === "review" && takenByMe) a.push(`<span class="help">${esc(T("vb.wait.poster", { name: nameOf(p.by) }))}</span>`);
+        if (p.status === "open" && mineP) btn("close", T("vb.a.close"));
+      }
+      if (mineP && (p.kind !== "mission" || ["open", "closed"].includes(p.status))) btn("delete", armedDelete === p.id ? T("vb.a.sure") : T("vb.a.delete"), armedDelete === p.id ? "btn-danger" : "btn-ghost");
+      return a.join("");
+    }
+    function commentHTML(p, c) {
+      const mineC = c.by === me.uid, rep = !!(c.reports || {})[me.uid];
+      if (!isOrg && !mineC && c.reportCount >= AUTO_HIDE) return "";
+      const tools = [
+        !mineC ? `<button type="button" class="linkbtn" data-act="c-report" data-id="${p.id}" data-c="${c.id}" ${rep ? "disabled" : ""}>${esc(T(rep ? "vb.a.reported" : "vb.a.report"))}</button>` : "",
+        isOrg ? `<button type="button" class="linkbtn" data-act="${c.hidden ? "c-unhide" : "c-hide"}" data-id="${p.id}" data-c="${c.id}">${esc(T(c.hidden ? "vb.a.unhide" : "vb.a.hide"))}</button>` : "",
+        mineC || isOrg ? `<button type="button" class="linkbtn" data-act="c-delete" data-id="${p.id}" data-c="${c.id}">${esc(T("vb.a.delete"))}</button>` : "",
+      ].join("");
+      return `<li class="comment${c.hidden ? " is-hidden" : ""}">${ninja(c.by)}<div><p class="c-meta"><b>${esc(nameOf(c.by))}</b> · ${esc(rel(c.at))}${isOrg && c.reportCount ? ` · <span class="chip st-reported">${esc(T("vb.reported.tag", { n: c.reportCount }))}</span>` : ""}${c.hidden ? ` · <span class="chip">${esc(T("vb.hidden.tag"))}</span>` : ""}</p>
+        <p class="c-text">${esc(c.text).replace(/\n/g, "<br>")}</p><p class="c-tools">${tools}</p></div></li>`;
+    }
+    function postHTML(p) {
+      const mineP = p.by === me.uid, rep = !!(p.reports || {})[me.uid];
+      const kindLabel = p.kind === "mission" ? T("vb.k.mission") + " · " + T(p.mtype === "help" ? "vb.mt.help" : "vb.mt.build") : T(p.kind === "event" ? "vb.k.event" : "vb.k.oss");
+      const mp = p.kind === "mission" ? missionPts(p.mtype) : null;
+      const ptsChip = mp ? `<span class="chip pts">${esc(mp.from ? T("vb.pts.later", { n: mp.n, d: fmtDate(mp.from) }) : T("vb.pts", { n: mp.n }))}</span>` : "";
+      const link = /^https:\/\/\S+$/.test(p.link || "") ? `<a class="vb-link" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer">${esc(T("vb.a.open"))}</a>` : "";
+      const when = p.kind === "event" && (p.date || p.where) ? `<p class="vb-when">${esc(T("vb.event.on", { date: p.date ? fmtDate(p.date) : "", where: p.where || "" }).replace(/^ · | · $/g, ""))}</p>` : "";
+      const flags = (isOrg && p.reportCount ? `<span class="chip st-reported">${esc(T("vb.reported.tag", { n: p.reportCount }))}</span>` : "") + (p.hidden ? `<span class="chip">${esc(T("vb.hidden.tag"))}</span>` : "");
+      const autoHidden = !isOrg && mineP && p.reportCount >= AUTO_HIDE ? `<p class="notice bad">${esc(T("vb.autohidden"))}</p>` : "";
+      const c = comments[p.id] || [];
+      const cBlock = open.has(p.id) ? `<div class="comments"><ul>${c.map(x => commentHTML(p, x)).join("") || `<li class="help">${esc(T("vb.c.empty"))}</li>`}</ul>
+        <form class="c-form" data-id="${p.id}"><label class="sr" for="c-${p.id}">${esc(T("vb.c.ph"))}</label>
+          <textarea class="textarea" id="c-${p.id}" maxlength="500" rows="2" placeholder="${esc(T("vb.c.ph"))}"></textarea>
+          <button class="btn btn-ghost" type="submit">${esc(T("vb.a.comment"))}</button></form></div>` : "";
+      return `<article class="post k-${esc(p.kind)}${p.hidden ? " is-hidden" : ""}" id="post-${p.id}">
+        <div class="post-meta"><span class="chip kind">${esc(kindLabel)}</span>${ptsChip}${statusLine(p)}${flags}</div>
+        <h3>${esc(p.title)}</h3>
+        ${when}${p.body ? `<p class="vb-body">${esc(p.body).replace(/\n/g, "<br>")}</p>` : ""}${link}${autoHidden}
+        <div class="post-foot">
+          <span class="by">${ninja(p.by)}<b>${esc(nameOf(p.by))}</b> · ${esc(rel(p.at))}</span>
+          <span class="post-actions">${actions(p)}</span>
+        </div>
+        <div class="post-tools">
+          <button type="button" class="linkbtn" data-act="comments" data-id="${p.id}" aria-expanded="${open.has(p.id)}">${esc(T("vb.a.comments"))}${comments[p.id] ? " (" + comments[p.id].length + ")" : ""}</button>
+          ${!mineP ? `<button type="button" class="linkbtn" data-act="report" data-id="${p.id}" ${rep ? "disabled" : ""}>${esc(T(rep ? "vb.a.reported" : "vb.a.report"))}</button>` : ""}
+          ${isOrg ? `<button type="button" class="linkbtn" data-act="${p.hidden ? "unhide" : "hide"}" data-id="${p.id}">${esc(T(p.hidden ? "vb.a.unhide" : "vb.a.hide"))}</button>` : ""}
+        </div>
+        ${cBlock}
+      </article>`;
+    }
+    function render() {
+      renderHow(); renderFilters();
+      const mine = posts.find(p => p.id === active);
+      $("mine").innerHTML = mine ? `<div class="mine"><p class="eyebrow" style="margin:0">${esc(T("vb.mine.h"))}</p>${postHTML(mine)}</div>` : "";
+      const list = posts.filter(p => p.id !== active)
+        .filter(p => isOrg || p.by === me.uid || p.reportCount < AUTO_HIDE)
+        .filter(p => !F.kind || p.kind === F.kind)
+        .filter(p => !F.openOnly || (p.kind === "mission" && p.status === "open"))
+        .filter(p => p.status !== "closed" || p.by === me.uid || isOrg);
+      $("posts").innerHTML = list.map(postHTML).join("") || `<p class="vb-empty">${esc(T("vb.empty"))}</p>`;
+    }
+
+    // ---------- actions ----------
+    async function act(kind, p, c) {
+      say($("msg"), "");
+      const r = await ({
+        take: () => data.takeMission(p), release: () => data.releaseMission(p), finish: () => data.finishMission(p),
+        confirm: () => data.confirmMission(p), reopen: () => data.reopenMission(p), close: () => data.closePost(p),
+        delete: () => data.deletePost(p), report: () => data.report(p.id), hide: () => data.setHidden(p.id, null, true), unhide: () => data.setHidden(p.id, null, false),
+        "c-report": () => data.report(p.id, c), "c-hide": () => data.setHidden(p.id, c, true), "c-unhide": () => data.setHidden(p.id, c, false), "c-delete": () => data.deleteComment(p.id, c),
+      })[kind]();
+      if (!r.ok) say($("msg"), errText(r));
+      if (kind === "confirm" && r.ok) await loadPeople();   // their bandana may change
+      await refresh();
+    }
+    document.addEventListener("click", async (e) => {
+      const f = e.target.closest("[data-kind], [data-open]");
+      if (f && $("filters").contains(f)) { if (f.hasAttribute("data-open")) F.openOnly = !F.openOnly; else F.kind = f.dataset.kind; render(); return; }
+      const b = e.target.closest("[data-act]"); if (!b || !$("board").contains(b)) return;
+      const p = posts.find(x => x.id === b.dataset.id); if (!p) return;
+      if (b.dataset.act === "comments") {
+        if (open.has(p.id)) open.delete(p.id); else { open.add(p.id); comments[p.id] = await data.loadComments(p.id, isOrg); }
+        render(); const t = document.getElementById("c-" + p.id); if (t) t.focus(); return;
+      }
+      if (b.dataset.act === "delete" && armedDelete !== p.id) { armedDelete = p.id; render(); setTimeout(() => { if (armedDelete === p.id) { armedDelete = null; render(); } }, 4000); return; }
+      armedDelete = null;
+      b.disabled = true; await act(b.dataset.act, p, b.dataset.c);
+    });
+    document.addEventListener("submit", async (e) => {
+      const f = e.target.closest(".c-form"); if (!f) return; e.preventDefault();
+      const t = f.querySelector("textarea"), text = t.value.trim();
+      if (!text) { say($("msg"), T("vb.err.comment")); return; }
+      const r = await data.addComment(f.dataset.id, text); if (!r.ok) { say($("msg"), errText(r)); return; }
+      comments[f.dataset.id] = await data.loadComments(f.dataset.id, isOrg); render();
+    });
+
+    // ---------- new post ----------
+    const KINDS = ["mission", "event", "oss"], MT = ["help", "build"];
+    function renderFormChoices() {
+      const cur = (n) => (document.querySelector(`[name=${n}]:checked`) || {}).value;
+      const k = cur("kind") || "mission", m = cur("mtype") || "help";
+      $("kindChoices").innerHTML = KINDS.map(v => `<label class="choice"><input type="radio" name="kind" value="${v}"${v === k ? " checked" : ""}><span>${esc(T("vb.k." + v))}</span></label>`).join("");
+      $("mtypeChoices").innerHTML = MT.map(v => {
+        const mp = missionPts(v);
+        return `<label class="choice"><input type="radio" name="mtype" value="${v}"${v === m ? " checked" : ""}><span>${esc(T(v === "help" ? "vb.mt.help.long" : "vb.mt.build"))} · ${esc(mp.from ? T("vb.pts.later", { n: mp.n, d: fmtDate(mp.from) }) : T("vb.pts", { n: mp.n }))}</span></label>`;
+      }).join("");
+      syncForm();
+    }
+    function syncForm() {
+      const k = (document.querySelector("[name=kind]:checked") || {}).value;
+      $("mtypeField").hidden = k !== "mission"; $("eventFields").hidden = k !== "event";
+    }
+    $("postForm").addEventListener("change", syncForm);
+    const toggleForm = (on) => { $("postForm").hidden = !on; $("newBtn").setAttribute("aria-expanded", String(on)); if (on) { renderFormChoices(); $("pTitle").focus(); } };
+    $("newBtn").addEventListener("click", () => toggleForm($("postForm").hidden));
+    $("pCancel").addEventListener("click", () => toggleForm(false));
+    $("postForm").addEventListener("submit", async (e) => {
+      e.preventDefault(); say($("formMsg"), "");
+      const p = { kind: document.querySelector("[name=kind]:checked").value, mtype: (document.querySelector("[name=mtype]:checked") || {}).value,
+        title: $("pTitle").value.trim(), body: $("pBody").value.trim(), link: $("pLink").value.trim(), date: $("pDate").value, where: $("pWhere").value.trim() };
+      if (p.title.length < 3) { say($("formMsg"), T("vb.err.title")); $("pTitle").focus(); return; }
+      if (p.link && !/^https:\/\/\S+$/.test(p.link)) { say($("formMsg"), T("vb.err.link")); $("pLink").focus(); return; }
+      $("pSend").disabled = true; const r = await data.createPost(p); $("pSend").disabled = false;
+      if (!r.ok) { say($("formMsg"), errText(r)); return; }
+      $("postForm").reset(); toggleForm(false); await refresh();
+    });
+
+    addEventListener("langchange", () => { if (me && !$("board").hidden) { render(); if (!$("postForm").hidden) renderFormChoices(); } });
+
+    // ---------- who is here ----------
+    data.onAuth(async (u) => {
+      try {
+        if (!u) { gate("gSignin"); if (data.linkError) say($("signinMsg"), data.linkError); return; }
+        if (!(await data.onRoster())) { gate("gMember"); return; }
+        const profile = await data.getProfile(u.uid);
+        if (!profile) { gate("gProfile"); return; }
+        me = u;
+        isOrg = profile.role === "organizer" || (data.mode === "demo" && new URLSearchParams(location.search).has("elder"));
+        $("elderNote").hidden = !isOrg;
+        await loadPeople(); gate("board"); await refresh();
+      } catch (e) { console.error(e); gate("vLoading"); $("vLoading").textContent = T("m.dberror", { e: e.code || e.message || "?" }); }
+    });
+  })();
+  </script>
+</body>
+</html>

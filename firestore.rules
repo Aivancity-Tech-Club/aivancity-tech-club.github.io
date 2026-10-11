@@ -6,10 +6,11 @@ service cloud.firestore {
   match /databases/{db}/documents {
 
     function signedIn() { return request.auth != null; }
-    // Only verified @aivancity.education accounts (email-link sign-in verifies the address).
+    // Only @aivancity.education accounts: verified by the email link, or signed in with Microsoft.
+    // The Microsoft app is registered single-tenant (aivancity's directory only), so Microsoft vouches for the address.
     function school() {
-      return signedIn() && request.auth.token.email_verified == true
-        && request.auth.token.email.matches('.*@aivancity[.]education$');
+      return signedIn() && request.auth.token.email.matches('.*@aivancity[.]education$')
+        && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'microsoft.com');
     }
     function email() { return request.auth.token.email.lower(); }
     // Who is in the club: a verified school account that either
@@ -22,21 +23,36 @@ service cloud.firestore {
     function isMember() { return onRoster() && exists(/databases/$(db)/documents/members/$(request.auth.uid)); }
     function isOrganizer() { return isMember() && memberDoc().data.get('role', 'member') == 'organizer'; }
     function code(c) { return get(/databases/$(db)/documents/checkinCodes/$(c)).data; }
+    function boardDoc(id) { return /databases/$(db)/documents/board/$(id); }
+    function myMember() { return /databases/$(db)/documents/members/$(request.auth.uid); }
+    // your "current mission" can only point at a mission that this same write gives to you
+    function activeMissionOk(m) { return m == null || getAfter(boardDoc(m)).data.get('takenBy', null) == request.auth.uid; }
+    function onlyKeys(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    // reporting: add yourself (and only yourself) to the reports map
+    function reportOnly() {
+      return onlyKeys(['reports'])
+        && request.resource.data.reports.diff(resource.data.reports).affectedKeys().hasOnly([request.auth.uid])
+        && request.resource.data.reports[request.auth.uid] == true;
+    }
 
     // Public profile inside the club: name, GitHub username, accessories. Roles are set by an owner in the console.
     match /members/{uid} {
       allow read: if isMember();
+      // anyone signed in can check their own profile, even before it exists (first visit)
+      allow get: if signedIn() && request.auth.uid == uid;
       allow create: if onRoster() && request.auth.uid == uid
         && request.resource.data.consent == true
         && !('role' in request.resource.data)
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40;
       allow update: if isMember() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'github', 'accessories'])
-        && request.resource.data.accessories.size() <= 2;
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'github', 'accessories', 'activeMission'])
+        && request.resource.data.accessories.size() <= 2
+        && (request.resource.data.get('activeMission', null) == resource.data.get('activeMission', null)
+            || activeMissionOk(request.resource.data.get('activeMission', null)));
       allow delete: if false;
     }
 
-    // Roster: document ID = member email in lower case, e.g. roster/amina.kone@aivancity.education
+    // Roster: document ID = the member's full school email address, in lower case.
     // Members can only check their own entry; organizers manage the list.
     match /roster/{em} {
       allow get: if school() && em == email();
@@ -96,6 +112,72 @@ service cloud.firestore {
       allow write: if onRoster() && request.auth.uid == uid;
     }
 
+    // ---------- Village Board: missions, events, open-source projects ----------
+    // Everything is visible to members. Elders (organizers) can hide anything; members can report.
+    match /board/{id} {
+      allow get, list: if isMember() && (resource.data.hidden == false || isOrganizer());
+
+      allow create: if isMember()
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.keys().hasOnly(['kind', 'title', 'body', 'link', 'by', 'createdAt', 'hidden', 'reports', 'mtype', 'status', 'takenBy', 'takenAt', 'date', 'where'])
+        && request.resource.data.kind in ['mission', 'event', 'oss']
+        && request.resource.data.title is string && request.resource.data.title.size() > 2 && request.resource.data.title.size() <= 90
+        && request.resource.data.body is string && request.resource.data.body.size() <= 800
+        && request.resource.data.link is string && request.resource.data.link.size() <= 300
+        && request.resource.data.hidden == false && request.resource.data.reports == {}
+        && request.resource.data.createdAt == request.time
+        && (request.resource.data.kind != 'mission'
+            || (request.resource.data.mtype in ['help', 'build'] && request.resource.data.status == 'open' && request.resource.data.takenBy == null));
+
+      // the author edits the text, or closes their own open mission
+      allow update: if isMember() && resource.data.by == request.auth.uid && resource.data.hidden == false
+        && onlyKeys(['title', 'body', 'link', 'date', 'where', 'status'])
+        && request.resource.data.title.size() > 2 && request.resource.data.title.size() <= 90 && request.resource.data.body.size() <= 800
+        && (request.resource.data.get('status', null) == resource.data.get('status', null)
+            || (resource.data.status == 'open' && request.resource.data.status == 'closed'));
+
+      // take an open mission: first come first served, never your own, and only if you have no other mission
+      allow update: if isMember() && resource.data.kind == 'mission' && resource.data.hidden == false
+        && resource.data.status == 'open' && resource.data.by != request.auth.uid
+        && onlyKeys(['status', 'takenBy', 'takenAt'])
+        && request.resource.data.status == 'taken' && request.resource.data.takenBy == request.auth.uid && request.resource.data.takenAt == request.time
+        && get(myMember()).data.get('activeMission', null) == null
+        && getAfter(myMember()).data.get('activeMission', null) == id;
+
+      // the taker gives it back, or marks it done (it then waits for the poster)
+      allow update: if isMember() && resource.data.kind == 'mission' && resource.data.takenBy == request.auth.uid
+        && resource.data.status == 'taken'
+        && ((onlyKeys(['status', 'takenBy', 'takenAt']) && request.resource.data.status == 'open' && request.resource.data.takenBy == null)
+            || (onlyKeys(['status', 'doneAt']) && request.resource.data.status == 'review' && request.resource.data.doneAt == request.time));
+
+      // a mission taken more than 7 days ago with no news goes back on the board (anyone can trigger it)
+      allow update: if isMember() && resource.data.kind == 'mission' && resource.data.status == 'taken'
+        && request.time > resource.data.takenAt + duration.value(7, 'd')
+        && onlyKeys(['status', 'takenBy', 'takenAt']) && request.resource.data.status == 'open' && request.resource.data.takenBy == null;
+
+      // the poster confirms (the matching points fact is created in the same write, see /facts rule 4)
+      allow update: if isMember() && resource.data.kind == 'mission' && resource.data.by == request.auth.uid
+        && resource.data.status == 'review' && onlyKeys(['status', 'confirmedAt'])
+        && request.resource.data.status == 'done' && request.resource.data.confirmedAt == request.time
+        && existsAfter(/databases/$(db)/documents/facts/$('m_' + id));
+
+      allow update: if isMember() && reportOnly();
+      allow update, delete: if isOrganizer();
+      allow delete: if isMember() && resource.data.by == request.auth.uid && resource.data.get('status', 'open') in ['open', 'closed'];
+
+      match /comments/{cid} {
+        allow get, list: if isMember() && (resource.data.hidden == false || isOrganizer());
+        allow create: if isMember() && request.resource.data.by == request.auth.uid
+          && request.resource.data.keys().hasOnly(['by', 'text', 'createdAt', 'hidden', 'reports'])
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500
+          && request.resource.data.hidden == false && request.resource.data.reports == {}
+          && request.resource.data.createdAt == request.time;
+        allow update: if isMember() && reportOnly();
+        allow update: if isOrganizer();
+        allow delete: if isMember() && (resource.data.by == request.auth.uid || isOrganizer());
+      }
+    }
+
     // One document per session code: { date: "YYYY-MM-DD", validFrom: timestamp, validUntil: timestamp, double: bool }.
     // Members can't read or list codes; the rules below only check that a typed code exists.
     match /checkinCodes/{c} {
@@ -128,7 +210,23 @@ service cloud.firestore {
         && request.resource.data.uid != request.auth.uid
         && request.resource.data.recordedBy == request.auth.uid;
 
-      // 4) Organizers verify submissions from other members. Only the decision fields can change.
+      // 4) Village Board mission confirmed by the member who posted it (fact id = "m_" + mission id, so once only).
+      //    The mission must move from "review" to "done" in the same write; the fact goes to the member who took it.
+      allow create: if isMember()
+        && id == 'm_' + request.resource.data.missionId
+        && request.resource.data.keys().hasOnly(['uid', 'type', 'date', 'status', 'missionId', 'mentee', 'recordedBy', 'title', 'createdAt'])
+        && get(boardDoc(request.resource.data.missionId)).data.status == 'review'
+        && getAfter(boardDoc(request.resource.data.missionId)).data.status == 'done'
+        && get(boardDoc(request.resource.data.missionId)).data.by == request.auth.uid
+        && request.resource.data.uid == get(boardDoc(request.resource.data.missionId)).data.takenBy
+        && request.resource.data.uid != request.auth.uid
+        && ((get(boardDoc(request.resource.data.missionId)).data.mtype == 'help' && request.resource.data.type == 'mentoring')
+            || (get(boardDoc(request.resource.data.missionId)).data.mtype == 'build' && request.resource.data.type == 'collab'))
+        && request.resource.data.status == 'approved'
+        && request.resource.data.mentee == request.auth.uid
+        && request.resource.data.recordedBy == request.auth.uid;
+
+      // 5) Organizers verify submissions from other members. Only the decision fields can change.
       allow update: if isOrganizer()
         && resource.data.uid != request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reason', 'verifiedBy', 'verifiedAt'])

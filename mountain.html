@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261010i"></script>
+<script src="assets/i18n.js?v=20261011h"></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/tech-club-logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,6 +75,10 @@ label { font-weight: 700; font-size: 14px; }
 .input { height: 48px; border: 2px solid var(--ink); border-radius: 14px; padding: 0 14px; background: var(--paper); width: 100%; }
 .btn { min-height: 48px; border: 2px solid var(--ink); border-radius: 999px; background: var(--blue); color: var(--on-dark); font-weight: 800; padding: 0 18px; cursor: pointer; }
 .btn.ghost { background: var(--paper); color: var(--ink); }
+.ms-block { display: flex; flex-direction: column; gap: 12px; }
+.ms-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--paper); color: var(--ink); width: 100%; }
+.or { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-soft); margin: 0; }
+.or::before, .or::after { content: ''; flex: 1; border-top: 1px solid #d6d6d6; }
 .btn:disabled { opacity: 0.5; cursor: default; }
 .msg { font-size: 14px; border-radius: 12px; padding: 8px 12px; }
 .msg.ok { background: var(--p-green); } .msg.err { background: var(--p-red); }
@@ -184,6 +188,10 @@ label { font-weight: 700; font-size: 14px; }
   <form class="card" id="signinForm" novalidate>
     <h1 data-i18n="m.signin.h">Start your <b>climb</b></h1>
     <p data-i18n="m.signin.p">Members only. We'll email you a sign-in link. No password, and you stay signed in on this device. The email can land in <b>Junk</b>, so check there too.</p>
+    <div class="ms-block" hidden>
+      <button class="btn ms-btn" type="button"><svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg><span data-i18n="ms.btn">Sign in with Microsoft</span></button>
+      <p class="or"><span data-i18n="ms.or">or get a sign-in link by email</span></p>
+    </div>
     <div class="field">
       <label for="email" data-i18n="m.signin.email">School email</label>
       <input class="input" id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" required>
@@ -258,6 +266,7 @@ label { font-weight: 700; font-size: 14px; }
   </section>
   <section class="box"><h3 data-i18n="m.badges.h">Badges</h3><div class="badges" id="badges"></div></section>
   <section class="box"><h3 data-i18n="m.activity.h">Activity</h3><ul class="list log" id="log"></ul></section>
+  <a class="btn ghost" href="/village" style="display:grid;place-items:center;text-decoration:none" data-i18n="vb.title">Village board</a>
   <a class="btn ghost" href="/feedback?topic=platform" style="display:grid;place-items:center;text-decoration:none" data-i18n="m.feedback">Give feedback</a>
   <button type="button" class="btn ghost" id="signOut" data-i18n="m.signout">Sign out</button>
 </aside>
@@ -268,13 +277,13 @@ label { font-weight: 700; font-size: 14px; }
 <div class="pop" id="pop" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261010i"></script>
-<script src="assets/world/world.js?v=20261010i"></script>
-<script src="assets/js-yaml.min.js?v=20261010i"></script>
-<script src="assets/schedule.js?v=20261010i"></script>
-<script src="assets/platform/config.js?v=20261010i"></script>
-<script src="assets/platform/engine.js?v=20261010i"></script>
-<script src="assets/platform/data.js?v=20261010i"></script>
+<script src="assets/world/world-data.js?v=20261011h"></script>
+<script src="assets/world/world.js?v=20261011h"></script>
+<script src="assets/js-yaml.min.js?v=20261011h"></script>
+<script src="assets/schedule.js?v=20261011h"></script>
+<script src="assets/platform/config.js?v=20261011h"></script>
+<script src="assets/platform/engine.js?v=20261011h"></script>
+<script src="assets/platform/data.js?v=20261011h"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -285,11 +294,12 @@ label { font-weight: 700; font-size: 14px; }
   const RANK = (id) => T('rank.' + id);
   // engine notes are English; show them in the page language
   const NOTE = { 'Waiting for an organizer': 'note.pending', 'Already checked in': 'note.dup', 'Project already counted': 'note.project', 'Already counted': 'note.dup',
-    'Monthly limit reached': 'note.month', 'Weekly limit for this pair reached': 'note.week' };
+    'Monthly limit reached': 'note.month', 'Weekly limit for this pair reached': 'note.week', 'Monthly mission cap reached': 'note.missioncap' };
   const noteText = (n) => {
     if (!n) return '';
     if (NOTE[n]) return T(NOTE[n]);
     if (/^Session cap/.test(n)) return T('note.cap');
+    if (/^Rule starts /.test(n)) return T('note.rulestart', { d: n.slice(11) });
     if (/^Not accepted/.test(n)) return T('note.rejected') + n.slice('Not accepted'.length);
     return n;
   };
@@ -458,6 +468,10 @@ label { font-weight: 700; font-size: 14px; }
   $('signOut').onclick = async () => { await data.signOut(); location.reload(); };
   $('demoReset').onclick = () => { data.reset && data.reset(); location.reload(); };
 
+  document.querySelectorAll('.ms-btn').forEach(b => b.addEventListener('click', async () => {
+    b.disabled = true; const r = await data.signInMicrosoft(); b.disabled = false;
+    if (!r.ok) show($('signinMsg'), r.message, false);
+  }));
   $('signinForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const v = $('email').value.trim();
@@ -488,8 +502,10 @@ label { font-weight: 700; font-size: 14px; }
 
   /* ---------- auth flow ---------- */
   data.onAuth(async (user) => {
+    try {
     if (!user) {
       $('signin').hidden = false; $('meBtn').hidden = true;
+      document.querySelectorAll('.ms-block').forEach(b => b.hidden = !data.microsoft);
       if (data.linkError) show($('signinMsg'), data.linkError, false);
       if (data.pendingLink) { $('signinBtn').dataset.i18n = 'm.signin.confirm'; $('signinBtn').textContent = T('m.signin.confirm'); show($('signinMsg'), T('m.signin.otherdevice'), true); }
       return;
@@ -505,6 +521,12 @@ label { font-weight: 700; font-size: 14px; }
     profile = await data.getProfile(user.uid);
     if (!profile) { $('setup').hidden = false; return; }
     await refresh();
+    } catch (e) {
+      // never leave an empty screen: say what went wrong
+      console.error(e);
+      $('loading').hidden = false; $('loading').style.zIndex = 12; $('loading').style.padding = '24px'; $('loading').style.textAlign = 'center';
+      $('loading').textContent = T('m.dberror', { e: (e && (e.code || e.message)) || '?' });
+    }
   });
 })();
 </script>

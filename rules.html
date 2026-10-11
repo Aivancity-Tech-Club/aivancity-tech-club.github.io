@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261010i">
+  <link rel="stylesheet" href="assets/styles.css?v=20261011h">
   <style>
     /* Category palette: tint (card ground), ink (accent text), solid (pills) */
     .c-show_up { --tint: #e3f4fb; --acc: #0b57d0; --solid: #1a73e8; }
@@ -116,7 +116,7 @@
       .kv { grid-template-columns: 1fr; gap: 2px; } .kv dd { margin-bottom: 8px; }
     }
   </style>
-  <script src="assets/i18n.js?v=20261010i"></script>
+  <script src="assets/i18n.js?v=20261011h"></script>
 </head>
 <body data-i18n-title="nav.rules">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -130,7 +130,8 @@
         <a href="/about" data-i18n="nav.about">About</a>
         <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
         <a href="/rules" aria-current="page" data-i18n="nav.rules">Rules</a>
-        <a href="/join" data-i18n="nav.join">Join</a>
+        <a href="/village" data-member data-i18n="nav.board">Village</a>
+        <a href="/join" data-join data-i18n="nav.join">Join</a>
         <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
         <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
       </nav>
@@ -161,10 +162,11 @@
     <div class="wrap">
       <span data-i18n="rules.source">Source of truth: <a href="rules/rules.yaml">rules/rules.yaml</a> · <a href="rules/GOVERNANCE.md">how rules change</a></span>
       <span><a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span></span>
+      <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
 
-  <script src="assets/js-yaml.min.js?v=20261010i"></script>
+  <script src="assets/js-yaml.min.js?v=20261011h"></script>
   <script>
   (() => {
     const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -204,7 +206,7 @@
       if (!R) return;
       const facts = document.getElementById("facts");
       facts.innerHTML =
-        `<span class="fact">${T("rules.fact.version", { v: esc(R.version) })}</span><span class="fact">${T("rules.fact.from", { d: esc(new Date(R.effective_from + "T12:00").toLocaleDateString(I18N.locale(), { day: "numeric", month: "long", year: "numeric" })) })}</span>` +
+        `<span class="fact">${T("rules.fact.version", { v: esc(R.version) })}</span>` +
         `<span class="fact">${T("rules.fact.cap", { n: R.sessions.point_cap_per_regular_session })}</span><span class="fact">${T("rules.fact.ways", { n: R.rules.length })}</span>`;
 
       const peaks = R.ranks.map((k, i) => `

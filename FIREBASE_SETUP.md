@@ -16,6 +16,29 @@ Takes about 15 minutes. Do it signed in with a Google account the club will keep
 2. **Sign-in method → Email/Password → Enable**, then also turn on **Email link (passwordless sign-in)**. Save.
 3. **Settings → Authorized domains → Add domain:** `aivancity-tech-club.github.io`
 
+## 2b. Sign in with Microsoft (recommended for school accounts)
+School email security can use up one-time email links before students click them. Signing in with the
+school's Microsoft account avoids email entirely. Do this once, signed in with your **@aivancity.education** account:
+
+1. Go to https://entra.microsoft.com → **Applications → App registrations → New registration**.
+   - **Name:** `aivancity Tech Club`
+   - **Supported account types:** **Accounts in this organizational directory only (single tenant)**.
+     This matters: it makes Microsoft itself refuse anyone outside aivancity.
+   - **Redirect URI:** platform **Web**, value `https://aivancity-tech-club.firebaseapp.com/__/auth/handler`
+   - Click **Register**.
+2. On the app's **Overview** page, copy the **Application (client) ID** and the **Directory (tenant) ID**.
+3. **Certificates & secrets → New client secret** → any description, 24 months → **Add**, then copy the secret's **Value**
+   right away (it's only shown once). Put a reminder in your calendar to renew it before it expires.
+4. **Token configuration → Add optional claim → ID → email → Add** (accept the Microsoft Graph prompt if asked).
+5. In Firebase: **Authentication → Sign-in method → Add new provider → Microsoft** → enable it, paste the
+   **client ID** and the secret **Value** → **Save**.
+6. In `assets/platform/config.js`, replace `MICROSOFT: null,` with
+   `MICROSOFT: { tenant: "the Directory (tenant) ID" },` then commit and push.
+   The "Sign in with Microsoft" button appears on `/apply` and `/mountain`. The email link stays as a backup.
+
+If step 1 says you're not allowed to register apps, or students see **"Need admin approval"** when they sign in,
+the school's IT has to allow it once (they approve the app for the whole school).
+
 ## 3. Create the database
 1. **Build → Firestore Database → Create database**.
 2. Location: **eur3 (europe-west)** so member data stays in the EU.
@@ -34,7 +57,7 @@ The Mountain is members only. A verified `@aivancity.education` account becomes 
 
 **Add yourself first** (you need to be on the roster to do anything else):
 1. **Firestore Database → Data → Start collection** named `roster`.
-2. **Document ID:** your school email in lower case, e.g. `REDACTED`.
+2. **Document ID:** your full school email address, in lower case.
 3. Add a field `addedBy` (string) with your name, then **Save**.
 
 **Make yourself an organizer:** sign in at `/mountain`, create your profile, then open
@@ -68,6 +91,14 @@ It lands in the `feedback` collection: topic, optional 1–5 rating, message, op
 Only organizers can read it; nobody can edit it.
 
 The organizer screens (next build) will turn all of this into buttons: approve requests, manage the roster, read feedback.
+
+## 7b. The Village Board (`/village`)
+Members post **missions** (Help or Build together), **events** and **open-source projects**, and comment on them.
+Nothing to set up: it uses the `board` collection (comments live under each post) and the rules in `firestore.rules`.
+- Missions pay what the rulebook says (Help = mentoring, Build = collab), capped by `missions.monthly_cap` in `rules/rules.yaml`.
+- Points are written when the poster confirms. If a poster never confirms, an organizer can confirm from the board.
+- Organizers see an "Elder view": they can hide or show any post or comment. A post or comment reported by 3 members
+  disappears for everyone else until an organizer looks at it (hide it, or leave it).
 
 ## 8. Every Thursday: the check-in code
 Until the organizer screens are built (next step of the project), create the code in the console:

@@ -16,4 +16,8 @@ window.CLUB_PLATFORM = {
        storageBucket: "….appspot.com", messagingSenderId: "…", appId: "…"
      }, */
   EMAIL_DOMAIN: "aivancity.education",
+  /* "Sign in with Microsoft" (school accounts). Leave null to hide the button.
+     When the app is registered (see FIREBASE_SETUP.md, step 2b), set it to:
+     MICROSOFT: { tenant: "the Directory (tenant) ID from the Microsoft app's Overview page" }, */
+  MICROSOFT: null,
 };

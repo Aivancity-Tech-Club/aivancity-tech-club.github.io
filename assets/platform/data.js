@@ -1,7 +1,7 @@
 /* Data layer for /mountain.
    Two backends with the same functions:
    - demo:     sample members kept in this browser only (used while config.js has no Firebase settings)
-   - firebase: email-link sign-in for @aivancity.education, Firestore with an offline cache
+   - firebase: email-link sign-in for school accounts, Firestore with an offline cache
    Facts are only ever added, never edited by members; points are always recomputed by engine.js. */
 (function () {
 'use strict';
@@ -55,9 +55,21 @@ function demoSeed() {
 function demoBackend() {
   let state = store.get('nw-demo-v1') || demoSeed();
   const save = () => store.set('nw-demo-v1', state);
+  const day = 864e5, now = Date.now();
+  const boardSeed = () => ({ active: null, posts: [
+    { id: 'p1', kind: 'mission', mtype: 'help', title: 'Explain React hooks before my project deadline', body: 'I get useState but useEffect keeps looping. 30 minutes on a call or after Thursday\'s session would save me.', link: '', by: 'lea', createdAt: now - 2 * day, hidden: false, reports: {}, status: 'open', takenBy: null, takenAt: null },
+    { id: 'p2', kind: 'mission', mtype: 'build', title: 'Add a dark mode to our study-planner app', body: 'Flutter app, MIT licence. The theme switch is half done, I need someone to finish the colour tokens.', link: 'https://github.com/example/study-planner', by: 'ines', createdAt: now - 4 * day, hidden: false, reports: {}, status: 'taken', takenBy: 'hugo', takenAt: now - 3 * day },
+    { id: 'p3', kind: 'event', title: 'DevFest Paris 2026', body: 'Google Developer Groups conference: talks on AI, Cloud and Android. Student tickets are cheaper.', link: 'https://gdg.community.dev/', by: 'sofia', createdAt: now - 5 * day, hidden: false, reports: {}, date: '2026-11-21', where: 'Paris' },
+    { id: 'p4', kind: 'oss', title: 'First issues in a French open-data library', body: 'Good-first-issue labels, friendly maintainers, Python. Merged pull requests count as open-source points.', link: 'https://github.com/example/opendata-fr', by: 'lucas', createdAt: now - 6 * day, hidden: false, reports: {} },
+    { id: 'p5', kind: 'mission', mtype: 'help', title: 'Review my first REST API', body: 'Express + SQLite, about 300 lines. Looking for feedback on structure and error handling.', link: '', by: 'you', createdAt: now - 1 * day, hidden: false, reports: {}, status: 'review', takenBy: 'noah', takenAt: now - day, doneAt: now - 3600e3 },
+  ], comments: { p1: [{ id: 'c1', by: 'noah', text: 'I can do Thursday after the session if nobody takes it before.', createdAt: now - day, hidden: false, reports: {} }] } });
+  const board = () => store.get('nw-demo-board-v1') || boardSeed();
+  const saveBoard = (B) => store.set('nw-demo-board-v1', B);
+  const demoTarget = (B, postId, commentId) => (commentId ? (B.comments[postId] || []).find(c => c.id === commentId) : B.posts.find(p => p.id === postId));
   const user = { uid: 'you', email: 'you@' + DOMAIN, demo: true };
   return {
     mode: 'demo',
+    microsoft: false, async signInMicrosoft() { return { ok: true }; },
     async init() {}, onAuth(cb) { cb(user); },
     async sendLink() { return { ok: true }; }, async signOut() { store.del('nw-demo-v1'); state = demoSeed(); },
     async onRoster() { return true; }, async requestStatus() { return store.get('nw-demo-req'); },
@@ -80,7 +92,38 @@ function demoBackend() {
       state.facts.push({ id: 'd' + Date.now(), uid: 'you', date: todayStr(), status: 'pending', ...s }); save();
       return { ok: true, message: tr('m.proof.ok', 'Sent. An organizer will check it within 7 days.') };
     },
-    reset() { store.del('nw-demo-v1'); state = demoSeed(); },
+    /* ---------- Village Board (demo: kept in this browser) ---------- */
+    async loadBoard(isOrg) { return board().posts.filter(p => isOrg || !p.hidden).map(p => normPost(p.id, p)).sort((a, b) => b.at - a.at); },
+    async myMission() { return board().active || null; },
+    async createPost(p) {
+      const B = board(), post = { id: 'p' + Date.now(), kind: p.kind, title: p.title, body: p.body || '', link: p.link || '', by: 'you', createdAt: Date.now(), hidden: false, reports: {} };
+      if (p.kind === 'mission') Object.assign(post, { mtype: p.mtype, status: 'open', takenBy: null, takenAt: null });
+      if (p.kind === 'event') Object.assign(post, { date: p.date || '', where: p.where || '' });
+      B.posts.push(post); saveBoard(B); return { ok: true };
+    },
+    async editPost(id, p) { const B = board(); Object.assign(B.posts.find(x => x.id === id), p); saveBoard(B); return { ok: true }; },
+    async takeMission(post) {
+      const B = board(), x = B.posts.find(q => q.id === post.id);
+      if (B.active && B.posts.some(q => q.id === B.active && q.takenBy === 'you' && q.status === 'taken')) return { ok: false, code: 'vb.err.busy' };
+      if (!x || x.status !== 'open') return { ok: false, code: 'vb.err.gone' };
+      Object.assign(x, { status: 'taken', takenBy: 'you', takenAt: Date.now() }); B.active = x.id; saveBoard(B); return { ok: true };
+    },
+    async releaseMission(post) { const B = board(); Object.assign(B.posts.find(q => q.id === post.id), { status: 'open', takenBy: null, takenAt: null }); B.active = null; saveBoard(B); return { ok: true }; },
+    async finishMission(post) { const B = board(); Object.assign(B.posts.find(q => q.id === post.id), { status: 'review', doneAt: Date.now() }); B.active = null; saveBoard(B); return { ok: true }; },
+    async reopenMission(post) { const B = board(); Object.assign(B.posts.find(q => q.id === post.id), { status: 'open', takenBy: null, takenAt: null }); saveBoard(B); return { ok: true }; },
+    async confirmMission(post) {
+      const B = board(); Object.assign(B.posts.find(q => q.id === post.id), { status: 'done', confirmedAt: Date.now() }); saveBoard(B);
+      state.facts.push({ id: 'm_' + post.id, uid: post.takenBy, type: post.mtype === 'help' ? 'mentoring' : 'collab', date: todayStr(), status: 'approved', missionId: post.id, mentee: post.by, recordedBy: 'you', title: post.title });
+      save(); return { ok: true };
+    },
+    async closePost(post) { const B = board(); B.posts.find(q => q.id === post.id).status = 'closed'; saveBoard(B); return { ok: true }; },
+    async deletePost(post) { const B = board(); B.posts = B.posts.filter(q => q.id !== post.id); saveBoard(B); return { ok: true }; },
+    async report(postId, commentId) { const B = board(), t = demoTarget(B, postId, commentId); t.reports = { ...(t.reports || {}), you: true }; saveBoard(B); return { ok: true }; },
+    async setHidden(postId, commentId, hidden) { const B = board(); demoTarget(B, postId, commentId).hidden = !!hidden; saveBoard(B); return { ok: true }; },
+    async loadComments(postId, isOrg) { return (board().comments[postId] || []).filter(c => isOrg || !c.hidden).map(c => normPost(c.id, c)).sort((a, b) => a.at - b.at); },
+    async addComment(postId, text) { const B = board(); (B.comments[postId] = B.comments[postId] || []).push({ id: 'c' + Date.now(), by: 'you', text, createdAt: Date.now(), hidden: false, reports: {} }); saveBoard(B); return { ok: true }; },
+    async deleteComment(postId, cid) { const B = board(); B.comments[postId] = (B.comments[postId] || []).filter(c => c.id !== cid); saveBoard(B); return { ok: true }; },
+    reset() { store.del('nw-demo-v1'); store.del('nw-demo-board-v1'); state = demoSeed(); },
   };
 }
 
@@ -88,14 +131,40 @@ function demoBackend() {
 function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); }); }
 function linkErrorText(e) {
   const c = (e && e.code) || '';
-  if (c.includes('invalid-action-code') || c.includes('expired-action-code')) return tr('err.link.expired', 'That sign-in link has expired or was already used. Request a new one below and open it right away.');
+  if (c.includes('invalid-action-code') || c.includes('expired-action-code')) return tr('err.link.expired', 'That sign-in link has expired or was already used. Request a new one below and open it right away.') + ' (' + c.replace('auth/', '') + ')';
   if (c.includes('invalid-email')) return tr('err.link.email', 'The email in the link does not match. Request a new link from this browser.');
   if ((e && e.message || '').includes('referer') || c.includes('api-key')) return tr('err.link.key', 'Sign-in is blocked by the API key settings. If you just changed them, wait 5 minutes and try again.');
   const why = c || (e && e.message) || 'unknown error';
   return tr('err.link.other', 'Sign-in did not finish (' + why + '). Request a new link and try again.', { e: why });
 }
+/* remembered per browser so static pages can hide "Join" for people already in the club */
+function markMember(on) { try { on ? localStorage.setItem('nw-member', '1') : localStorage.removeItem('nw-member'); } catch (e) {} document.documentElement.classList.toggle('is-member', !!on); }
+/* Village Board helpers shared by both backends */
+const tsMs = (v) => (v && typeof v.toMillis === 'function' ? v.toMillis() : typeof v === 'number' ? v : v ? Date.parse(v) : Date.now());
+function normPost(id, d) { return { id, ...d, at: tsMs(d.createdAt), takenAtMs: d.takenAt ? tsMs(d.takenAt) : 0, reportCount: Object.keys(d.reports || {}).length }; }
+function fail(e, code) {
+  console.error(e);
+  const c = (e && e.code) || '';
+  return { ok: false, code: code && (c === 'permission-denied' || c === 'failed-precondition' || c === 'not-found') ? code : c === 'permission-denied' ? 'vb.err.denied' : 'err.generic', detail: c || (e && e.message) || '' };
+}
+function msErrorText(e) {
+  const c = (e && e.code) || '';
+  if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request' || c === 'auth/user-cancelled') return tr('err.ms.closed', 'The Microsoft window was closed before signing in. Try again.');
+  if (c === 'auth/account-exists-with-different-credential') return tr('err.ms.exists', 'This email already has an account from an email link. Ask an organizer to merge it, or use the email link below.');
+  return tr('err.ms.other', 'Microsoft sign-in did not finish (' + (c || (e && e.message) || '?') + ').', { e: c || (e && e.message) || '?' });
+}
+let checkSchoolAccount = async () => ({ ok: true });
 function firebaseBackend() {
   let auth, db;
+  const FV = () => firebase.firestore.FieldValue;
+  const target = (postId, commentId) => { const p = db.collection('board').doc(postId); return commentId ? p.collection('comments').doc(commentId) : p; };
+  // a mission step by the member who took it: the post changes and their "current mission" is cleared together
+  const missionStep = async (post, change) => {
+    const b = db.batch();
+    b.update(db.collection('board').doc(post.id), change);
+    b.update(db.collection('members').doc(auth.currentUser.uid), { activeMission: null });
+    try { await b.commit(); return { ok: true }; } catch (e) { return fail(e); }
+  };
   const V = '10.12.2', base = 'https://www.gstatic.com/firebasejs/' + V + '/';
   return {
     mode: 'firebase',
@@ -104,38 +173,69 @@ function firebaseBackend() {
       await Promise.all([loadScript(base + 'firebase-auth-compat.js'), loadScript(base + 'firebase-firestore-compat.js')]);
       firebase.initializeApp(CFG.FIREBASE);
       auth = firebase.auth(); db = firebase.firestore();
+      checkSchoolAccount = async () => {
+        const u = auth.currentUser;
+        const em = (u && (u.email || ((u.providerData || []).find(x => x.email) || {}).email)) || '';
+        if (validEmail(em)) return { ok: true };
+        await auth.signOut();
+        return { ok: false, message: tr('err.email', 'Use your school email address.') };
+      };
+      if (CFG.MICROSOFT) {
+        try { const r = await auth.getRedirectResult(); if (r && r.user) { const c = await checkSchoolAccount(); if (!c.ok) this.linkError = c.message; } }
+        catch (e) { this.linkError = msErrorText(e); }
+      }
       try { await db.enablePersistence({ synchronizeTabs: true }); } catch (e) { /* private mode or another tab: online only */ }
       if (auth.isSignInWithEmailLink(location.href)) {
         let email = store.get('nw-email');
         // If the link was opened on another device, the page asks for the email (see completeLink).
         if (email) {
           try { await auth.signInWithEmailLink(email, location.href); store.del('nw-email'); }
-          catch (e) { this.linkError = linkErrorText(e); }
+          catch (e) {
+            // the link may have been opened twice (e.g. two tabs): if this browser is already signed in as that email, all is well
+            await new Promise((res) => { const off = auth.onAuthStateChanged(() => { off(); res(); }); });
+            const u = auth.currentUser;
+            if (u && (u.email || '').toLowerCase() === String(email).toLowerCase()) store.del('nw-email');
+            else this.linkError = linkErrorText(e);
+          }
           history.replaceState(null, '', location.pathname);
         } else this.pendingLink = location.href;
       }
     },
+    microsoft: !!CFG.MICROSOFT,
+    /* Sign in with the school's Microsoft account (popup; falls back to a full-page redirect if popups are blocked).
+       The app is registered as single-tenant, so Microsoft itself only lets aivancity accounts in. */
+    async signInMicrosoft() {
+      const p = new firebase.auth.OAuthProvider('microsoft.com');
+      p.setCustomParameters({ tenant: CFG.MICROSOFT.tenant, prompt: 'select_account', domain_hint: DOMAIN });
+      try { await auth.signInWithPopup(p); }
+      catch (e) {
+        const c = (e && e.code) || '';
+        if (c === 'auth/popup-blocked' || c === 'auth/operation-not-supported-in-environment') { await auth.signInWithRedirect(p); return { ok: true }; }
+        return { ok: false, message: msErrorText(e) };
+      }
+      return checkSchoolAccount();
+    },
     async completeLink(email) {
-      if (!validEmail(email)) throw new Error(tr('err.email', 'Use your @' + DOMAIN + ' school email.', { d: DOMAIN }));
+      if (!validEmail(email)) throw new Error(tr('err.email', 'Use your school email address.'));
       await auth.signInWithEmailLink(email.trim(), this.pendingLink); this.pendingLink = null; history.replaceState(null, '', location.pathname);
     },
-    onAuth(cb) { auth.onAuthStateChanged(u => cb(u ? { uid: u.uid, email: u.email } : null)); },
+    onAuth(cb) { auth.onAuthStateChanged(u => { if (!u) markMember(false); cb(u ? { uid: u.uid, email: u.email } : null); }); },
     async sendLink(email) {
-      if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your @' + DOMAIN + ' school email.', { d: DOMAIN }) };
+      if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
       try { await auth.sendSignInLinkToEmail(email.trim(), { url: location.origin + location.pathname, handleCodeInApp: true }); }
       catch (e) { return { ok: false, message: linkErrorText(e) }; }
       store.set('nw-email', email.trim());
       return { ok: true, message: tr('m.signin.sent', 'Check your inbox: we sent a sign-in link to ' + email.trim() + '.', { email: email.trim() }) };
     },
-    async signOut() { await auth.signOut(); },
+    async signOut() { markMember(false); await auth.signOut(); },
     /* Member = on the roster (added by an organizer) OR sent the /apply form, unless an organizer set status "removed". */
     async onRoster() {
       const u = auth.currentUser, em = (u.email || '').toLowerCase();
       const read = async (ref) => { try { return await ref.get({ source: 'server' }); } catch (e) { try { return await ref.get(); } catch (e2) { return null; } } };
       const r = await read(db.collection('roster').doc(em));
-      if (r && r.exists) return true;
+      if (r && r.exists) { markMember(true); return true; }
       const q = await read(db.collection('requests').doc(u.uid));
-      return !!(q && q.exists && q.data().status !== 'removed');
+      const yes = !!(q && q.exists && q.data().status !== 'removed'); markMember(yes); return yes;
     },
     async requestStatus() { try { const d = await db.collection('requests').doc(auth.currentUser.uid).get(); return d.exists ? d.data() : null; } catch (e) { return null; } },
     /* Application to join the club (and its WhatsApp group). Only the person and organizers can read it. */
@@ -143,7 +243,7 @@ function firebaseBackend() {
       const u = auth.currentUser;
       const doc = { email: u.email.toLowerCase(), name: d.name, program: d.program || '', phone: d.phone, interests: d.interests || [],
         level: d.level, heard: d.heard || '', consent: true, lang: d.lang === 'fr' ? 'fr' : 'en', at: firebase.firestore.FieldValue.serverTimestamp() };
-      try { await db.collection('requests').doc(u.uid).set(doc, { merge: true }); return { ok: true }; }
+      try { await db.collection('requests').doc(u.uid).set(doc, { merge: true }); markMember(true); return { ok: true }; }
       catch (e) { return { ok: false, message: tr('err.generic', 'Something went wrong. Try again in a moment.') + ' (' + (e.code || e.message) + ')' }; }
     },
     /* The WhatsApp invite link lives in Firestore (invites/whatsapp), not in this public repository.
@@ -161,7 +261,10 @@ function firebaseBackend() {
     },
     async loadMembers() { const s = await db.collection('members').get(); return s.docs.map(d => ({ uid: d.id, ...d.data() })); },
     async loadFacts() { const s = await db.collection('facts').get(); return s.docs.map(d => ({ id: d.id, ...d.data() })); },
-    async getProfile(uid) { const d = await db.collection('members').doc(uid).get(); return d.exists ? { uid, ...d.data() } : null; },
+    async getProfile(uid) {
+      try { const d = await db.collection('members').doc(uid).get(); return d.exists ? { uid, ...d.data() } : null; }
+      catch (e) { if (e && e.code === 'permission-denied') return null; throw e; }
+    },
     async saveProfile(p) {
       const uid = auth.currentUser.uid, ref = db.collection('members').doc(uid), doc = await ref.get();
       if (doc.exists) await ref.update({ name: p.name, github: p.github || '' });
@@ -180,6 +283,71 @@ function firebaseBackend() {
         return { ok: false, message: tr('m.checkin.bad', 'That code did not work. Check it on the screen, and note codes only work during the session.') };
       }
     },
+    /* ---------- Village Board (missions, events, open-source projects) ---------- */
+    async loadBoard(isOrg) {
+      let q = db.collection('board'); if (!isOrg) q = q.where('hidden', '==', false);
+      const snap = await q.get();
+      return snap.docs.map(d => normPost(d.id, d.data())).sort((a, b) => b.at - a.at);
+    },
+    async myMission() {
+      const m = await db.collection('members').doc(auth.currentUser.uid).get();
+      return (m.exists && m.data().activeMission) || null;
+    },
+    async createPost(p) {
+      const doc = { kind: p.kind, title: p.title, body: p.body || '', link: p.link || '', by: auth.currentUser.uid, createdAt: FV().serverTimestamp(), hidden: false, reports: {} };
+      if (p.kind === 'mission') Object.assign(doc, { mtype: p.mtype, status: 'open', takenBy: null, takenAt: null });
+      if (p.kind === 'event') Object.assign(doc, { date: p.date || '', where: p.where || '' });
+      try { await db.collection('board').add(doc); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    async editPost(id, p) { try { await db.collection('board').doc(id).update(p); return { ok: true }; } catch (e) { return fail(e); } },
+    async takeMission(post) {
+      const uid = auth.currentUser.uid, me = db.collection('members').doc(uid);
+      try {
+        const m = await me.get(), cur = m.exists ? m.data().activeMission : null;
+        if (cur) {   // one mission at a time; clear a stale pointer (e.g. a mission that went back on the board)
+          const c = await db.collection('board').doc(cur).get().catch(() => null);
+          if (c && c.exists && c.data().takenBy === uid && c.data().status === 'taken') return { ok: false, code: 'vb.err.busy' };
+          await me.update({ activeMission: null });
+        }
+        const b = db.batch();
+        b.update(db.collection('board').doc(post.id), { status: 'taken', takenBy: uid, takenAt: FV().serverTimestamp() });
+        b.update(me, { activeMission: post.id });
+        await b.commit(); return { ok: true };
+      } catch (e) { return fail(e, 'vb.err.gone'); }
+    },
+    async releaseMission(post) { return missionStep(post, { status: 'open', takenBy: null, takenAt: null }); },
+    async finishMission(post) { return missionStep(post, { status: 'review', doneAt: FV().serverTimestamp() }); },
+    async reopenMission(post) {
+      try { await db.collection('board').doc(post.id).update({ status: 'open', takenBy: null, takenAt: null }); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    /* the poster (or an elder) confirms: the mission becomes "done" and the taker's points fact is written in the same step */
+    async confirmMission(post) {
+      const uid = auth.currentUser.uid, b = db.batch();
+      b.update(db.collection('board').doc(post.id), { status: 'done', confirmedAt: FV().serverTimestamp() });
+      b.set(db.collection('facts').doc('m_' + post.id), { uid: post.takenBy, type: post.mtype === 'help' ? 'mentoring' : 'collab', date: todayStr(), status: 'approved',
+        missionId: post.id, mentee: post.by, recordedBy: uid, title: post.title.slice(0, 80), createdAt: FV().serverTimestamp() });
+      try { await b.commit(); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    async closePost(post) { try { await db.collection('board').doc(post.id).update({ status: 'closed' }); return { ok: true }; } catch (e) { return fail(e); } },
+    async deletePost(post) { try { await db.collection('board').doc(post.id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    async report(postId, commentId) {
+      try { await target(postId, commentId).update('reports.' + auth.currentUser.uid, true); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    async setHidden(postId, commentId, hidden) {
+      try { await target(postId, commentId).update({ hidden: !!hidden }); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    async loadComments(postId, isOrg) {
+      let q = db.collection('board').doc(postId).collection('comments'); if (!isOrg) q = q.where('hidden', '==', false);
+      const snap = await q.get();
+      return snap.docs.map(d => normPost(d.id, d.data())).sort((a, b) => a.at - b.at);
+    },
+    async addComment(postId, text) {
+      try {
+        await db.collection('board').doc(postId).collection('comments').add({ by: auth.currentUser.uid, text, createdAt: FV().serverTimestamp(), hidden: false, reports: {} });
+        return { ok: true };
+      } catch (e) { return fail(e); }
+    },
+    async deleteComment(postId, cid) { try { await target(postId, cid).delete(); return { ok: true }; } catch (e) { return fail(e); } },
     async submit(s) {
       if (!SUBMIT_TYPES.includes(s.type)) return { ok: false, message: tr('m.proof.badtype', 'That kind of proof is not on the list.') };
       const uid = auth.currentUser.uid;

@@ -5,7 +5,8 @@
      { id, uid, type, date: "YYYY-MM-DD", status: "approved"|"pending"|"rejected",
        double?, place?, team?, proof?, title?, mentee?, newMember? }
    type is a rule id from the rulebook: attend, compete_enter, compete_place, talk_lightning, workshop,
-   host_event, ship_project, club_contribution, open_source, skill_badge, certification, mentoring, referral.
+   host_event, ship_project, club_contribution, open_source, skill_badge, certification, mentoring, referral, collab.
+   Facts from Village Board missions carry missionId and share the rulebook's missions.monthly_cap.
    ("compete_place" uses compete_place_team when team is true, otherwise compete_place_solo.) */
 (function (root) {
 'use strict';
@@ -42,7 +43,9 @@ function computeMember(rb, uid, facts, regularSessions, today) {
   const history = [];   // every fact with the points it earned and why
   const counted = [];
   const seen = { attend: new Set(), ship: new Set(), referral: new Set(), month: {}, week: new Set() };
-  const LIMIT_MONTH = { club_contribution: 3, open_source: 2 };
+  const LIMIT_MONTH = { club_contribution: 3, open_source: 2, collab: 2 };
+  const MISSION_CAP = (rb.missions && rb.missions.monthly_cap) || Infinity;
+  const missionPts = {};   // month -> points earned through Village Board missions
 
   for (const f of mine) {
     const rule = ruleFor(rb, f);
@@ -51,6 +54,7 @@ function computeMember(rb, uid, facts, regularSessions, today) {
     if (!rule) note = 'Unknown rule';
     else if (f.status === 'rejected') note = 'Not accepted' + (f.reason ? ': ' + f.reason : '');
     else if (needsVerify && f.status !== 'approved') note = 'Waiting for an organizer';
+    else if (rule.from && f.date < rule.from) note = 'Rule starts ' + rule.from;
     else if (f.type === 'attend' && seen.attend.has(f.date)) note = 'Already checked in';
     else if (f.type === 'ship_project' && seen.ship.has(f.proof)) note = 'Project already counted';
     else if (f.type === 'referral' && seen.referral.has(f.newMember)) note = 'Already counted';
@@ -58,6 +62,11 @@ function computeMember(rb, uid, facts, regularSessions, today) {
     else if (f.type === 'mentoring' && seen.week.has(f.mentee + isoWeek(f.date))) note = 'Weekly limit for this pair reached';
     else {
       pts = basePoints(rule, f) * multiplier(rb, rule, f);
+      if (f.missionId) {   // missions share one monthly cap
+        const m = f.date.slice(0, 7), room = Math.max(0, MISSION_CAP - (missionPts[m] || 0));
+        if (pts > room) { pts = room; note = 'Monthly mission cap reached'; }
+        missionPts[m] = (missionPts[m] || 0) + pts;
+      }
       if (f.type === 'attend') seen.attend.add(f.date);
       if (f.type === 'ship_project') seen.ship.add(f.proof);
       if (f.type === 'referral') seen.referral.add(f.newMember);
@@ -91,7 +100,8 @@ function computeMember(rb, uid, facts, regularSessions, today) {
   }
   history.sort((a, b) => (a.fact.date < b.fact.date ? 1 : a.fact.date > b.fact.date ? -1 : 0));
 
-  const ok = history.filter(h => h.points > 0 || (h.fact.type === 'attend' && !h.note));
+  // counted toward belt tests: anything that earned points, check-ins, and missions that only hit the points cap
+  const ok = history.filter(h => h.points > 0 || (h.fact.type === 'attend' && !h.note) || h.note === 'Monthly mission cap reached');
   const count = (t) => ok.filter(h => h.fact.type === t || (t === 'compete_place' && h.fact.type === 'compete_place')).length;
   const lifetime = history.reduce((a, h) => a + h.points, 0);
   const season = seasonOf(rb, today);

@@ -305,3 +305,20 @@ fieldset > legend { padding: 0; margin-bottom: 10px; }
 @media (max-width: 600px) { .lost { grid-template-columns: 1fr; gap: 8px; } .lost img { grid-row: 1; width: 120px; } }
 /* very narrow phones: the four menu links share the row evenly */
 @media (max-width: 380px) { .nav { justify-content: space-between; gap: 0; } .nav a { padding: 8px 6px; font-size: .84rem; } }
+
+/* footer sign-off */
+.site-footer .made { flex-basis: 100%; margin: 6px 0 0; display: flex; align-items: center; gap: 6px; font-size: .9rem; }
+.site-footer .heart { color: #ea4335; flex: none; }
+
+.site-footer .wrap > span.copy { display: inline; }
+
+/* Sign in with Microsoft */
+.ms-block { display: grid; gap: 10px; }
+.ms-block .help { margin: 0; }
+.ms-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: var(--surface); color: var(--ink); border: var(--stroke) solid var(--line); justify-self: start; }
+.or { display: flex; align-items: center; gap: 12px; margin: 6px 0 0; font-size: .9rem; color: var(--ink-soft); }
+.or::before, .or::after { content: ""; flex: 1; border-top: 1px solid rgba(0,0,0,.15); }
+
+/* already in the club: no "Join" prompts */
+.is-member [data-join] { display: none !important; }
+html:not(.is-member) [data-member] { display: none !important; }

@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261010i">
-  <script src="assets/i18n.js?v=20261010i"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261011h">
+  <script src="assets/i18n.js?v=20261011h"></script>
 </head>
 <body data-i18n-title="apply.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -32,7 +32,8 @@
         <a href="/about" data-i18n="nav.about">About</a>
         <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
         <a href="/rules" data-i18n="nav.rules">Rules</a>
-        <a href="/join" aria-current="page" data-i18n="nav.join">Join</a>
+        <a href="/village" data-member data-i18n="nav.board">Village</a>
+        <a href="/join" aria-current="page" data-join data-i18n="nav.join">Join</a>
         <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
         <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
       </nav>
@@ -63,6 +64,11 @@
           <!-- 1. sign in -->
           <form id="vSignin" class="form-grid" hidden novalidate>
             <p style="margin:0" data-i18n="apply.signin.p"></p>
+            <div class="ms-block" hidden>
+              <button class="btn ms-btn" type="button"><svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg><span data-i18n="ms.btn">Sign in with Microsoft</span></button>
+              <p class="help" data-i18n="ms.hint">Use your school account, the one you use for Outlook.</p>
+              <p class="or"><span data-i18n="ms.or">or get a sign-in link by email</span></p>
+            </div>
             <div class="field">
               <label for="email" data-i18n="m.signin.email">School email</label>
               <input class="input" id="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required>
@@ -126,9 +132,8 @@
             <h2 style="margin:0" data-i18n="apply.wa.h">Your <b>invite</b></h2>
             <div id="waHas" hidden class="form-grid" style="gap:14px">
               <p style="margin:0" data-i18n="apply.wa.p"></p>
-              <div><a class="btn wa-btn" id="waBtn" href="#" target="_blank" rel="noopener noreferrer">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:inline-block;vertical-align:-4px;margin-right:6px"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.4a.5.5 0 0 0 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a.9.9 0 0 0-.7.3 2.8 2.8 0 0 0-.9 2.1 4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c1.6.7 2.2.7 3 .6a2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .2-1.2c-.1-.2-.3-.2-.5-.3z"/></svg><span data-i18n="apply.wa.btn">Join the WhatsApp group</span></a></div>
-              <p class="help" data-i18n="apply.wa.keep"></p>
+              <div><button class="btn wa-btn" id="waBtn" type="button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:inline-block;vertical-align:-4px;margin-right:6px"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.4a.5.5 0 0 0 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a.9.9 0 0 0-.7.3 2.8 2.8 0 0 0-.9 2.1 4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c1.6.7 2.2.7 3 .6a2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .2-1.2c-.1-.2-.3-.2-.5-.3z"/></svg><span data-i18n="apply.wa.btn">Join the WhatsApp group</span></button></div>
             </div>
             <p id="waWait" hidden style="margin:0" data-i18n="apply.wa.wait"></p>
             <div class="btns" style="margin:0"><a class="btn btn-primary" href="/mountain" data-i18n="apply.mountain">Open my climb on the Mountain →</a><button class="btn btn-ghost" type="button" id="editBtn" data-i18n="apply.edit">Edit my answers</button>
@@ -158,13 +163,14 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <span>© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <span class="copy">© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
       <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
+      <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
 
-  <script src="assets/platform/config.js?v=20261010i"></script>
-  <script src="assets/platform/data.js?v=20261010i"></script>
+  <script src="assets/platform/config.js?v=20261011h"></script>
+  <script src="assets/platform/data.js?v=20261011h"></script>
   <script>
   (async () => {
     const $ = id => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -186,12 +192,19 @@
     if (data.mode === "demo") $("demoNote").hidden = false;
 
     let user = null, req = null;
+    let waLink = null;
+    $("waBtn").addEventListener("click", () => {
+      if (!waLink) return;
+      const w = window.open(waLink, "_blank");
+      if (w) w.opener = null; else location.href = waLink; // popup blocked (some phones): open it in this tab
+    });
     async function showDone() {
       show("vDone");
       const link = await data.inviteLink();
       const ok = typeof link === "string" && /^https:\/\/chat\.whatsapp\.com\//.test(link);
       $("waHas").hidden = !ok; $("waWait").hidden = ok;
-      if (ok) $("waBtn").href = link;
+      // a button, not a link: the address never sits in the page, so there's nothing to right-click and copy
+      waLink = ok ? link : null;
     }
     function fill(r) {
       if (!r) return;
@@ -203,6 +216,12 @@
     const renderWho = () => { if (user) $("who").innerHTML = T("apply.signedin", { email: esc(user.email) }); };
     addEventListener("langchange", renderWho);
 
+    // Microsoft sign-in, when it's set up in config.js
+    document.querySelectorAll(".ms-block").forEach(b => b.hidden = !data.microsoft);
+    document.querySelectorAll(".ms-btn").forEach(b => b.addEventListener("click", async () => {
+      b.disabled = true; const r = await data.signInMicrosoft(); b.disabled = false;
+      if (!r.ok) msg($("signinMsg"), esc(r.message), "bad");
+    }));
     if (data.linkError) { show("vSignin"); msg($("signinMsg"), esc(data.linkError), "bad"); }
     if (data.pendingLink) show("vConfirm");
 
