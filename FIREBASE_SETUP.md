@@ -16,6 +16,12 @@ Takes about 15 minutes. Do it signed in with a Google account the club will keep
 2. **Sign-in method → Email/Password → Enable**, then also turn on **Email link (passwordless sign-in)**. Save.
 3. **Settings → Authorized domains → Add domain:** `aivancity-tech-club.github.io`
 
+## 2a. How members sign in
+Members sign in with their **school email and a password**. Creating an account sends one confirmation email
+(the free plan allows 1,000 a day); signing in sends none. "Forgot your password?" sends a reset email (150 a day).
+Email sign-in *links* are no longer offered: the free plan only allows 5 of those per day for the whole project.
+Nothing to change in the console: Email/Password is the provider that was already switched on in step 2.
+
 ## 2b. Sign in with Microsoft (recommended for school accounts)
 School email security can use up one-time email links before students click them. Signing in with the
 school's Microsoft account avoids email entirely. Do this once, signed in with your **@aivancity.education** account:

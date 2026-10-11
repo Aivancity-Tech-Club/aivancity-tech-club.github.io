@@ -70,7 +70,9 @@ function demoBackend() {
   return {
     mode: 'demo',
     microsoft: false, async signInMicrosoft() { return { ok: true }; },
-    async init() {}, onAuth(cb) { cb(user); },
+    async signInPassword() { return { ok: true }; }, async signUp() { return { ok: true }; }, async resendVerification() { return { ok: true }; },
+    async refreshVerified() { return true; }, async resetPassword() { return { ok: true }; },
+    async init() {}, onAuth(cb) { cb({ ...user, verified: true }); },
     async sendLink() { return { ok: true }; }, async signOut() { store.del('nw-demo-v1'); state = demoSeed(); },
     async onRoster() { return true; }, async requestStatus() { return store.get('nw-demo-req'); },
     async apply(d) { store.set('nw-demo-req', { ...d, email: user.email }); return { ok: true }; },
@@ -132,6 +134,7 @@ function loadScript(src) { return new Promise((res, rej) => { const s = document
 function linkErrorText(e) {
   const c = (e && e.code) || '';
   if (c.includes('invalid-action-code') || c.includes('expired-action-code')) return tr('err.link.expired', 'That sign-in link has expired or was already used. Request a new one below and open it right away.') + ' (' + c.replace('auth/', '') + ')';
+  if (c.includes('quota-exceeded') || c.includes('too-many-requests')) return tr('err.link.quota', 'Sign-in emails are paused for today: the club reached its daily limit. Try again tomorrow, or tell an organizer.');
   if (c.includes('invalid-email')) return tr('err.link.email', 'The email in the link does not match. Request a new link from this browser.');
   if ((e && e.message || '').includes('referer') || c.includes('api-key')) return tr('err.link.key', 'Sign-in is blocked by the API key settings. If you just changed them, wait 5 minutes and try again.');
   const why = c || (e && e.message) || 'unknown error';
@@ -146,6 +149,16 @@ function fail(e, code) {
   console.error(e);
   const c = (e && e.code) || '';
   return { ok: false, code: code && (c === 'permission-denied' || c === 'failed-precondition' || c === 'not-found') ? code : c === 'permission-denied' ? 'vb.err.denied' : 'err.generic', detail: c || (e && e.message) || '' };
+}
+function pwErrorText(e) {
+  const c = (e && e.code) || '';
+  if (c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found') || c.includes('invalid-login')) return tr('err.pw.wrong', 'Email or password is wrong.');
+  if (c.includes('email-already-in-use')) return tr('err.pw.exists', 'There is already an account with this email. Sign in, or use "Forgot your password?".');
+  if (c.includes('weak-password')) return tr('err.pw.weak', 'Use at least 8 characters.');
+  if (c.includes('too-many-requests')) return tr('err.pw.many', 'Too many attempts. Wait a few minutes and try again.');
+  if (c.includes('quota-exceeded')) return tr('err.link.quota', 'Sign-in emails are paused for today: the club reached its daily limit. Try again tomorrow, or tell an organizer.');
+  if (c.includes('network')) return tr('m.dberror', 'Could not reach the club database. Check your connection.', { e: c });
+  return tr('err.link.other', 'Sign-in did not finish (' + (c || (e && e.message) || '?') + ').', { e: c || (e && e.message) || '?' });
 }
 function msErrorText(e) {
   const c = (e && e.code) || '';
@@ -219,7 +232,46 @@ function firebaseBackend() {
       if (!validEmail(email)) throw new Error(tr('err.email', 'Use your school email address.'));
       await auth.signInWithEmailLink(email.trim(), this.pendingLink); this.pendingLink = null; history.replaceState(null, '', location.pathname);
     },
-    onAuth(cb) { auth.onAuthStateChanged(u => { if (!u) markMember(false); cb(u ? { uid: u.uid, email: u.email } : null); }); },
+    // verified: the email is confirmed (email link, confirmation email or Microsoft). Unverified accounts can't read club data.
+    onAuth(cb) {
+      auth.onAuthStateChanged(u => {
+        if (!u) markMember(false);
+        const ms = u && (u.providerData || []).some(p => p.providerId === 'microsoft.com');
+        cb(u ? { uid: u.uid, email: u.email, verified: !!(u.emailVerified || ms) } : null);
+      });
+    },
+    /* ---------- email + password (free plan friendly: no email at each sign-in) ---------- */
+    async signInPassword(email, pw) {
+      if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
+      try { await auth.signInWithEmailAndPassword(email.trim(), pw); return { ok: true }; }
+      catch (e) { return { ok: false, message: pwErrorText(e) }; }
+    },
+    async signUp(email, pw) {
+      if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
+      if (String(pw || '').length < 8) return { ok: false, message: tr('err.pw.weak', 'Use at least 8 characters.') };
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email.trim(), pw);
+        await cred.user.sendEmailVerification({ url: location.origin + location.pathname });
+        return { ok: true };
+      } catch (e) { return { ok: false, message: pwErrorText(e) }; }
+    },
+    async resendVerification() {
+      try { await auth.currentUser.sendEmailVerification({ url: location.origin + location.pathname }); return { ok: true }; }
+      catch (e) { return { ok: false, message: pwErrorText(e) }; }
+    },
+    // after the person clicked the confirmation link (maybe in another tab): refresh the account and its security token
+    async refreshVerified() {
+      const u = auth.currentUser; if (!u) return false;
+      await u.reload();
+      if (auth.currentUser.emailVerified) { await auth.currentUser.getIdToken(true); return true; }
+      return false;
+    },
+    async resetPassword(email) {
+      if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
+      try { await auth.sendPasswordResetEmail(email.trim(), { url: location.origin + location.pathname }); }
+      catch (e) { if (!(e && e.code === 'auth/user-not-found')) return { ok: false, message: pwErrorText(e) }; }
+      return { ok: true };
+    },
     async sendLink(email) {
       if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
       try { await auth.sendSignInLinkToEmail(email.trim(), { url: location.origin + location.pathname, handleCodeInApp: true }); }

@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261011h">
-  <script src="assets/i18n.js?v=20261011h"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261011i">
+  <script src="assets/i18n.js?v=20261011i"></script>
 </head>
 <body data-i18n-title="apply.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -62,31 +62,10 @@
           <div id="vLoading"><p class="help">…</p></div>
 
           <!-- 1. sign in -->
-          <form id="vSignin" class="form-grid" hidden novalidate>
-            <p style="margin:0" data-i18n="apply.signin.p"></p>
-            <div class="ms-block" hidden>
-              <button class="btn ms-btn" type="button"><svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg><span data-i18n="ms.btn">Sign in with Microsoft</span></button>
-              <p class="help" data-i18n="ms.hint">Use your school account, the one you use for Outlook.</p>
-              <p class="or"><span data-i18n="ms.or">or get a sign-in link by email</span></p>
-            </div>
-            <div class="field">
-              <label for="email" data-i18n="m.signin.email">School email</label>
-              <input class="input" id="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required>
-            </div>
-            <p class="notice form-msg" id="signinMsg" role="status"></p>
-            <div><button class="btn btn-primary" type="submit" id="signinBtn" data-i18n="m.signin.btn">Email me a sign-in link</button></div>
-          </form>
-
-          <!-- 1b. link opened on another device -->
-          <form id="vConfirm" class="form-grid" hidden novalidate>
-            <p style="margin:0" data-i18n="m.signin.otherdevice"></p>
-            <div class="field">
-              <label for="email2" data-i18n="m.signin.email">School email</label>
-              <input class="input" id="email2" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" required>
-            </div>
-            <p class="notice form-msg" id="confirmMsg" role="status"></p>
-            <div><button class="btn btn-primary" type="submit" data-i18n="m.signin.confirm">Confirm my email</button></div>
-          </form>
+          <div id="vSignin" class="form-grid" hidden>
+            <p style="margin:0" data-si-intro data-i18n="apply.signin.p"></p>
+            <div id="siBox"></div>
+          </div>
 
           <!-- 2. details -->
           <form id="vForm" class="form-grid" hidden novalidate>
@@ -169,18 +148,19 @@
     </div>
   </footer>
 
-  <script src="assets/platform/config.js?v=20261011h"></script>
-  <script src="assets/platform/data.js?v=20261011h"></script>
+  <script src="assets/platform/config.js?v=20261011i"></script>
+  <script src="assets/platform/signin.js?v=20261011i"></script>
+  <script src="assets/platform/data.js?v=20261011i"></script>
   <script>
   (async () => {
     const $ = id => document.getElementById(id), T = (k, v) => I18N.t(k, v);
     const INTERESTS = ["ai", "web", "data", "cloud", "games", "competitive", "startup", "career"];
     $("interests").innerHTML = INTERESTS.map(k => `<label class="choice"><input type="checkbox" name="interest" value="${k}"><span data-i18n="int.${k}"></span></label>`).join("");
     I18N.apply($("interests"));
-    const views = ["vLoading", "vSignin", "vConfirm", "vForm", "vDone"];
+    const views = ["vLoading", "vSignin", "vForm", "vDone"];
     function show(v) {
       views.forEach(x => $(x).hidden = x !== v);
-      const step = { vLoading: 0, vSignin: 0, vConfirm: 0, vForm: 1, vDone: 2 }[v];
+      const step = { vLoading: 0, vSignin: 0, vForm: 1, vDone: 2 }[v];
       [...$("steps").children].forEach((li, i) => { li.className = i < step ? "done" : i === step ? "on" : ""; });
     }
     const msg = (el, text, kind) => { el.className = "notice form-msg " + (kind || ""); el.innerHTML = text || ""; };
@@ -188,7 +168,8 @@
     show("vLoading");
 
     const data = ClubData.create();
-    try { await data.init(); } catch (e) { show("vSignin"); msg($("signinMsg"), T("err.generic") + " (" + esc(e.message) + ")", "bad"); return; }
+    try { await data.init(); } catch (e) { show("vLoading"); $("vLoading").textContent = T("err.generic") + " (" + (e.message || "?") + ")"; return; }
+    const siBox = ClubSignIn.mount($("siBox"), data);
     if (data.mode === "demo") $("demoNote").hidden = false;
 
     let user = null, req = null;
@@ -217,17 +198,12 @@
     addEventListener("langchange", renderWho);
 
     // Microsoft sign-in, when it's set up in config.js
-    document.querySelectorAll(".ms-block").forEach(b => b.hidden = !data.microsoft);
-    document.querySelectorAll(".ms-btn").forEach(b => b.addEventListener("click", async () => {
-      b.disabled = true; const r = await data.signInMicrosoft(); b.disabled = false;
-      if (!r.ok) msg($("signinMsg"), esc(r.message), "bad");
-    }));
-    if (data.linkError) { show("vSignin"); msg($("signinMsg"), esc(data.linkError), "bad"); }
-    if (data.pendingLink) show("vConfirm");
+
 
     data.onAuth(async u => {
       user = u;
-      if (!u) { if (!data.pendingLink) show("vSignin"); return; }
+      if (!u) { show("vSignin"); siBox.signin(data.linkError); return; }
+      if (!u.verified) { show("vSignin"); siBox.verify(u.email); return; }
       renderWho();
       const [r, onRoster] = await Promise.all([data.requestStatus(), data.onRoster()]);
       req = r; fill(r);
@@ -235,17 +211,6 @@
       if (r && r.consent && r.phone) showDone(); else show("vForm");
     });
 
-    $("vSignin").addEventListener("submit", async e => {
-      e.preventDefault();
-      const btn = $("signinBtn"); btn.disabled = true;
-      const r = await data.sendLink($("email").value);
-      msg($("signinMsg"), esc(r.message), r.ok ? "ok" : "bad");
-      btn.disabled = false;
-    });
-    $("vConfirm").addEventListener("submit", async e => {
-      e.preventDefault();
-      try { await data.completeLink($("email2").value); } catch (err) { msg($("confirmMsg"), esc(err.message), "bad"); }
-    });
     document.querySelector(".js-other").addEventListener("click", async e => { e.preventDefault(); await data.signOut(); if (data.mode === "demo") location.reload(); });
     $("editBtn").addEventListener("click", () => show("vForm"));
 

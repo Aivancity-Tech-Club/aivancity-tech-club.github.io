@@ -27,8 +27,8 @@
 .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .dot.lv-beginner { background: #34a853; } .dot.lv-intermediate { background: #f9ab00; } .dot.lv-advanced { background: #ea4335; }
 .chip.lv-beginner { background: var(--p-green); } .chip.lv-intermediate { background: var(--p-yellow); } .chip.lv-advanced { background: var(--p-red); }
-.chip.lv-all { background: transparent; }
-.chip-level { color: var(--black, #1e1e1e); }
+.chip.lv-all { background: transparent; color: inherit; }
+.chip-level:not(.lv-all) { color: var(--black, #1e1e1e); }
 .filter-empty { border: var(--stroke) dashed var(--line); border-radius: 18px; padding: 22px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; }
 .filter-empty p { margin: 0; color: var(--ink-soft); }
 @media (max-width: 600px) {
