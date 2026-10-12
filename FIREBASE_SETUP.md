@@ -21,6 +21,8 @@ Members sign in with their **school email and a password**. Creating an account 
 (the free plan allows 1,000 a day); signing in sends none. "Forgot your password?" sends a reset email (150 a day).
 Email sign-in *links* are no longer offered: the free plan only allows 5 of those per day for the whole project.
 Nothing to change in the console: Email/Password is the provider that was already switched on in step 2.
+Emails are sent through the club Gmail (**aivancitytechclub@gmail.com**): Authentication → Templates → SMTP settings,
+with a Google app password. If that password is ever revoked, emails stop until a new one is pasted there.
 
 ## 2b. Sign in with Microsoft (recommended for school accounts)
 School email security can use up one-time email links before students click them. Signing in with the
