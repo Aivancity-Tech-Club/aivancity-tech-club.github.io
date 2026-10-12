@@ -107,6 +107,11 @@ Nothing to set up: it uses the `board` collection (comments live under each post
 - Points are written when the poster confirms. If a poster never confirms, an organizer can confirm from the board.
 - Organizers see an "Elder view": they can hide or show any post or comment. A post or comment reported by 3 members
   disappears for everyone else until an organizer looks at it (hide it, or leave it).
+- Mission types: Help (mentoring), Build together (collab) and Club work (club_quest). Build and Club work count from Spring 2027.
+- **Theme of the week:** organizers post it from "New post" → "Theme of the week" (a Monday + up to 7 daily tasks).
+  It's pinned at the top of the board during its week (or before, if it's the next one).
+- **Starter posts:** `assets/village-starter.json` holds the first posts (LeetCode week, first missions). An organizer
+  publishes them with the "Publish starter posts" button on /village. Edit the file to change them before publishing.
 
 ## 8. Every Thursday: the check-in code
 Until the organizer screens are built (next step of the project), create the code in the console:

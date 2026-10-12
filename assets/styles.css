@@ -322,3 +322,11 @@ fieldset > legend { padding: 0; margin-bottom: 10px; }
 /* already in the club: no "Join" prompts */
 .is-member [data-join] { display: none !important; }
 html:not(.is-member) [data-member] { display: none !important; }
+
+/* install the app */
+.install-btn { font: inherit; font-size: .9rem; font-weight: 700; min-height: 40px; padding: 0 16px; border-radius: 999px; border: var(--stroke) solid var(--line);
+  background: var(--surface); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.install-btn::before { content: ""; width: 16px; height: 16px; flex: none; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3v12M7 10l5 5 5-5M5 21h14'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3v12M7 10l5 5 5-5M5 21h14'/></svg>") center/contain no-repeat; }
+.install-tip { flex-basis: 100%; margin: 0; font-size: .85rem; color: var(--ink-soft); }

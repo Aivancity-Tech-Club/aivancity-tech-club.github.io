@@ -256,13 +256,27 @@ rules:
     notes: "Counts from Spring 2027."
     notes_fr: "Compte à partir du printemps 2027."
 
+  - id: club_quest
+    category: help
+    name: "Club work (Village Board mission)"
+    points: 4
+    from: "2027-02-01"          # new rule: starts with the next season (see GOVERNANCE.md)
+    trigger: "A member finishes a Club work mission (content, events, audits for the club), and the member who posted it confirms."
+    recorded_by: member
+    limit: "Max 2 per calendar month."
+    name_fr: "Travail pour le club (mission du Tableau du village)"
+    trigger_fr: "Un membre termine une mission Travail pour le club (contenu, événements, audits), et le membre qui l'a publiée confirme."
+    limit_fr: "2 maximum par mois."
+    notes: "Counts from Spring 2027."
+    notes_fr: "Compte à partir du printemps 2027."
+
 # --------------------------------------------------------------
 # VILLAGE BOARD MISSIONS
 # A mission never sets its own reward: it pays what its rule above pays.
-#   help  -> mentoring (3 pts)    build -> collab (5 pts)
+#   help  -> mentoring (3 pts)    build -> collab (5 pts)    club -> club_quest (4 pts)
 # --------------------------------------------------------------
 missions:
-  types: { help: mentoring, build: collab }
+  types: { help: mentoring, build: collab, club: club_quest }
   monthly_cap: 10               # points per member per calendar month from missions, all types together
   one_at_a_time: true           # finish or release your mission before taking another
   reopen_after_days: 7          # a taken mission with no update for 7 days goes back on the board

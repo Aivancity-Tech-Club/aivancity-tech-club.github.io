@@ -43,7 +43,7 @@ function computeMember(rb, uid, facts, regularSessions, today) {
   const history = [];   // every fact with the points it earned and why
   const counted = [];
   const seen = { attend: new Set(), ship: new Set(), referral: new Set(), month: {}, week: new Set() };
-  const LIMIT_MONTH = { club_contribution: 3, open_source: 2, collab: 2 };
+  const LIMIT_MONTH = { club_contribution: 3, open_source: 2, collab: 2, club_quest: 2 };
   const MISSION_CAP = (rb.missions && rb.missions.monthly_cap) || Infinity;
   const missionPts = {};   // month -> points earned through Village Board missions
 

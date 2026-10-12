@@ -35,6 +35,30 @@ en: {
   'err.pw.weak': 'Use at least 8 characters.',
   'err.pw.many': 'Too many attempts. Wait a few minutes and try again.',
   'err.pw.empty': 'Enter your email and password.',
+  'vb.mt.club': 'Club work',
+  'vb.mt.club.long': 'Club work: content, events, audits',
+  'vb.how.club': '<b>Club work</b>: content, events or audits for the club. <b>{n} pts</b>, max 2 a month{from}.',
+  'vb.how.see': 'See how missions work',
+  'vb.how.hide': 'Hide',
+  'vb.how.dismiss': 'Dismiss for good',
+  'vb.k.week': 'Theme of the week',
+  'vb.f.week': 'Weekly themes',
+  'vb.week.now': 'This week',
+  'vb.week.next': 'Coming up',
+  'vb.week.days': 'One small task a day',
+  'vb.week.today': 'Today',
+  'vb.week.share': 'Share your solution in the comments.',
+  'vb.week.start': 'First day (a Monday)',
+  'vb.week.day': 'Day {n}',
+  'vb.week.task': 'Task',
+  'vb.week.link': 'Link (optional)',
+  'vb.seed.btn': 'Publish starter posts',
+  'vb.seed.p': 'Elders: publish the LeetCode week and the first missions in one tap. Publishing twice does nothing.',
+  'vb.seed.done': 'Starter posts published: {n} new, {skip} already there.',
+  'fact.club_quest': 'Club work',
+  'fmt.week': 'Theme of the week',
+  'pwa.install': 'Install the app',
+  'pwa.ios': 'On iPhone: tap Share, then "Add to Home Screen".',
   'nav.board': 'Village',
   'vb.title': 'Village board',
   'vb.h1': 'The village <b>board</b>',
@@ -313,6 +337,30 @@ fr: {
   'err.pw.weak': 'Utilisez au moins 8 caractères.',
   'err.pw.many': 'Trop de tentatives. Attendez quelques minutes et réessayez.',
   'err.pw.empty': 'Entrez votre e-mail et votre mot de passe.',
+  'vb.mt.club': 'Travail pour le club',
+  'vb.mt.club.long': 'Travail pour le club : contenu, événements, audits',
+  'vb.how.club': '<b>Travail pour le club</b> : contenu, événements ou audits pour le club. <b>{n} pts</b>, 2 maximum par mois{from}.',
+  'vb.how.see': 'Voir comment marchent les missions',
+  'vb.how.hide': 'Masquer',
+  'vb.how.dismiss': 'Ne plus afficher',
+  'vb.k.week': 'Thème de la semaine',
+  'vb.f.week': 'Thèmes de la semaine',
+  'vb.week.now': 'Cette semaine',
+  'vb.week.next': 'À venir',
+  'vb.week.days': 'Une petite tâche par jour',
+  'vb.week.today': 'Aujourd\'hui',
+  'vb.week.share': 'Partagez votre solution dans les commentaires.',
+  'vb.week.start': 'Premier jour (un lundi)',
+  'vb.week.day': 'Jour {n}',
+  'vb.week.task': 'Tâche',
+  'vb.week.link': 'Lien (facultatif)',
+  'vb.seed.btn': 'Publier les publications de départ',
+  'vb.seed.p': 'Anciens : publiez la semaine LeetCode et les premières missions en une fois. Publier deux fois ne change rien.',
+  'vb.seed.done': 'Publications de départ : {n} nouvelles, {skip} déjà présentes.',
+  'fact.club_quest': 'Travail pour le club',
+  'fmt.week': 'Thème de la semaine',
+  'pwa.install': 'Installer l\'application',
+  'pwa.ios': 'Sur iPhone : touchez Partager, puis « Sur l\'écran d\'accueil ».',
   'nav.board': 'Village',
   'vb.title': 'Tableau du village',
   'vb.h1': 'Le tableau <b>du village</b>',
@@ -600,4 +648,29 @@ try { if (localStorage.getItem('nw-member') === '1') document.documentElement.cl
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => apply()); else apply();
 
 window.I18N = { t, apply, set, pick, locale, get lang() { return lang; } };
+
+/* ---------- installable app (PWA) ---------- */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+let installEvent = null;
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function addInstallUI() {
+  if (standalone()) return;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  document.querySelectorAll('.site-footer .wrap').forEach(w => {
+    if (installEvent && !w.querySelector('.install-btn')) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'install-btn'; b.dataset.i18n = 'pwa.install'; b.textContent = t('pwa.install');
+      b.addEventListener('click', async () => { if (!installEvent) return; installEvent.prompt(); await installEvent.userChoice.catch(() => {}); installEvent = null; b.remove(); });
+      w.appendChild(b);
+    }
+    if (ios && !installEvent && !w.querySelector('.install-tip')) {
+      const p = document.createElement('p'); p.className = 'install-tip'; p.dataset.i18n = 'pwa.ios'; p.textContent = t('pwa.ios'); w.appendChild(p);
+    }
+  });
+}
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; addInstallUI(); });
+addEventListener('appinstalled', () => document.querySelectorAll('.install-btn, .install-tip').forEach(x => x.remove()));
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addInstallUI); else addInstallUI();
 })();

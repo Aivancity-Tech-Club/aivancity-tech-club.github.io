@@ -14,13 +14,18 @@
   <meta name="twitter:card" content="summary">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
-  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Tech Club">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261011j">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261011j">
-  <script src="assets/i18n.js?v=20261011j"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261012a">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261012a">
+  <script src="assets/i18n.js?v=20261012a"></script>
 </head>
 <body data-i18n-title="nav.schedule">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -69,7 +74,7 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261011j"></script>
+  <script src="assets/schedule.js?v=20261012a"></script>
   <script>
     const draw = () => renderSeason(document.getElementById("season"));
     draw(); addEventListener("langchange", draw);

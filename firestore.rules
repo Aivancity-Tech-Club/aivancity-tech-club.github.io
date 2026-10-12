@@ -119,19 +119,21 @@ service cloud.firestore {
 
       allow create: if isMember()
         && request.resource.data.by == request.auth.uid
-        && request.resource.data.keys().hasOnly(['kind', 'title', 'body', 'link', 'by', 'createdAt', 'hidden', 'reports', 'mtype', 'status', 'takenBy', 'takenAt', 'date', 'where'])
-        && request.resource.data.kind in ['mission', 'event', 'oss']
+        && request.resource.data.keys().hasOnly(['kind', 'title', 'body', 'link', 'by', 'createdAt', 'hidden', 'reports', 'mtype', 'status', 'takenBy', 'takenAt', 'date', 'where', 'start', 'days'])
+        && request.resource.data.kind in ['mission', 'event', 'oss', 'week']
+        && (request.resource.data.kind != 'week'
+            || (isOrganizer() && request.resource.data.start is string && request.resource.data.days is list && request.resource.data.days.size() <= 7))
         && request.resource.data.title is string && request.resource.data.title.size() > 2 && request.resource.data.title.size() <= 90
         && request.resource.data.body is string && request.resource.data.body.size() <= 800
         && request.resource.data.link is string && request.resource.data.link.size() <= 300
         && request.resource.data.hidden == false && request.resource.data.reports == {}
         && request.resource.data.createdAt == request.time
         && (request.resource.data.kind != 'mission'
-            || (request.resource.data.mtype in ['help', 'build'] && request.resource.data.status == 'open' && request.resource.data.takenBy == null));
+            || (request.resource.data.mtype in ['help', 'build', 'club'] && request.resource.data.status == 'open' && request.resource.data.takenBy == null));
 
       // the author edits the text, or closes their own open mission
       allow update: if isMember() && resource.data.by == request.auth.uid && resource.data.hidden == false
-        && onlyKeys(['title', 'body', 'link', 'date', 'where', 'status'])
+        && onlyKeys(['title', 'body', 'link', 'date', 'where', 'status', 'start', 'days'])
         && request.resource.data.title.size() > 2 && request.resource.data.title.size() <= 90 && request.resource.data.body.size() <= 800
         && (request.resource.data.get('status', null) == resource.data.get('status', null)
             || (resource.data.status == 'open' && request.resource.data.status == 'closed'));
@@ -221,7 +223,8 @@ service cloud.firestore {
         && request.resource.data.uid == get(boardDoc(request.resource.data.missionId)).data.takenBy
         && request.resource.data.uid != request.auth.uid
         && ((get(boardDoc(request.resource.data.missionId)).data.mtype == 'help' && request.resource.data.type == 'mentoring')
-            || (get(boardDoc(request.resource.data.missionId)).data.mtype == 'build' && request.resource.data.type == 'collab'))
+            || (get(boardDoc(request.resource.data.missionId)).data.mtype == 'build' && request.resource.data.type == 'collab')
+            || (get(boardDoc(request.resource.data.missionId)).data.mtype == 'club' && request.resource.data.type == 'club_quest'))
         && request.resource.data.status == 'approved'
         && request.resource.data.mentee == request.auth.uid
         && request.resource.data.recordedBy == request.auth.uid;

@@ -14,14 +14,19 @@
   <meta name="twitter:card" content="summary">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
-  <link rel="apple-touch-icon" href="assets/tech-club-logo.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Tech Club">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261011j">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261011j">
-  <link rel="stylesheet" href="assets/village.css?v=20261011j">
-  <script src="assets/i18n.js?v=20261011j"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261012a">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261012a">
+  <link rel="stylesheet" href="assets/village.css?v=20261012a">
+  <script src="assets/i18n.js?v=20261012a"></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -77,10 +82,34 @@
           <p class="notice info" id="demoNote" hidden data-i18n="vb.demo"></p>
           <p class="notice" id="elderNote" hidden data-i18n="vb.elder"></p>
 
-          <section class="how" aria-labelledby="howH">
-            <h2 id="howH" data-i18n="vb.how.h">How missions work</h2>
-            <ul id="howList"></ul>
-          </section>
+          <div class="elder-tools" id="elderTools" hidden>
+            <p data-i18n="vb.seed.p"></p>
+            <button class="btn btn-ghost" type="button" id="seedBtn" data-i18n="vb.seed.btn">Publish starter posts</button>
+            <p class="notice form-msg" id="seedMsg" role="status"></p>
+          </div>
+
+          <!-- how missions work: a banner until opened; can be collapsed, or dismissed for good (remembered in this browser) -->
+          <div id="howWrap">
+            <div class="how-banner" id="howBanner">
+              <button type="button" class="how-open" id="howOpen" aria-expanded="false" aria-controls="howBody">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><circle cx="12" cy="17.5" r=".6" fill="currentColor"/></svg>
+                <span data-i18n="vb.how.see">See how missions work</span>
+              </button>
+              <button type="button" class="how-x" data-how-x data-i18n-attr="aria-label:vb.how.dismiss" aria-label="Dismiss for good">×</button>
+            </div>
+            <section class="how" id="howBody" aria-labelledby="howH" hidden>
+              <div class="how-head">
+                <h2 id="howH" data-i18n="vb.how.h">How missions work</h2>
+                <span class="how-btns">
+                  <button type="button" class="linkbtn" id="howHide" data-i18n="vb.how.hide">Hide</button>
+                  <button type="button" class="how-x" data-how-x data-i18n-attr="aria-label:vb.how.dismiss" aria-label="Dismiss for good">×</button>
+                </span>
+              </div>
+              <ul id="howList"></ul>
+            </section>
+          </div>
+
+          <div id="weekPin"></div>
 
           <div id="mine"></div>
 
@@ -103,6 +132,10 @@
               <div class="field"><label for="pDate" data-i18n="vb.form.date">Date</label><input class="input" id="pDate" type="date"></div>
               <div class="field"><label for="pWhere" data-i18n="vb.form.where">Where</label><input class="input" id="pWhere" maxlength="80"></div>
             </div>
+            <div id="weekFields" class="form-grid" hidden>
+              <div class="field"><label for="wStart" data-i18n="vb.week.start">First day (a Monday)</label><input class="input" id="wStart" type="date"></div>
+              <ol class="week-inputs" id="weekInputs"></ol>
+            </div>
             <div class="field"><label for="pLink" data-i18n="vb.form.link">Link (optional)</label>
               <input class="input" id="pLink" type="url" inputmode="url" maxlength="300" placeholder="https://"></div>
             <p class="notice bad form-msg" id="formMsg" role="alert"></p>
@@ -123,12 +156,12 @@
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261011j"></script>
-  <script src="assets/schedule.js?v=20261011j"></script>
-  <script src="assets/platform/config.js?v=20261011j"></script>
-  <script src="assets/platform/engine.js?v=20261011j"></script>
-  <script src="assets/platform/signin.js?v=20261011j"></script>
-  <script src="assets/platform/data.js?v=20261011j"></script>
+  <script src="assets/js-yaml.min.js?v=20261012a"></script>
+  <script src="assets/schedule.js?v=20261012a"></script>
+  <script src="assets/platform/config.js?v=20261012a"></script>
+  <script src="assets/platform/engine.js?v=20261012a"></script>
+  <script src="assets/platform/signin.js?v=20261012a"></script>
+  <script src="assets/platform/data.js?v=20261012a"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -145,7 +178,10 @@
     const rule = (id) => (rb.rules || []).find(r => r.id === id) || {};
     const fmtDate = (d) => new Date(d + "T12:00").toLocaleDateString(I18N.locale(), { day: "numeric", month: "long", year: "numeric" });
     const today = ClubData.todayStr();
-    const missionPts = (mt) => { const r = rule(mt === "help" ? "mentoring" : "collab"); return { n: r.points || 0, from: r.from && today < r.from ? r.from : "" }; };
+    const MT_RULE = (rb.missions && rb.missions.types) || { help: "mentoring", build: "collab", club: "club_quest" };
+    const missionPts = (mt) => { const r = rule(MT_RULE[mt] || "mentoring"); return { n: r.points || 0, from: r.from && today < r.from ? r.from : "" }; };
+    const MT_LABEL = { help: "vb.mt.help", build: "vb.mt.build", club: "vb.mt.club" };
+    const addDays = (d, n) => { const x = new Date(d + "T12:00"); x.setDate(x.getDate() + n); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
 
     const err = await ready;
     if (err) { gate("vLoading"); $("vLoading").textContent = T("m.dberror", { e: err.code || err.message || "?" }); return; }
@@ -187,17 +223,19 @@
 
     // ---------- rendering ----------
     function renderHow() {
-      const h = missionPts("help"), b = missionPts("build");
+      if (!$("howList")) return;   // dismissed for good
+      const h = missionPts("help"), b = missionPts("build"), c = missionPts("club");
       $("howList").innerHTML = [
         T("vb.how.help", { n: h.n }),
         T("vb.how.build", { n: b.n, from: b.from ? T("vb.how.from", { d: fmtDate(b.from) }) : "" }),
+        T("vb.how.club", { n: c.n, from: c.from ? T("vb.how.from", { d: fmtDate(c.from) }) : "" }),
         T("vb.how.rules", { cap: (rb.missions && rb.missions.monthly_cap) || 10 }),
       ].map(x => `<li>${x}</li>`).join("");
     }
     function renderFilters() {
       const k = (v, label) => `<button type="button" class="fchip" data-kind="${v}" aria-pressed="${F.kind === v}">${esc(label)}</button>`;
       $("filters").setAttribute("aria-label", T("vb.title"));
-      $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) +
+      $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) + k("week", T("vb.f.week")) +
         `<button type="button" class="fchip" data-open aria-pressed="${F.openOnly}">${esc(T("vb.f.open"))}</button>`;
     }
     function statusLine(p) {
@@ -231,9 +269,34 @@
       return `<li class="comment${c.hidden ? " is-hidden" : ""}">${ninja(c.by)}<div><p class="c-meta"><b>${esc(nameOf(c.by))}</b> · ${esc(rel(c.at))}${isOrg && c.reportCount ? ` · <span class="chip st-reported">${esc(T("vb.reported.tag", { n: c.reportCount }))}</span>` : ""}${c.hidden ? ` · <span class="chip">${esc(T("vb.hidden.tag"))}</span>` : ""}</p>
         <p class="c-text">${esc(c.text).replace(/\n/g, "<br>")}</p><p class="c-tools">${tools}</p></div></li>`;
     }
+    // ---------- theme of the week ----------
+    const weekState = (p) => (today < p.start ? "next" : today <= addDays(p.start, 6) ? "now" : "past");
+    function weekChip(p) {
+      const st = weekState(p), range = fmtRange(p.start, addDays(p.start, 6));
+      return `<span class="chip wk-${st}">${esc(st === "now" ? T("vb.week.now") : st === "next" ? T("vb.week.next") + " · " + range : range)}</span>`;
+    }
+    function fmtRange(a, b) {
+      const o = { day: "numeric", month: "short" };
+      return new Date(a + "T12:00").toLocaleDateString(I18N.locale(), o) + " – " + new Date(b + "T12:00").toLocaleDateString(I18N.locale(), o);
+    }
+    function weekHTML(p) {
+      const days = (p.days || []).map((d, i) => {
+        const date = addDays(p.start, i), cls = date === today ? "today" : date < today ? "done" : "";
+        const label = new Date(date + "T12:00").toLocaleDateString(I18N.locale(), { weekday: "short", day: "numeric" });
+        const t = /^https:\/\/\S+$/.test(d.link || "") ? `<a href="${esc(d.link)}" target="_blank" rel="noopener noreferrer">${esc(d.title)}</a>` : esc(d.title);
+        return `<li class="${cls}"><span class="wd">${esc(label)}</span><span class="wt">${t}</span>${cls === "today" ? `<span class="chip wk-now">${esc(T("vb.week.today"))}</span>` : ""}</li>`;
+      }).join("");
+      return `<p class="eyebrow" style="margin:6px 0 0">${esc(T("vb.week.days"))}</p><ol class="week-days">${days}</ol><p class="help">${esc(T("vb.week.share"))}</p>`;
+    }
+    // the theme shown at the top: this week's, otherwise the next one
+    function pinnedWeek() {
+      const weeks = posts.filter(p => p.kind === "week" && !p.hidden);
+      return weeks.find(p => weekState(p) === "now") || weeks.filter(p => weekState(p) === "next").sort((a, b) => (a.start < b.start ? -1 : 1))[0] || null;
+    }
+
     function postHTML(p) {
       const mineP = p.by === me.uid, rep = !!(p.reports || {})[me.uid];
-      const kindLabel = p.kind === "mission" ? T("vb.k.mission") + " · " + T(p.mtype === "help" ? "vb.mt.help" : "vb.mt.build") : T(p.kind === "event" ? "vb.k.event" : "vb.k.oss");
+      const kindLabel = p.kind === "mission" ? T("vb.k.mission") + " · " + T(MT_LABEL[p.mtype] || "vb.mt.help") : T("vb.k." + p.kind);
       const mp = p.kind === "mission" ? missionPts(p.mtype) : null;
       const ptsChip = mp ? `<span class="chip pts">${esc(mp.from ? T("vb.pts.later", { n: mp.n, d: fmtDate(mp.from) }) : T("vb.pts", { n: mp.n }))}</span>` : "";
       const link = /^https:\/\/\S+$/.test(p.link || "") ? `<a class="vb-link" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer">${esc(T("vb.a.open"))}</a>` : "";
@@ -246,9 +309,9 @@
           <textarea class="textarea" id="c-${p.id}" maxlength="500" rows="2" placeholder="${esc(T("vb.c.ph"))}"></textarea>
           <button class="btn btn-ghost" type="submit">${esc(T("vb.a.comment"))}</button></form></div>` : "";
       return `<article class="post k-${esc(p.kind)}${p.hidden ? " is-hidden" : ""}" id="post-${p.id}">
-        <div class="post-meta"><span class="chip kind">${esc(kindLabel)}</span>${ptsChip}${statusLine(p)}${flags}</div>
+        <div class="post-meta"><span class="chip kind">${esc(kindLabel)}</span>${p.kind === "week" ? weekChip(p) : ""}${ptsChip}${statusLine(p)}${flags}</div>
         <h3>${esc(p.title)}</h3>
-        ${when}${p.body ? `<p class="vb-body">${esc(p.body).replace(/\n/g, "<br>")}</p>` : ""}${link}${autoHidden}
+        ${when}${p.body ? `<p class="vb-body">${esc(p.body).replace(/\n/g, "<br>")}</p>` : ""}${p.kind === "week" ? weekHTML(p) : ""}${link}${autoHidden}
         <div class="post-foot">
           <span class="by">${ninja(p.by)}<b>${esc(nameOf(p.by))}</b> · ${esc(rel(p.at))}</span>
           <span class="post-actions">${actions(p)}</span>
@@ -265,7 +328,9 @@
       renderHow(); renderFilters();
       const mine = posts.find(p => p.id === active);
       $("mine").innerHTML = mine ? `<div class="mine"><p class="eyebrow" style="margin:0">${esc(T("vb.mine.h"))}</p>${postHTML(mine)}</div>` : "";
-      const list = posts.filter(p => p.id !== active)
+      const pin = F.kind && F.kind !== "week" ? null : pinnedWeek();
+      $("weekPin").innerHTML = pin ? `<div class="pin">${postHTML(pin)}</div>` : "";
+      const list = posts.filter(p => p.id !== active && (!pin || p.id !== pin.id))
         .filter(p => isOrg || p.by === me.uid || p.reportCount < AUTO_HIDE)
         .filter(p => !F.kind || p.kind === F.kind)
         .filter(p => !F.openOnly || (p.kind === "mission" && p.status === "open"))
@@ -308,20 +373,22 @@
     });
 
     // ---------- new post ----------
-    const KINDS = ["mission", "event", "oss"], MT = ["help", "build"];
+    const KINDS = ["mission", "event", "oss"], MT = ["help", "build", "club"];
     function renderFormChoices() {
       const cur = (n) => (document.querySelector(`[name=${n}]:checked`) || {}).value;
       const k = cur("kind") || "mission", m = cur("mtype") || "help";
-      $("kindChoices").innerHTML = KINDS.map(v => `<label class="choice"><input type="radio" name="kind" value="${v}"${v === k ? " checked" : ""}><span>${esc(T("vb.k." + v))}</span></label>`).join("");
+      $("kindChoices").innerHTML = (isOrg ? [...KINDS, "week"] : KINDS).map(v => `<label class="choice"><input type="radio" name="kind" value="${v}"${v === k ? " checked" : ""}><span>${esc(T("vb.k." + v))}</span></label>`).join("");
       $("mtypeChoices").innerHTML = MT.map(v => {
         const mp = missionPts(v);
-        return `<label class="choice"><input type="radio" name="mtype" value="${v}"${v === m ? " checked" : ""}><span>${esc(T(v === "help" ? "vb.mt.help.long" : "vb.mt.build"))} · ${esc(mp.from ? T("vb.pts.later", { n: mp.n, d: fmtDate(mp.from) }) : T("vb.pts", { n: mp.n }))}</span></label>`;
+        return `<label class="choice"><input type="radio" name="mtype" value="${v}"${v === m ? " checked" : ""}><span>${esc(T(v === "help" ? "vb.mt.help.long" : v === "club" ? "vb.mt.club.long" : "vb.mt.build"))} · ${esc(mp.from ? T("vb.pts.later", { n: mp.n, d: fmtDate(mp.from) }) : T("vb.pts", { n: mp.n }))}</span></label>`;
       }).join("");
       syncForm();
     }
     function syncForm() {
       const k = (document.querySelector("[name=kind]:checked") || {}).value;
-      $("mtypeField").hidden = k !== "mission"; $("eventFields").hidden = k !== "event";
+      $("mtypeField").hidden = k !== "mission"; $("eventFields").hidden = k !== "event"; $("weekFields").hidden = k !== "week";
+      if (k === "week" && !$("weekInputs").children.length)
+        $("weekInputs").innerHTML = [0, 1, 2, 3, 4, 5, 6].map(i => `<li class="week-input"><input class="input" data-wt="${i}" maxlength="90" aria-label="${esc(T("vb.week.day", { n: i + 1 }) + " · " + T("vb.week.task"))}" placeholder="${esc(T("vb.week.day", { n: i + 1 }))}"><input class="input" data-wl="${i}" type="url" maxlength="300" placeholder="https://" aria-label="${esc(T("vb.week.day", { n: i + 1 }) + " · " + T("vb.week.link"))}"></li>`).join("");
     }
     $("postForm").addEventListener("change", syncForm);
     const toggleForm = (on) => { $("postForm").hidden = !on; $("newBtn").setAttribute("aria-expanded", String(on)); if (on) { renderFormChoices(); $("pTitle").focus(); } };
@@ -333,9 +400,43 @@
         title: $("pTitle").value.trim(), body: $("pBody").value.trim(), link: $("pLink").value.trim(), date: $("pDate").value, where: $("pWhere").value.trim() };
       if (p.title.length < 3) { say($("formMsg"), T("vb.err.title")); $("pTitle").focus(); return; }
       if (p.link && !/^https:\/\/\S+$/.test(p.link)) { say($("formMsg"), T("vb.err.link")); $("pLink").focus(); return; }
+      if (p.kind === "week") {
+        p.start = $("wStart").value;
+        p.days = [0, 1, 2, 3, 4, 5, 6].map(i => ({ title: document.querySelector(`[data-wt="${i}"]`).value.trim(), link: document.querySelector(`[data-wl="${i}"]`).value.trim() })).filter(d => d.title);
+        if (!p.start || !p.days.length) { say($("formMsg"), T("vb.err.title")); return; }
+        if (p.days.some(d => d.link && !/^https:\/\/\S+$/.test(d.link))) { say($("formMsg"), T("vb.err.link")); return; }
+      }
       $("pSend").disabled = true; const r = await data.createPost(p); $("pSend").disabled = false;
       if (!r.ok) { say($("formMsg"), errText(r)); return; }
       $("postForm").reset(); toggleForm(false); await refresh();
+    });
+
+    // ---------- how missions work: banner → open → hide, or × to dismiss for good ----------
+    const HOW_KEY = "vb-how-dismissed";
+    const howGone = () => { try { return localStorage.getItem(HOW_KEY) === "1"; } catch (e) { return false; } };
+    const setHow = (open) => { $("howBody").hidden = !open; $("howBanner").hidden = open; $("howOpen").setAttribute("aria-expanded", String(open)); };
+    if (howGone()) $("howWrap").remove(); else setHow(false);
+    if (!howGone()) {
+      $("howOpen").addEventListener("click", () => { setHow(true); $("howHide").focus(); });
+      $("howHide").addEventListener("click", () => { setHow(false); $("howOpen").focus(); });
+      $("howWrap").addEventListener("click", (e) => {
+        if (!e.target.closest("[data-how-x]")) return;
+        try { localStorage.setItem(HOW_KEY, "1"); } catch (x) {}
+        $("howWrap").remove(); $("newBtn").focus();
+      });
+    }
+
+    // ---------- elders: starter posts ----------
+    $("seedBtn").addEventListener("click", async () => {
+      $("seedBtn").disabled = true; say($("seedMsg"), "");
+      try {
+        const pack = await (await fetch("assets/village-starter.json", { cache: "no-cache" })).json();
+        let n = 0, skip = 0, fail = null;
+        for (const p of pack.posts) { const r = await data.createPost(p); if (!r.ok) { fail = r; break; } if (r.skipped) skip++; else n++; }
+        if (fail) say($("seedMsg"), errText(fail)); else say($("seedMsg"), T("vb.seed.done", { n, skip }), "ok");
+        await refresh();
+      } catch (e) { say($("seedMsg"), T("err.generic")); }
+      $("seedBtn").disabled = false;
     });
 
     addEventListener("langchange", () => { if (me && !$("board").hidden) { render(); if (!$("postForm").hidden) renderFormChoices(); } });
@@ -350,7 +451,7 @@
         if (!profile) { gate("gProfile"); return; }
         me = u;
         isOrg = profile.role === "organizer" || (data.mode === "demo" && new URLSearchParams(location.search).has("elder"));
-        $("elderNote").hidden = !isOrg;
+        $("elderNote").hidden = !isOrg; $("elderTools").hidden = !isOrg;
         await loadPeople(); gate("board"); await refresh();
       } catch (e) { console.error(e); gate("vLoading"); $("vLoading").textContent = T("m.dberror", { e: e.code || e.message || "?" }); }
     });

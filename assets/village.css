@@ -81,3 +81,39 @@
   .vb-act { flex: 1 1 auto; justify-content: center; }
   .c-form { flex-direction: column; align-items: stretch; }
 }
+
+/* how missions work: banner, open panel, dismiss */
+.how-banner { display: flex; align-items: center; gap: 6px; border: var(--stroke) dashed var(--line); border-radius: 999px; padding: 4px 6px 4px 4px; }
+.how-open { flex: 1; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent;
+  color: var(--ink); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.how-open:hover { background: color-mix(in srgb, var(--line) 8%, transparent); }
+.how-x { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line); background: transparent; color: var(--ink);
+  font-size: 1.3rem; line-height: 1; cursor: pointer; }
+.how-x:hover { background: var(--ink); color: var(--bg); }
+.how-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.how-head h2 { margin: 0; }
+.how-btns { display: inline-flex; align-items: center; gap: 12px; }
+
+/* theme of the week */
+.pin .post { box-shadow: 6px 6px 0 var(--line); }
+.k-week .chip.kind { background: var(--yellow); color: var(--black); }
+.chip.wk-now { background: var(--p-green); color: var(--black); }
+.chip.wk-next { background: var(--p-blue); color: var(--black); }
+.week-days { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.week-days li { display: grid; grid-template-columns: 76px 1fr auto; gap: 10px; align-items: center; padding: 8px 12px; border: 1.5px solid color-mix(in srgb, var(--line) 30%, transparent); border-radius: 14px; }
+.week-days li.today { border: var(--stroke) solid var(--line); background: color-mix(in srgb, var(--p-green) 35%, transparent); }
+.week-days li.done { opacity: .6; }
+.week-days .wd { font-family: var(--mono); font-size: .82rem; text-transform: capitalize; }
+.week-days .wt { min-width: 0; overflow-wrap: anywhere; }
+.week-days a { color: var(--ink); font-weight: 700; }
+.week-inputs { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.week-input { display: grid; grid-template-columns: 1.2fr 1fr; gap: 8px; }
+
+/* elders */
+.elder-tools { display: grid; gap: 10px; justify-items: start; border: var(--stroke) dashed var(--line); border-radius: 18px; padding: 14px 16px; }
+.elder-tools p { margin: 0; }
+@media (max-width: 600px) {
+  .week-days li { grid-template-columns: 64px 1fr; }
+  .week-days li .chip { grid-column: 2; justify-self: start; }
+  .week-input { grid-template-columns: 1fr; }
+}

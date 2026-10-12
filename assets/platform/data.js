@@ -101,6 +101,8 @@ function demoBackend() {
       const B = board(), post = { id: 'p' + Date.now(), kind: p.kind, title: p.title, body: p.body || '', link: p.link || '', by: 'you', createdAt: Date.now(), hidden: false, reports: {} };
       if (p.kind === 'mission') Object.assign(post, { mtype: p.mtype, status: 'open', takenBy: null, takenAt: null });
       if (p.kind === 'event') Object.assign(post, { date: p.date || '', where: p.where || '' });
+      if (p.kind === 'week') Object.assign(post, { start: p.start, days: p.days || [] });
+      if (p.id) { if (B.posts.some(x => x.id === p.id)) return { ok: true, skipped: true }; post.id = p.id; }
       B.posts.push(post); saveBoard(B); return { ok: true };
     },
     async editPost(id, p) { const B = board(); Object.assign(B.posts.find(x => x.id === id), p); saveBoard(B); return { ok: true }; },
@@ -115,7 +117,7 @@ function demoBackend() {
     async reopenMission(post) { const B = board(); Object.assign(B.posts.find(q => q.id === post.id), { status: 'open', takenBy: null, takenAt: null }); saveBoard(B); return { ok: true }; },
     async confirmMission(post) {
       const B = board(); Object.assign(B.posts.find(q => q.id === post.id), { status: 'done', confirmedAt: Date.now() }); saveBoard(B);
-      state.facts.push({ id: 'm_' + post.id, uid: post.takenBy, type: post.mtype === 'help' ? 'mentoring' : 'collab', date: todayStr(), status: 'approved', missionId: post.id, mentee: post.by, recordedBy: 'you', title: post.title });
+      state.facts.push({ id: 'm_' + post.id, uid: post.takenBy, type: MISSION_RULE[post.mtype] || 'mentoring', date: todayStr(), status: 'approved', missionId: post.id, mentee: post.by, recordedBy: 'you', title: post.title });
       save(); return { ok: true };
     },
     async closePost(post) { const B = board(); B.posts.find(q => q.id === post.id).status = 'closed'; saveBoard(B); return { ok: true }; },
@@ -143,6 +145,7 @@ function linkErrorText(e) {
 /* remembered per browser so static pages can hide "Join" for people already in the club */
 function markMember(on) { try { on ? localStorage.setItem('nw-member', '1') : localStorage.removeItem('nw-member'); } catch (e) {} document.documentElement.classList.toggle('is-member', !!on); }
 /* Village Board helpers shared by both backends */
+const MISSION_RULE = { help: 'mentoring', build: 'collab', club: 'club_quest' };
 const tsMs = (v) => (v && typeof v.toMillis === 'function' ? v.toMillis() : typeof v === 'number' ? v : v ? Date.parse(v) : Date.now());
 function normPost(id, d) { return { id, ...d, at: tsMs(d.createdAt), takenAtMs: d.takenAt ? tsMs(d.takenAt) : 0, reportCount: Object.keys(d.reports || {}).length }; }
 function fail(e, code) {
@@ -349,7 +352,15 @@ function firebaseBackend() {
       const doc = { kind: p.kind, title: p.title, body: p.body || '', link: p.link || '', by: auth.currentUser.uid, createdAt: FV().serverTimestamp(), hidden: false, reports: {} };
       if (p.kind === 'mission') Object.assign(doc, { mtype: p.mtype, status: 'open', takenBy: null, takenAt: null });
       if (p.kind === 'event') Object.assign(doc, { date: p.date || '', where: p.where || '' });
-      try { await db.collection('board').add(doc); return { ok: true }; } catch (e) { return fail(e); }
+      if (p.kind === 'week') Object.assign(doc, { start: p.start, days: p.days || [] });
+      try {
+        if (p.id) {   // starter pack: fixed ids, so publishing twice never duplicates
+          const ref = db.collection('board').doc(p.id);
+          if ((await ref.get()).exists) return { ok: true, skipped: true };
+          await ref.set(doc);
+        } else await db.collection('board').add(doc);
+        return { ok: true };
+      } catch (e) { return fail(e); }
     },
     async editPost(id, p) { try { await db.collection('board').doc(id).update(p); return { ok: true }; } catch (e) { return fail(e); } },
     async takeMission(post) {
@@ -376,7 +387,7 @@ function firebaseBackend() {
     async confirmMission(post) {
       const uid = auth.currentUser.uid, b = db.batch();
       b.update(db.collection('board').doc(post.id), { status: 'done', confirmedAt: FV().serverTimestamp() });
-      b.set(db.collection('facts').doc('m_' + post.id), { uid: post.takenBy, type: post.mtype === 'help' ? 'mentoring' : 'collab', date: todayStr(), status: 'approved',
+      b.set(db.collection('facts').doc('m_' + post.id), { uid: post.takenBy, type: MISSION_RULE[post.mtype] || 'mentoring', date: todayStr(), status: 'approved',
         missionId: post.id, mentee: post.by, recordedBy: uid, title: post.title.slice(0, 80), createdAt: FV().serverTimestamp() });
       try { await b.commit(); return { ok: true }; } catch (e) { return fail(e); }
     },
