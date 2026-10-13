@@ -330,3 +330,46 @@ html:not(.is-member) [data-member] { display: none !important; }
   -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3v12M7 10l5 5 5-5M5 21h14'/></svg>") center/contain no-repeat;
           mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3v12M7 10l5 5 5-5M5 21h14'/></svg>") center/contain no-repeat; }
 .install-tip { flex-basis: 100%; margin: 0; font-size: .85rem; color: var(--ink-soft); }
+
+/* joining: obvious for visitors, hidden for members */
+.nav a.nav-join { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.join-steps { padding-top: 0; }
+.join-steps h2 { margin: 0 0 18px; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 400; letter-spacing: -0.02em; }
+.join-steps h2 b { font-weight: 800; }
+.steps3 { list-style: none; counter-reset: s; margin: 0 0 22px; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.steps3 li { counter-increment: s; position: relative; background: var(--surface); border: var(--stroke) solid var(--line); border-radius: 22px; padding: 18px 18px 18px 64px; display: grid; gap: 4px; }
+.steps3 li::before { content: counter(s); position: absolute; left: 16px; top: 16px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--p-yellow); color: var(--black); border: var(--stroke) solid var(--black); font-weight: 800; }
+.steps3 li b { font-size: 1.05rem; } .steps3 li span { color: var(--ink-soft); font-size: .95rem; }
+@media (max-width: 760px) { .steps3 { grid-template-columns: 1fr; } }
+
+/* ---------- profile in the top bar (members) ---------- */
+.me-wrap { position: relative; flex: none; }
+.me-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 2px 12px 2px 4px; border-radius: 999px;
+  border: var(--stroke) solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: .9rem; font-weight: 700; cursor: pointer; }
+.me-pill img { width: 32px; height: 32px; object-fit: contain; }
+.me-pill:hover, .me-pill[aria-expanded="true"] { background: var(--ink); color: var(--bg); }
+.me-name { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 230px; display: grid; padding: 8px;
+  background: var(--surface); color: var(--ink); border: var(--stroke) solid var(--line); border-radius: 18px; box-shadow: 0 12px 32px rgba(0,0,0,.18); }
+.me-menu[hidden] { display: none; }
+.me-head { display: flex; align-items: center; gap: 10px; padding: 8px 10px 12px; margin-bottom: 4px; border-bottom: 1px solid color-mix(in srgb, var(--line) 15%, transparent); }
+.me-head img { width: 40px; height: 40px; object-fit: contain; }
+.me-head b { display: block; }
+.me-head span { font-size: .85rem; color: var(--ink-soft); }
+.nav .me-menu a { display: block; padding: 10px 12px; border: 0; border-radius: 10px; font-size: .95rem; }
+.nav .me-menu a:hover, .nav .me-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+@media (max-width: 820px) { .nav:has(.me-wrap) { overflow: visible; } }
+@media (max-width: 600px) {
+  /* phones: avatar only, on the logo row between the Mountain button and FR */
+  .site-header .me-wrap { position: absolute; right: 72px; top: 0; }
+  .me-pill { padding: 2px; width: 44px; justify-content: center; }
+  .me-name { display: none; }
+  .is-member .site-header .nav-cta { right: 124px; }
+}
+
+/* About: where the rules live */
+.rules-card { display: flex; align-items: center; justify-content: space-between; gap: 18px 28px; flex-wrap: wrap;
+  background: var(--surface); border: var(--stroke) solid var(--line); border-radius: var(--radius); padding: clamp(20px, 4vw, 32px); }
+.rules-card h2 { margin: 0 0 8px; font-size: clamp(1.3rem, 3vw, 1.7rem); }
+.rules-card p { margin: 0; max-width: 60ch; color: var(--ink-soft); }

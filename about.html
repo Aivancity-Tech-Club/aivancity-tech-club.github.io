@@ -23,8 +23,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261012a">
-  <script src="assets/i18n.js?v=20261012a"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261012f">
+  <script src="assets/i18n.js?v=20261012f"></script>
 </head>
 <body data-i18n-title="nav.about">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -37,9 +37,8 @@
       <nav class="nav" aria-label="Main">
         <a href="/about" aria-current="page" data-i18n="nav.about">About</a>
         <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
-        <a href="/rules" data-i18n="nav.rules">Rules</a>
         <a href="/village" data-member data-i18n="nav.board">Village</a>
-        <a href="/join" data-join data-i18n="nav.join">Join</a>
+        <a href="/join" class="nav-join" data-join data-i18n="nav.join">Join</a>
         <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
         <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
       </nav>
@@ -67,6 +66,7 @@
               <li data-i18n="about.tech.l2">Team projects &amp; hack nights</li>
               <li data-i18n="about.tech.l3">Peer help and code reviews</li>
             </ul>
+            <p style="margin:16px 0 0"><a class="btn btn-primary" href="/join" data-join data-i18n="home.cta.join">Join the club →</a><a class="btn btn-primary" href="/mountain" data-member data-i18n="home.cta.mountain">Open the Mountain →</a></p>
           </article>
           <article class="group gdg">
             <div class="gdg-lockup">
@@ -88,12 +88,24 @@
         </div>
       </div>
     </section>
+
+    <section class="about-rules" style="padding-top:24px">
+      <div class="wrap">
+        <div class="rules-card">
+          <div>
+            <h2 data-i18n="about.rules.h">How points and bandanas work</h2>
+            <p data-i18n="about.rules.p">Every point on the Mountain comes from one public rulebook: what earns points, how many, and what each bandana needs. Changes are announced in advance, and new rules start next season.</p>
+          </div>
+          <a class="btn btn-primary" href="/rules" data-i18n="about.rules.cta">Read the rules →</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
       <span class="copy">© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
-      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>

@@ -23,10 +23,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261012a">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261012a">
-  <link rel="stylesheet" href="assets/village.css?v=20261012a">
-  <script src="assets/i18n.js?v=20261012a"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261012f">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261012f">
+  <link rel="stylesheet" href="assets/village.css?v=20261012f">
+  <script src="assets/i18n.js?v=20261012f"></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -39,9 +39,8 @@
       <nav class="nav" aria-label="Main">
         <a href="/about" data-i18n="nav.about">About</a>
         <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
-        <a href="/rules" data-i18n="nav.rules">Rules</a>
         <a href="/village" aria-current="page" data-member data-i18n="nav.board">Village</a>
-        <a href="/join" data-join data-i18n="nav.join">Join</a>
+        <a href="/join" class="nav-join" data-join data-i18n="nav.join">Join</a>
         <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
         <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
       </nav>
@@ -58,7 +57,15 @@
 
     <section class="vb-section">
       <div class="wrap">
-        <p class="help" id="vLoading">…</p>
+        <!-- placeholder while the board loads (replaced by an error message if loading fails) -->
+        <div class="vb-skel" id="vLoading" role="status" aria-busy="true" aria-live="polite">
+          <span class="sr-only" data-i18n="vb.loading">Loading the board…</span>
+          <div aria-hidden="true">
+            <span class="sk sk-search"></span>
+            <div class="sk-row sk-tabs"><span class="sk sk-tab"></span><span class="sk sk-tab"></span><span class="sk sk-tab"></span><span class="sk sk-tab"></span></div>
+            <div class="sk-cards"><div class="sk-card"><div class="sk-row"><span class="sk sk-chip"></span><span class="sk sk-chip"></span><span class="sk sk-chip"></span></div><span class="sk sk-title"></span><span class="sk sk-line"></span><span class="sk sk-line sk-short"></span><div class="sk-row"><span class="sk sk-dot"></span><span class="sk sk-name"></span></div></div><div class="sk-card"><div class="sk-row"><span class="sk sk-chip"></span><span class="sk sk-chip"></span><span class="sk sk-chip"></span></div><span class="sk sk-title"></span><span class="sk sk-line"></span><span class="sk sk-line sk-short"></span><div class="sk-row"><span class="sk sk-dot"></span><span class="sk sk-name"></span></div></div><div class="sk-card"><div class="sk-row"><span class="sk sk-chip"></span><span class="sk sk-chip"></span><span class="sk sk-chip"></span></div><span class="sk sk-title"></span><span class="sk sk-line"></span><span class="sk sk-line sk-short"></span><div class="sk-row"><span class="sk sk-dot"></span><span class="sk sk-name"></span></div></div><div class="sk-card"><div class="sk-row"><span class="sk sk-chip"></span><span class="sk sk-chip"></span><span class="sk sk-chip"></span></div><span class="sk sk-title"></span><span class="sk sk-line"></span><span class="sk sk-line sk-short"></span><div class="sk-row"><span class="sk sk-dot"></span><span class="sk sk-name"></span></div></div><div class="sk-card"><div class="sk-row"><span class="sk sk-chip"></span><span class="sk sk-chip"></span><span class="sk sk-chip"></span></div><span class="sk sk-title"></span><span class="sk sk-line"></span><span class="sk sk-line sk-short"></span><div class="sk-row"><span class="sk sk-dot"></span><span class="sk sk-name"></span></div></div><div class="sk-card"><div class="sk-row"><span class="sk sk-chip"></span><span class="sk sk-chip"></span><span class="sk sk-chip"></span></div><span class="sk sk-title"></span><span class="sk sk-line"></span><span class="sk sk-line sk-short"></span><div class="sk-row"><span class="sk sk-dot"></span><span class="sk sk-name"></span></div></div></div>
+          </div>
+        </div>
 
         <!-- not signed in -->
         <div class="form-card gate" id="gSignin" hidden>
@@ -80,13 +87,10 @@
         <!-- the board -->
         <div id="board" hidden>
           <p class="notice info" id="demoNote" hidden data-i18n="vb.demo"></p>
-          <p class="notice" id="elderNote" hidden data-i18n="vb.elder"></p>
-
-          <div class="elder-tools" id="elderTools" hidden>
-            <p data-i18n="vb.seed.p"></p>
-            <button class="btn btn-ghost" type="button" id="seedBtn" data-i18n="vb.seed.btn">Publish starter posts</button>
-            <p class="notice form-msg" id="seedMsg" role="status"></p>
-          </div>
+          <details class="elder-tools" id="elderTools" hidden>
+            <summary data-i18n="vb.elder.h">Elder tools</summary>
+            <p data-i18n="vb.elder.p"></p>
+          </details>
 
           <!-- how missions work: a banner until opened; can be collapsed, or dismissed for good (remembered in this browser) -->
           <div id="howWrap">
@@ -114,9 +118,15 @@
           <div id="mine"></div>
 
           <div class="vb-toolbar">
-            <div class="fgroup" role="group" id="filters"></div>
+            <div class="vb-search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <label class="sr" for="q" data-i18n="vb.search.ph">Search the board</label>
+              <input class="input" id="q" type="search" autocomplete="off" data-i18n-attr="placeholder:vb.search.ph">
+            </div>
             <button class="btn btn-primary" type="button" id="newBtn" aria-expanded="false" aria-controls="postForm" data-i18n="vb.new">New post</button>
           </div>
+          <div class="vb-tabs" role="group" id="filters"></div>
+          <div class="vb-subtabs" role="group" id="subfilters"></div>
 
           <form class="form-card form-grid post-form" id="postForm" hidden novalidate>
             <fieldset class="field"><legend data-i18n="vb.form.kind">What are you posting?</legend>
@@ -124,10 +134,23 @@
             <fieldset class="field" id="mtypeField"><legend data-i18n="vb.form.mtype">Type of mission</legend>
               <div class="choices" id="mtypeChoices"></div>
               <p class="help" data-i18n="vb.form.techonly"></p></fieldset>
+            <fieldset class="field" id="asField" hidden><legend data-i18n="vb.form.as">Post as</legend>
+              <div class="choices" id="asChoices"></div>
+              <p class="help" data-i18n="vb.form.as.help"></p></fieldset>
             <div class="field"><label for="pTitle" data-i18n="vb.form.title">Title</label>
               <input class="input" id="pTitle" maxlength="90" data-i18n-attr="placeholder:vb.form.title.ph" required></div>
             <div class="field"><label for="pBody" data-i18n="vb.form.body">Details</label>
               <textarea class="textarea" id="pBody" maxlength="800" data-i18n-attr="placeholder:vb.form.body.ph"></textarea></div>
+            <div id="missionFields" class="form-grid" hidden>
+              <div class="field"><label for="pOutcome" data-i18n="vb.form.outcome">Done when…</label>
+                <input class="input" id="pOutcome" maxlength="300" data-i18n-attr="placeholder:vb.form.outcome.ph"></div>
+              <div class="vb-row">
+                <div class="field"><label for="pTime" data-i18n="vb.time">Time needed</label><select class="input" id="pTime"></select></div>
+                <div class="field"><label for="pLevel" data-i18n="vb.level">Level</label><select class="input" id="pLevel"></select></div>
+              </div>
+              <div class="field"><label for="pSkills" data-i18n="vb.form.skills">Skills (optional, comma-separated)</label>
+                <input class="input" id="pSkills" maxlength="120" data-i18n-attr="placeholder:vb.form.skills.ph"></div>
+            </div>
             <div class="vb-row" id="eventFields" hidden>
               <div class="field"><label for="pDate" data-i18n="vb.form.date">Date</label><input class="input" id="pDate" type="date"></div>
               <div class="field"><label for="pWhere" data-i18n="vb.form.where">Where</label><input class="input" id="pWhere" maxlength="80"></div>
@@ -144,7 +167,19 @@
           </form>
 
           <p class="notice bad form-msg" id="msg" role="alert"></p>
-          <div class="posts" id="posts" aria-live="polite"></div>
+          <p class="vb-count help" id="count" aria-live="polite"></p>
+          <div class="cards" id="posts"></div>
+
+          <!-- one post, full details (a side panel on wide screens, a full-screen sheet on phones) -->
+          <div class="vb-detail" id="detail" hidden>
+            <div class="vb-scrim" data-close></div>
+            <div class="vb-panel" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+              <div class="vb-panel-head">
+                <button type="button" class="how-x" data-close data-i18n-attr="aria-label:vb.close" aria-label="Close">×</button>
+              </div>
+              <div id="dBody"></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -152,16 +187,16 @@
   <footer class="site-footer">
     <div class="wrap">
       <span class="copy">© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
-      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261012a"></script>
-  <script src="assets/schedule.js?v=20261012a"></script>
-  <script src="assets/platform/config.js?v=20261012a"></script>
-  <script src="assets/platform/engine.js?v=20261012a"></script>
-  <script src="assets/platform/signin.js?v=20261012a"></script>
-  <script src="assets/platform/data.js?v=20261012a"></script>
+  <script src="assets/js-yaml.min.js?v=20261012f"></script>
+  <script src="assets/schedule.js?v=20261012f"></script>
+  <script src="assets/platform/config.js?v=20261012f"></script>
+  <script src="assets/platform/engine.js?v=20261012f"></script>
+  <script src="assets/platform/signin.js?v=20261012f"></script>
+  <script src="assets/platform/data.js?v=20261012f"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -191,11 +226,18 @@
 
     // ---------- state ----------
     let me = null, isOrg = false, names = {}, ranks = {}, posts = [], active = null;
-    const open = new Set(), comments = {};
-    const F = { kind: "", openOnly: false };
+    const comments = {};
+    const F = { kind: "", openOnly: false, mtype: "", q: "" };
+    let openId = null;   // the post shown in the details panel
+    const TIMES = ["lt1", "1to3", "sessions", "ongoing"], LEVELS = ["all", "beginner", "intermediate", "advanced"];
     let armedDelete = null;
 
     const nameOf = (uid) => (me && uid === me.uid ? T("vb.you") : (names[uid] || "—"));
+    const AS = ["team", "council"];
+    // posts from the organizing team or the council show the club, not the person; the detail view still says who posted
+    const byHTML = (p, full) => (AS.includes(p.as)
+      ? `<img class="vb-ninja" src="assets/favicon.svg" alt=""><b>${esc(T("vb.as." + p.as))}</b>${full ? ` <span class="help">(${esc(T("vb.as.posted", { name: nameOf(p.by) }))})</span>` : ""}`
+      : `${ninja(p.by)}<b>${esc(nameOf(p.by))}</b>`);
     const ninja = (uid) => `<img class="vb-ninja" src="assets/ninjas/ninja-${ranks[uid] || "white"}.svg" alt="">`;
     const rel = (ms) => {
       const f = new Intl.RelativeTimeFormat(I18N.locale(), { numeric: "auto" }), d = (ms - Date.now()) / 1000;
@@ -211,13 +253,15 @@
       const regular = SESSIONS.filter(s => s.track !== "break" && parseDate(s.date).getDay() === 4 && s.date <= today).map(s => s.date).sort();
       const res = PointsEngine.compute(rb, facts, members, regular, today);
       ranks = Object.fromEntries(members.map(m => [m.uid, res.byUid[m.uid] && res.byUid[m.uid].isMember ? res.byUid[m.uid].rank : "white"]));
+      const mine = res.byUid[me.uid];
+      if (window.ClubMe && names[me.uid]) ClubMe.save(names[me.uid], mine && mine.isMember ? mine.rank : null);
     }
     async function refresh() {
       [posts, active] = await Promise.all([data.loadBoard(isOrg), data.myMission()]);
       // a pointer to a mission that isn't ours any more doesn't count
       const mine = posts.find(p => p.id === active);
       if (!mine || mine.takenBy !== me.uid || mine.status !== "taken") active = null;
-      for (const id of open) comments[id] = await data.loadComments(id, isOrg);
+      if (openId) comments[openId] = await data.loadComments(openId, isOrg);
       render();
     }
 
@@ -233,11 +277,17 @@
       ].map(x => `<li>${x}</li>`).join("");
     }
     function renderFilters() {
-      const k = (v, label) => `<button type="button" class="fchip" data-kind="${v}" aria-pressed="${F.kind === v}">${esc(label)}</button>`;
+      const n = (kind) => posts.filter(p => visible(p) && (!kind || p.kind === kind)).length;
+      const k = (v, label) => `<button type="button" class="vb-tab" data-kind="${v}" aria-pressed="${F.kind === v}">${esc(label)} <small>${n(v)}</small></button>`;
       $("filters").setAttribute("aria-label", T("vb.title"));
-      $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) + k("week", T("vb.f.week")) +
-        `<button type="button" class="fchip" data-open aria-pressed="${F.openOnly}">${esc(T("vb.f.open"))}</button>`;
+      $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) + k("week", T("vb.f.week"));
+      const showSub = !F.kind || F.kind === "mission";
+      $("subfilters").hidden = !showSub;
+      const m = (v, label) => `<button type="button" class="fchip" data-mtype="${v}" aria-pressed="${F.mtype === v}">${esc(label)}</button>`;
+      $("subfilters").innerHTML = showSub ? `<button type="button" class="fchip" data-open aria-pressed="${F.openOnly}">${esc(T("vb.f.open"))}</button>` +
+        m("help", T("vb.mt.help")) + m("build", T("vb.mt.build")) + m("club", T("vb.mt.club")) : "";
     }
+    const visible = (p) => (isOrg || p.by === me.uid || p.reportCount < AUTO_HIDE) && (p.status !== "closed" || p.by === me.uid || isOrg);
     function statusLine(p) {
       if (p.kind !== "mission") return "";
       const key = { open: "vb.st.open", taken: "vb.st.taken", review: "vb.st.review", done: "vb.st.done", closed: "vb.st.closed" }[p.status] || "vb.st.open";
@@ -304,39 +354,105 @@
       const flags = (isOrg && p.reportCount ? `<span class="chip st-reported">${esc(T("vb.reported.tag", { n: p.reportCount }))}</span>` : "") + (p.hidden ? `<span class="chip">${esc(T("vb.hidden.tag"))}</span>` : "");
       const autoHidden = !isOrg && mineP && p.reportCount >= AUTO_HIDE ? `<p class="notice bad">${esc(T("vb.autohidden"))}</p>` : "";
       const c = comments[p.id] || [];
-      const cBlock = open.has(p.id) ? `<div class="comments"><ul>${c.map(x => commentHTML(p, x)).join("") || `<li class="help">${esc(T("vb.c.empty"))}</li>`}</ul>
+      const cBlock = `<h4 class="qna-h">${esc(T("vb.qna"))}</h4><div class="comments"><ul>${c.map(x => commentHTML(p, x)).join("") || `<li class="help">${esc(T("vb.c.empty"))}</li>`}</ul>
         <form class="c-form" data-id="${p.id}"><label class="sr" for="c-${p.id}">${esc(T("vb.c.ph"))}</label>
           <textarea class="textarea" id="c-${p.id}" maxlength="500" rows="2" placeholder="${esc(T("vb.c.ph"))}"></textarea>
-          <button class="btn btn-ghost" type="submit">${esc(T("vb.a.comment"))}</button></form></div>` : "";
-      return `<article class="post k-${esc(p.kind)}${p.hidden ? " is-hidden" : ""}" id="post-${p.id}">
+          <button class="btn btn-ghost" type="submit">${esc(T("vb.a.comment"))}</button></form></div>`;
+      return `<article class="post detail k-${esc(p.kind)}${p.hidden ? " is-hidden" : ""}" id="post-${p.id}">
         <div class="post-meta"><span class="chip kind">${esc(kindLabel)}</span>${p.kind === "week" ? weekChip(p) : ""}${ptsChip}${statusLine(p)}${flags}</div>
-        <h3>${esc(p.title)}</h3>
-        ${when}${p.body ? `<p class="vb-body">${esc(p.body).replace(/\n/g, "<br>")}</p>` : ""}${p.kind === "week" ? weekHTML(p) : ""}${link}${autoHidden}
+        <h2 class="d-title" id="dTitle" tabindex="-1">${esc(p.title)}</h2>
+        ${facts(p)}${takenHint(p)}
+        ${when}${p.body ? `<p class="vb-body">${esc(p.body).replace(/\n/g, "<br>")}</p>` : ""}${p.outcome ? `<p class="vb-outcome"><b>${esc(T("vb.done.when"))}</b> ${esc(p.outcome)}</p>` : ""}${p.kind === "week" ? weekHTML(p) : ""}${link}${autoHidden}
         <div class="post-foot">
-          <span class="by">${ninja(p.by)}<b>${esc(nameOf(p.by))}</b> · ${esc(rel(p.at))}</span>
+          <span class="by">${byHTML(p, true)} · ${esc(rel(p.at))}</span>
           <span class="post-actions">${actions(p)}</span>
         </div>
         <div class="post-tools">
-          <button type="button" class="linkbtn" data-act="comments" data-id="${p.id}" aria-expanded="${open.has(p.id)}">${esc(T("vb.a.comments"))}${comments[p.id] ? " (" + comments[p.id].length + ")" : ""}</button>
           ${!mineP ? `<button type="button" class="linkbtn" data-act="report" data-id="${p.id}" ${rep ? "disabled" : ""}>${esc(T(rep ? "vb.a.reported" : "vb.a.report"))}</button>` : ""}
           ${isOrg ? `<button type="button" class="linkbtn" data-act="${p.hidden ? "unhide" : "hide"}" data-id="${p.id}">${esc(T(p.hidden ? "vb.a.unhide" : "vb.a.hide"))}</button>` : ""}
         </div>
         ${cBlock}
       </article>`;
     }
+    // mission facts shown as small labelled values: time, level, skills
+    function facts(p) {
+      if (p.kind !== "mission") return "";
+      const f = [];
+      if (p.time) f.push(`<span><small>${esc(T("vb.time"))}</small>${esc(T("vb.t." + p.time))}</span>`);
+      if (p.level) f.push(`<span><small>${esc(T("vb.level"))}</small>${esc(T("level." + p.level))}</span>`);
+      if ((p.skills || []).length) f.push(`<span><small>${esc(T("vb.skills"))}</small>${p.skills.map(x => `<i class="tag">${esc(x)}</i>`).join(" ")}</span>`);
+      return f.length ? `<div class="vb-facts">${f.join("")}</div>` : "";
+    }
+    const takenHint = (p) => (p.kind === "mission" && p.status === "taken" && p.takenBy === me.uid ? `<p class="notice ok">${esc(T("vb.taken.hint", { name: nameOf(p.by) }))}</p>` : "");
+    const summary = (t) => { const x = String(t || "").replace(/\s+/g, " ").trim(); return x.length > 150 ? x.slice(0, 147).replace(/\s\S*$/, "") + "…" : x; };
+
+    // compact card: what it is, how big, its state; tap to open the details
+    function cardHTML(p, extraCls = "") {
+      const kindLabel = p.kind === "mission" ? T(MT_LABEL[p.mtype] || "vb.mt.help") : T("vb.k." + p.kind);
+      const mp = p.kind === "mission" ? missionPts(p.mtype) : null;
+      const meta = [
+        `<span class="chip kind">${esc(kindLabel)}</span>`,
+        mp ? `<span class="chip pts">${esc(mp.from ? T("vb.pts.later", { n: mp.n, d: fmtDate(mp.from) }) : T("vb.pts", { n: mp.n }))}</span>` : "",
+        p.kind === "week" ? weekChip(p) : "",
+        p.time ? `<span class="chip">${esc(T("vb.t." + p.time))}</span>` : "",
+        p.level && p.level !== "all" ? `<span class="chip lv-${esc(p.level)}">${esc(T("level." + p.level))}</span>` : "",
+        statusLine(p),
+        isOrg && p.reportCount ? `<span class="chip st-reported">${esc(T("vb.reported.tag", { n: p.reportCount }))}</span>` : "",
+        p.hidden ? `<span class="chip">${esc(T("vb.hidden.tag"))}</span>` : "",
+      ].join("");
+      const today_ = p.kind === "week" ? (p.days || [])[Math.round((new Date(today + "T12:00") - new Date(p.start + "T12:00")) / DAY)] : null;
+      const sub = today_ ? `${T("vb.week.today")}: ${today_.title}` : p.kind === "event" && p.date ? `${fmtDate(p.date)}${p.where ? " · " + p.where : ""}` : summary(p.body);
+      return `<article class="card k-${esc(p.kind)} ${extraCls}${p.hidden ? " is-hidden" : ""}">
+        <div class="post-meta">${meta}</div>
+        <h3><a href="?post=${encodeURIComponent(p.id)}" data-open-post="${esc(p.id)}">${esc(p.title)}</a></h3>
+        ${sub ? `<p class="card-sub">${esc(sub)}</p>` : ""}
+        <p class="by">${byHTML(p, false)} · ${esc(rel(p.at))}</p>
+      </article>`;
+    }
     function render() {
       renderHow(); renderFilters();
       const mine = posts.find(p => p.id === active);
-      $("mine").innerHTML = mine ? `<div class="mine"><p class="eyebrow" style="margin:0">${esc(T("vb.mine.h"))}</p>${postHTML(mine)}</div>` : "";
-      const pin = F.kind && F.kind !== "week" ? null : pinnedWeek();
-      $("weekPin").innerHTML = pin ? `<div class="pin">${postHTML(pin)}</div>` : "";
+      $("mine").innerHTML = mine ? `<div class="mine"><p class="eyebrow" style="margin:0">${esc(T("vb.mine.h"))}</p>${cardHTML(mine, "is-mine")}</div>` : "";
+      const pin = F.kind && F.kind !== "week" || F.q ? null : pinnedWeek();
+      $("weekPin").innerHTML = pin ? cardHTML(pin, "is-pin") : "";
+      const q = F.q.toLowerCase();
       const list = posts.filter(p => p.id !== active && (!pin || p.id !== pin.id))
-        .filter(p => isOrg || p.by === me.uid || p.reportCount < AUTO_HIDE)
+        .filter(visible)
         .filter(p => !F.kind || p.kind === F.kind)
         .filter(p => !F.openOnly || (p.kind === "mission" && p.status === "open"))
-        .filter(p => p.status !== "closed" || p.by === me.uid || isOrg);
-      $("posts").innerHTML = list.map(postHTML).join("") || `<p class="vb-empty">${esc(T("vb.empty"))}</p>`;
+        .filter(p => !F.mtype || (p.kind === "mission" && p.mtype === F.mtype))
+        .filter(p => !q || [p.title, p.body, p.outcome, (p.skills || []).join(" ")].join(" ").toLowerCase().includes(q));
+      $("count").textContent = F.q || F.kind || F.openOnly || F.mtype ? T("vb.count", { n: list.length }) : "";
+      $("posts").innerHTML = list.map(p => cardHTML(p)).join("") || `<p class="vb-empty">${esc(T(F.q ? "vb.noresults" : "vb.empty"))}</p>`;
+      renderDetail();
     }
+
+    // ---------- details panel ----------
+    function renderDetail() {
+      const p = openId && posts.find(x => x.id === openId);
+      $("detail").hidden = !p; document.documentElement.classList.toggle("vb-locked", !!p);
+      if (p) $("dBody").innerHTML = postHTML(p);
+    }
+    async function openPost(id, push = true) {
+      if (!posts.some(x => x.id === id)) return;
+      openId = id; comments[id] = comments[id] || [];
+      if (push) history.pushState({ post: id }, "", "?post=" + encodeURIComponent(id));
+      renderDetail(); $("dTitle") && $("dTitle").focus();
+      comments[id] = await data.loadComments(id, isOrg);
+      if (openId === id) {
+        const keepFocus = !document.activeElement || document.activeElement === document.body || document.activeElement.id === "dTitle";
+        renderDetail(); if (keepFocus && $("dTitle")) $("dTitle").focus();
+      }
+    }
+    function closePost(push = true) {
+      if (!openId) return;
+      const id = openId; openId = null; renderDetail();
+      if (push) history.pushState({}, "", location.pathname);
+      const a = document.querySelector(`[data-open-post="${CSS.escape(id)}"]`); if (a) a.focus();
+    }
+    addEventListener("popstate", () => { const id = new URLSearchParams(location.search).get("post"); if (id) openPost(id, false); else closePost(false); });
+    addEventListener("keydown", (e) => { if (e.key === "Escape" && openId) closePost(); });
+    $("q").addEventListener("input", () => { F.q = $("q").value.trim(); render(); });
 
     // ---------- actions ----------
     async function act(kind, p, c) {
@@ -349,17 +465,24 @@
       })[kind]();
       if (!r.ok) say($("msg"), errText(r));
       if (kind === "confirm" && r.ok) await loadPeople();   // their bandana may change
+      if (kind === "delete" && r.ok && openId === p.id) closePost();
       await refresh();
     }
     document.addEventListener("click", async (e) => {
-      const f = e.target.closest("[data-kind], [data-open]");
-      if (f && $("filters").contains(f)) { if (f.hasAttribute("data-open")) F.openOnly = !F.openOnly; else F.kind = f.dataset.kind; render(); return; }
+      const f = e.target.closest("[data-kind], [data-open], [data-mtype]");
+      if (f && ($("filters").contains(f) || $("subfilters").contains(f))) {
+        if (f.hasAttribute("data-open")) F.openOnly = !F.openOnly;
+        else if (f.dataset.mtype !== undefined) F.mtype = F.mtype === f.dataset.mtype ? "" : f.dataset.mtype;
+        else { F.kind = f.dataset.kind; if (F.kind && F.kind !== "mission") { F.openOnly = false; F.mtype = ""; } }
+        render(); return;
+      }
+      const o = e.target.closest("[data-open-post]");
+      if (o) { e.preventDefault(); openPost(o.dataset.openPost); return; }
+      const card = e.target.closest(".card");
+      if (card && !e.target.closest("a, button")) { const a = card.querySelector("[data-open-post]"); if (a) openPost(a.dataset.openPost); return; }
+      if (e.target.closest("[data-close]") && $("detail").contains(e.target)) { closePost(); return; }
       const b = e.target.closest("[data-act]"); if (!b || !$("board").contains(b)) return;
       const p = posts.find(x => x.id === b.dataset.id); if (!p) return;
-      if (b.dataset.act === "comments") {
-        if (open.has(p.id)) open.delete(p.id); else { open.add(p.id); comments[p.id] = await data.loadComments(p.id, isOrg); }
-        render(); const t = document.getElementById("c-" + p.id); if (t) t.focus(); return;
-      }
       if (b.dataset.act === "delete" && armedDelete !== p.id) { armedDelete = p.id; render(); setTimeout(() => { if (armedDelete === p.id) { armedDelete = null; render(); } }, 4000); return; }
       armedDelete = null;
       b.disabled = true; await act(b.dataset.act, p, b.dataset.c);
@@ -376,17 +499,23 @@
     const KINDS = ["mission", "event", "oss"], MT = ["help", "build", "club"];
     function renderFormChoices() {
       const cur = (n) => (document.querySelector(`[name=${n}]:checked`) || {}).value;
-      const k = cur("kind") || "mission", m = cur("mtype") || "help";
+      const k = cur("kind") || "mission", m = cur("mtype") || "help", as0 = cur("as") || "";
+      $("asField").hidden = !isOrg;
+      $("asChoices").innerHTML = ["", ...AS].map(v => `<label class="choice"><input type="radio" name="as" value="${v}"${v === as0 ? " checked" : ""}><span>${esc(v ? T("vb.as." + v) : T("vb.as.me", { name: names[me.uid] || T("vb.you") }))}</span></label>`).join("");
       $("kindChoices").innerHTML = (isOrg ? [...KINDS, "week"] : KINDS).map(v => `<label class="choice"><input type="radio" name="kind" value="${v}"${v === k ? " checked" : ""}><span>${esc(T("vb.k." + v))}</span></label>`).join("");
       $("mtypeChoices").innerHTML = MT.map(v => {
         const mp = missionPts(v);
         return `<label class="choice"><input type="radio" name="mtype" value="${v}"${v === m ? " checked" : ""}><span>${esc(T(v === "help" ? "vb.mt.help.long" : v === "club" ? "vb.mt.club.long" : "vb.mt.build"))} · ${esc(mp.from ? T("vb.pts.later", { n: mp.n, d: fmtDate(mp.from) }) : T("vb.pts", { n: mp.n }))}</span></label>`;
       }).join("");
+      const keep = (id) => $(id).value;
+      const t0 = keep("pTime") || "1to3", l0 = keep("pLevel") || "all";
+      $("pTime").innerHTML = TIMES.map(v => `<option value="${v}"${v === t0 ? " selected" : ""}>${esc(T("vb.t." + v))}</option>`).join("");
+      $("pLevel").innerHTML = LEVELS.map(v => `<option value="${v}"${v === l0 ? " selected" : ""}>${esc(T("level." + v))}</option>`).join("");
       syncForm();
     }
     function syncForm() {
       const k = (document.querySelector("[name=kind]:checked") || {}).value;
-      $("mtypeField").hidden = k !== "mission"; $("eventFields").hidden = k !== "event"; $("weekFields").hidden = k !== "week";
+      $("mtypeField").hidden = k !== "mission"; $("missionFields").hidden = k !== "mission"; $("eventFields").hidden = k !== "event"; $("weekFields").hidden = k !== "week";
       if (k === "week" && !$("weekInputs").children.length)
         $("weekInputs").innerHTML = [0, 1, 2, 3, 4, 5, 6].map(i => `<li class="week-input"><input class="input" data-wt="${i}" maxlength="90" aria-label="${esc(T("vb.week.day", { n: i + 1 }) + " · " + T("vb.week.task"))}" placeholder="${esc(T("vb.week.day", { n: i + 1 }))}"><input class="input" data-wl="${i}" type="url" maxlength="300" placeholder="https://" aria-label="${esc(T("vb.week.day", { n: i + 1 }) + " · " + T("vb.week.link"))}"></li>`).join("");
     }
@@ -397,8 +526,14 @@
     $("postForm").addEventListener("submit", async (e) => {
       e.preventDefault(); say($("formMsg"), "");
       const p = { kind: document.querySelector("[name=kind]:checked").value, mtype: (document.querySelector("[name=mtype]:checked") || {}).value,
+        as: isOrg ? ((document.querySelector("[name=as]:checked") || {}).value || "") : "",
         title: $("pTitle").value.trim(), body: $("pBody").value.trim(), link: $("pLink").value.trim(), date: $("pDate").value, where: $("pWhere").value.trim() };
       if (p.title.length < 3) { say($("formMsg"), T("vb.err.title")); $("pTitle").focus(); return; }
+      if (p.kind === "mission") {
+        p.outcome = $("pOutcome").value.trim(); p.time = $("pTime").value; p.level = $("pLevel").value;
+        p.skills = $("pSkills").value.split(",").map(x => x.trim()).filter(Boolean).slice(0, 5).map(x => x.slice(0, 24));
+        if (p.outcome.length < 3) { say($("formMsg"), T("vb.err.outcome")); $("pOutcome").focus(); return; }
+      }
       if (p.link && !/^https:\/\/\S+$/.test(p.link)) { say($("formMsg"), T("vb.err.link")); $("pLink").focus(); return; }
       if (p.kind === "week") {
         p.start = $("wStart").value;
@@ -426,19 +561,6 @@
       });
     }
 
-    // ---------- elders: starter posts ----------
-    $("seedBtn").addEventListener("click", async () => {
-      $("seedBtn").disabled = true; say($("seedMsg"), "");
-      try {
-        const pack = await (await fetch("assets/village-starter.json", { cache: "no-cache" })).json();
-        let n = 0, skip = 0, fail = null;
-        for (const p of pack.posts) { const r = await data.createPost(p); if (!r.ok) { fail = r; break; } if (r.skipped) skip++; else n++; }
-        if (fail) say($("seedMsg"), errText(fail)); else say($("seedMsg"), T("vb.seed.done", { n, skip }), "ok");
-        await refresh();
-      } catch (e) { say($("seedMsg"), T("err.generic")); }
-      $("seedBtn").disabled = false;
-    });
-
     addEventListener("langchange", () => { if (me && !$("board").hidden) { render(); if (!$("postForm").hidden) renderFormChoices(); } });
 
     // ---------- who is here ----------
@@ -451,8 +573,9 @@
         if (!profile) { gate("gProfile"); return; }
         me = u;
         isOrg = profile.role === "organizer" || (data.mode === "demo" && new URLSearchParams(location.search).has("elder"));
-        $("elderNote").hidden = !isOrg; $("elderTools").hidden = !isOrg;
-        await loadPeople(); gate("board"); await refresh();
+        $("elderTools").hidden = !isOrg;
+        await loadPeople(); await refresh(); gate("board");
+        const deep = new URLSearchParams(location.search).get("post"); if (deep) openPost(deep, false);
       } catch (e) { console.error(e); gate("vLoading"); $("vLoading").textContent = T("m.dberror", { e: e.code || e.message || "?" }); }
     });
   })();

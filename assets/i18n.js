@@ -52,13 +52,52 @@ en: {
   'vb.week.day': 'Day {n}',
   'vb.week.task': 'Task',
   'vb.week.link': 'Link (optional)',
-  'vb.seed.btn': 'Publish starter posts',
-  'vb.seed.p': 'Elders: publish the LeetCode week and the first missions in one tap. Publishing twice does nothing.',
-  'vb.seed.done': 'Starter posts published: {n} new, {skip} already there.',
+  'me.profile': 'My profile', 'me.climb': 'My climb', 'me.rules': 'How to level up',
+  'me.belt.white': 'White bandana', 'me.belt.yellow': 'Yellow bandana', 'me.belt.green': 'Green bandana', 'me.belt.blue': 'Blue bandana', 'me.belt.red': 'Red bandana', 'me.belt.black': 'Black bandana',
+  'footer.rules': 'Rules',
+  'about.rules.h': 'How points and bandanas work',
+  'about.rules.p': 'Every point on the Mountain comes from one public rulebook: what earns points, how many, and what each bandana needs. Changes are announced in advance, and new rules start next season.',
+  'about.rules.cta': 'Read the rules →',
+  'm.rules.link': 'How to level up →',
+  'vb.loading': 'Loading the board…',
+  'vb.form.as': 'Post as',
+  'vb.form.as.help': 'Elders only. A team or council post shows the club as the author; the details panel still says who posted it, so people know who to message.',
+  'vb.as.me': 'Me ({name})',
+  'vb.as.team': 'Organizing team',
+  'vb.as.council': 'Council of Elders',
+  'vb.as.posted': 'posted by {name}',
   'fact.club_quest': 'Club work',
   'fmt.week': 'Theme of the week',
   'pwa.install': 'Install the app',
   'pwa.ios': 'On iPhone: tap Share, then "Add to Home Screen".',
+  'home.cta.join': 'Join the club →',
+  'home.cta.mountain': 'Open the Mountain →',
+  'home.cta.schedule2': 'See the schedule',
+  'home.steps.h': 'Join in <b>2 minutes</b>',
+  'home.steps.1': '<b>Create your account</b><span>With your aivancity email. Free, and every level is welcome.</span>',
+  'home.steps.2': '<b>Get the WhatsApp invite</b><span>News, session reminders and the weekly challenge.</span>',
+  'home.steps.3': '<b>Come on Thursday and climb</b><span>Earn points, missions and your next bandana on the Mountain.</span>',
+  'vb.elder.h': 'Elder tools',
+  'vb.elder.p': 'As an elder you also see posts that were hidden or reported (they\'re marked), and you can hide anything that doesn\'t belong here.',
+  'vb.search.ph': 'Search missions, events, skills…',
+  'vb.qna': 'Questions & answers',
+  'vb.done.when': 'Done when:',
+  'vb.time': 'Time needed',
+  'vb.level': 'Level',
+  'vb.skills': 'Skills',
+  'vb.t.lt1': 'Under 1 hour',
+  'vb.t.1to3': '1–3 hours',
+  'vb.t.sessions': 'A few sessions',
+  'vb.t.ongoing': 'Ongoing',
+  'vb.form.outcome': 'Done when…',
+  'vb.form.outcome.ph': 'e.g. the bug is fixed and you understand why',
+  'vb.form.skills': 'Skills (optional, comma-separated)',
+  'vb.form.skills.ph': 'e.g. Python, Git, video editing',
+  'vb.taken.hint': 'It\'s yours! Message {name} on the club WhatsApp to get started, and ask anything in the questions below.',
+  'vb.close': 'Close',
+  'vb.count': '{n} results',
+  'vb.noresults': 'Nothing matches your search.',
+  'vb.err.outcome': 'Say how you\'ll both know it\'s done.',
   'nav.board': 'Village',
   'vb.title': 'Village board',
   'vb.h1': 'The village <b>board</b>',
@@ -152,8 +191,8 @@ en: {
   'home.cta.schedule': 'View the schedule →', 'home.cta.about': 'What we do',
   'home.next': 'Coming <b>up next</b>', 'home.next.all': 'Full schedule →',
   'home.recent': 'What we\'ve <b>been up to</b>', 'home.recent.all': 'Whole season →',
-  'home.join.h': '<b>Just show up.</b>',
-  'home.join.p': 'Come to AIClinic – Room 107 on any Thursday from 1 to 2 PM, bring a laptop if you have one, and say hi. Want the news and invites? Join the WhatsApp group.',
+  'home.join.h': '<b>Come on Thursday,</b> join anytime.',
+  'home.join.p': 'Sessions are open to every aivancity student. Joining the club gets you the WhatsApp group, the weekly challenges and your own ninja on the Mountain.',
   'home.join.cta': 'Join the club →',
 
   'about.h1': 'One club, <b>two ways in</b>',
@@ -354,13 +393,52 @@ fr: {
   'vb.week.day': 'Jour {n}',
   'vb.week.task': 'Tâche',
   'vb.week.link': 'Lien (facultatif)',
-  'vb.seed.btn': 'Publier les publications de départ',
-  'vb.seed.p': 'Anciens : publiez la semaine LeetCode et les premières missions en une fois. Publier deux fois ne change rien.',
-  'vb.seed.done': 'Publications de départ : {n} nouvelles, {skip} déjà présentes.',
+  'me.profile': 'Mon profil', 'me.climb': 'Mon ascension', 'me.rules': 'Comment progresser',
+  'me.belt.white': 'Bandana blanc', 'me.belt.yellow': 'Bandana jaune', 'me.belt.green': 'Bandana vert', 'me.belt.blue': 'Bandana bleu', 'me.belt.red': 'Bandana rouge', 'me.belt.black': 'Bandana noir',
+  'footer.rules': 'Règles',
+  'about.rules.h': 'Comment marchent les points et les bandanas',
+  'about.rules.p': 'Chaque point de la Montagne vient d\'un seul règlement public : ce qui rapporte des points, combien, et ce qu\'il faut pour chaque bandana. Les changements sont annoncés à l\'avance, et les nouvelles règles commencent la saison suivante.',
+  'about.rules.cta': 'Lire les règles →',
+  'm.rules.link': 'Comment progresser →',
+  'vb.loading': 'Chargement du tableau…',
+  'vb.form.as': 'Publier en tant que',
+  'vb.form.as.help': 'Réservé aux anciens. Une publication de l\'équipe ou du conseil affiche le club comme auteur ; le détail indique toujours qui l\'a publiée, pour savoir à qui écrire.',
+  'vb.as.me': 'Moi ({name})',
+  'vb.as.team': 'Équipe d\'organisation',
+  'vb.as.council': 'Conseil des Anciens',
+  'vb.as.posted': 'publié par {name}',
   'fact.club_quest': 'Travail pour le club',
   'fmt.week': 'Thème de la semaine',
   'pwa.install': 'Installer l\'application',
   'pwa.ios': 'Sur iPhone : touchez Partager, puis « Sur l\'écran d\'accueil ».',
+  'home.cta.join': 'Rejoindre le club →',
+  'home.cta.mountain': 'Ouvrir la Montagne →',
+  'home.cta.schedule2': 'Voir le programme',
+  'home.steps.h': 'Rejoindre en <b>2 minutes</b>',
+  'home.steps.1': '<b>Créez votre compte</b><span>Avec votre e-mail aivancity. Gratuit, et tous les niveaux sont bienvenus.</span>',
+  'home.steps.2': '<b>Recevez l\'invitation WhatsApp</b><span>Les nouvelles, les rappels de séance et le défi de la semaine.</span>',
+  'home.steps.3': '<b>Venez le jeudi et grimpez</b><span>Gagnez des points, des missions et votre prochain bandana sur la Montagne.</span>',
+  'vb.elder.h': 'Outils des anciens',
+  'vb.elder.p': 'En tant qu\'ancien, vous voyez aussi les publications masquées ou signalées (elles sont marquées), et vous pouvez masquer ce qui n\'a pas sa place ici.',
+  'vb.search.ph': 'Chercher missions, événements, compétences…',
+  'vb.qna': 'Questions et réponses',
+  'vb.done.when': 'Terminé quand :',
+  'vb.time': 'Temps nécessaire',
+  'vb.level': 'Niveau',
+  'vb.skills': 'Compétences',
+  'vb.t.lt1': 'Moins d\'1 heure',
+  'vb.t.1to3': '1 à 3 heures',
+  'vb.t.sessions': 'Quelques séances',
+  'vb.t.ongoing': 'En continu',
+  'vb.form.outcome': 'Terminé quand…',
+  'vb.form.outcome.ph': 'ex. le bug est corrigé et vous comprenez pourquoi',
+  'vb.form.skills': 'Compétences (facultatif, séparées par des virgules)',
+  'vb.form.skills.ph': 'ex. Python, Git, montage vidéo',
+  'vb.taken.hint': 'C\'est à vous ! Écrivez à {name} sur le WhatsApp du club pour commencer, et posez vos questions ci-dessous.',
+  'vb.close': 'Fermer',
+  'vb.count': '{n} résultats',
+  'vb.noresults': 'Rien ne correspond à votre recherche.',
+  'vb.err.outcome': 'Dites comment vous saurez tous les deux que c\'est terminé.',
   'nav.board': 'Village',
   'vb.title': 'Tableau du village',
   'vb.h1': 'Le tableau <b>du village</b>',
@@ -454,8 +532,8 @@ fr: {
   'home.cta.schedule': 'Voir le programme →', 'home.cta.about': 'Ce qu\'on fait',
   'home.next': 'Les <b>prochaines séances</b>', 'home.next.all': 'Tout le programme →',
   'home.recent': 'Ce qu\'on a <b>déjà fait</b>', 'home.recent.all': 'Toute la saison →',
-  'home.join.h': '<b>Venez, tout simplement.</b>',
-  'home.join.p': 'Passez à l\'AIClinic – Salle 107 n\'importe quel jeudi de 13 h à 14 h, avec un ordinateur si vous en avez un, et dites bonjour. Envie des nouvelles et des invitations ? Rejoignez le groupe WhatsApp.',
+  'home.join.h': '<b>Venez le jeudi,</b> rejoignez quand vous voulez.',
+  'home.join.p': 'Les séances sont ouvertes à tous les étudiants d\'aivancity. Rejoindre le club vous donne accès au groupe WhatsApp, aux défis de la semaine et à votre propre ninja sur la Montagne.',
   'home.join.cta': 'Rejoindre le club →',
 
   'about.h1': 'Un club, <b>deux portes d\'entrée</b>',
@@ -648,6 +726,43 @@ try { if (localStorage.getItem('nw-member') === '1') document.documentElement.cl
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => apply()); else apply();
 
 window.I18N = { t, apply, set, pick, locale, get lang() { return lang; } };
+
+/* ---------- profile in the top bar (members) ----------
+   Pages without Firebase can't ask who you are, so the Mountain and the Village save a small copy
+   ({name, rank}) in localStorage when they load; signing out clears it. */
+function myCard() { try { return JSON.parse(localStorage.getItem('nw-me') || 'null'); } catch (e) { return null; } }
+const RANK_KEYS = ['white', 'yellow', 'green', 'blue', 'red', 'black'];
+function addProfile() {
+  if (!document.documentElement.classList.contains('is-member')) return;
+  const nav = document.querySelector('.site-header .nav'); if (!nav || nav.querySelector('.me-wrap')) return;
+  const me = myCard() || {}, rank = RANK_KEYS.includes(me.rank) ? me.rank : 'white';
+  const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const w = document.createElement('div'); w.className = 'me-wrap';
+  w.innerHTML = `<button type="button" class="me-pill" aria-haspopup="true" aria-expanded="false" aria-controls="meMenu">
+      <img src="/assets/ninjas/ninja-${rank}.svg" alt=""><span class="me-name">${esc((me.name || '').split(' ')[0] || t('me.profile'))}</span></button>
+    <div class="me-menu" id="meMenu" hidden>
+      <div class="me-head"><img src="/assets/ninjas/ninja-${rank}.svg" alt=""><div><b>${esc(me.name || t('me.profile'))}</b><span data-me-belt></span></div></div>
+      <a href="/mountain#me" data-i18n="me.climb">My climb</a>
+      <a href="/village" data-i18n="nav.board">Village</a>
+      <a href="/rules" data-i18n="me.rules">How to level up</a>
+      <a href="/feedback" data-i18n="footer.feedback">Give feedback</a>
+      <a href="/mountain#signout" data-i18n="m.signout">Sign out</a>
+    </div>`;
+  const belt = () => { const b = w.querySelector('[data-me-belt]'); b.textContent = me.rank ? t('me.belt.' + rank) : ''; w.querySelector('.me-pill').setAttribute('aria-label', t('me.profile') + (me.name ? ' · ' + me.name : '')); };
+  belt(); addEventListener('langchange', belt);
+  const btn = w.querySelector('.me-pill'), menu = w.querySelector('.me-menu');
+  const open = (on) => { menu.hidden = !on; btn.setAttribute('aria-expanded', String(on)); };
+  btn.addEventListener('click', () => { open(menu.hidden); if (!menu.hidden) menu.querySelector('a').focus(); });
+  document.addEventListener('click', (e) => { if (!w.contains(e.target)) open(false); });
+  w.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { open(false); btn.focus(); } });
+  w.addEventListener('focusout', (e) => { if (!w.contains(e.relatedTarget)) open(false); });
+  nav.insertBefore(w, nav.querySelector('.lang-toggle'));
+  apply();
+}
+function saveMe(name, rank) { try { localStorage.setItem('nw-me', JSON.stringify({ name, rank })); } catch (e) {}
+  document.querySelectorAll('.me-wrap').forEach(x => x.remove()); addProfile(); }
+window.ClubMe = { save: saveMe };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addProfile); else addProfile();
 
 /* ---------- installable app (PWA) ---------- */
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

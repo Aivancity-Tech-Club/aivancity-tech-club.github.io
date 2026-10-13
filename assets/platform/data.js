@@ -100,6 +100,8 @@ function demoBackend() {
     async createPost(p) {
       const B = board(), post = { id: 'p' + Date.now(), kind: p.kind, title: p.title, body: p.body || '', link: p.link || '', by: 'you', createdAt: Date.now(), hidden: false, reports: {} };
       if (p.kind === 'mission') Object.assign(post, { mtype: p.mtype, status: 'open', takenBy: null, takenAt: null });
+      if (p.kind === 'mission') { for (const k of ['outcome', 'time', 'level']) if (p[k]) post[k] = String(p[k]); if ((p.skills || []).length) post.skills = p.skills.slice(0, 5); }
+      if (['team', 'council'].includes(p.as)) post.as = p.as;
       if (p.kind === 'event') Object.assign(post, { date: p.date || '', where: p.where || '' });
       if (p.kind === 'week') Object.assign(post, { start: p.start, days: p.days || [] });
       if (p.id) { if (B.posts.some(x => x.id === p.id)) return { ok: true, skipped: true }; post.id = p.id; }
@@ -143,7 +145,7 @@ function linkErrorText(e) {
   return tr('err.link.other', 'Sign-in did not finish (' + why + '). Request a new link and try again.', { e: why });
 }
 /* remembered per browser so static pages can hide "Join" for people already in the club */
-function markMember(on) { try { on ? localStorage.setItem('nw-member', '1') : localStorage.removeItem('nw-member'); } catch (e) {} document.documentElement.classList.toggle('is-member', !!on); }
+function markMember(on) { try { on ? localStorage.setItem('nw-member', '1') : (localStorage.removeItem('nw-member'), localStorage.removeItem('nw-me')); } catch (e) {} document.documentElement.classList.toggle('is-member', !!on); }
 /* Village Board helpers shared by both backends */
 const MISSION_RULE = { help: 'mentoring', build: 'collab', club: 'club_quest' };
 const tsMs = (v) => (v && typeof v.toMillis === 'function' ? v.toMillis() : typeof v === 'number' ? v : v ? Date.parse(v) : Date.now());
@@ -351,6 +353,8 @@ function firebaseBackend() {
     async createPost(p) {
       const doc = { kind: p.kind, title: p.title, body: p.body || '', link: p.link || '', by: auth.currentUser.uid, createdAt: FV().serverTimestamp(), hidden: false, reports: {} };
       if (p.kind === 'mission') Object.assign(doc, { mtype: p.mtype, status: 'open', takenBy: null, takenAt: null });
+      if (p.kind === 'mission') { for (const k of ['outcome', 'time', 'level']) if (p[k]) doc[k] = String(p[k]); if ((p.skills || []).length) doc.skills = p.skills.slice(0, 5); }
+      if (['team', 'council'].includes(p.as)) doc.as = p.as;
       if (p.kind === 'event') Object.assign(doc, { date: p.date || '', where: p.where || '' });
       if (p.kind === 'week') Object.assign(doc, { start: p.start, days: p.days || [] });
       try {

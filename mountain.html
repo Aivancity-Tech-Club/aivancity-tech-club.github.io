@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261012a"></script>
+<script src="assets/i18n.js?v=20261012f"></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
@@ -100,6 +100,7 @@ label { font-weight: 700; font-size: 14px; }
 .x { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper); cursor: pointer; font-size: 20px; line-height: 1; }
 .box { background: var(--paper); border: 2px solid var(--ink); border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
 .box h3 { margin: 0; font-size: 17px; }
+.box .rules-link { font-weight: 700; font-size: 14px; color: inherit; justify-self: start; }
 .hero { align-items: center; text-align: center; }
 .hero img { width: 150px; height: 142px; object-fit: contain; }
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
@@ -275,14 +276,14 @@ label { font-weight: 700; font-size: 14px; }
 <div class="pop" id="pop" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261012a"></script>
-<script src="assets/world/world.js?v=20261012a"></script>
-<script src="assets/js-yaml.min.js?v=20261012a"></script>
-<script src="assets/schedule.js?v=20261012a"></script>
-<script src="assets/platform/config.js?v=20261012a"></script>
-<script src="assets/platform/engine.js?v=20261012a"></script>
-<script src="assets/platform/signin.js?v=20261012a"></script>
-<script src="assets/platform/data.js?v=20261012a"></script>
+<script src="assets/world/world-data.js?v=20261012f"></script>
+<script src="assets/world/world.js?v=20261012f"></script>
+<script src="assets/js-yaml.min.js?v=20261012f"></script>
+<script src="assets/schedule.js?v=20261012f"></script>
+<script src="assets/platform/config.js?v=20261012f"></script>
+<script src="assets/platform/engine.js?v=20261012f"></script>
+<script src="assets/platform/signin.js?v=20261012f"></script>
+<script src="assets/platform/data.js?v=20261012f"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -383,6 +384,7 @@ label { font-weight: 700; font-size: 14px; }
   function renderDrawer() {
     const s = result.byUid[me.uid];
     $('meAvatar').src = ninjaURI(s.rank, worn); $('meBtn').hidden = false;
+    if (window.ClubMe) ClubMe.save(profile.name, s.isMember ? s.rank : null);
     const seasonRank = Object.values(result.byUid).filter(x => x.isMember).sort((a, b) => b.season - a.season).findIndex(x => x.uid === me.uid) + 1;
     $('heroBox').style.background = { white: '#ffffff', yellow: '#ffe7a5', green: '#ccf6c5', blue: '#c3ecf6', red: '#f8d8d8', black: '#d9dbef' }[s.rank];
     $('heroBox').innerHTML = `<img src="${ninjaURI(s.rank, worn)}" alt="">
@@ -393,8 +395,9 @@ label { font-weight: 700; font-size: 14px; }
       ? `<h3>${esc(T('m.next', { rank: RANK(s.next), name: rankName(s.next) }))}</h3>
          <div class="bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(s.progress * 100)}"><div class="bar-fill" style="width:${Math.round(s.progress * 100)}%"></div></div>
          ${s.waiting ? `<p style="margin:0;font-size:13px">${T('m.waiting')}</p>` : ''}
-         <ul class="list">${s.checklist.map(c => `<li><span class="tick${c.done ? ' done' : ''}">${c.done ? '✓' : ''}</span>${esc(reqText(c))}</li>`).join('')}</ul>`
-      : `<h3>${T('m.summit')}</h3>`;
+         <ul class="list">${s.checklist.map(c => `<li><span class="tick${c.done ? ' done' : ''}">${c.done ? '✓' : ''}</span>${esc(reqText(c))}</li>`).join('')}</ul>
+         <a class="rules-link" href="/rules">${esc(T('m.rules.link'))}</a>`
+      : `<h3>${T('m.summit')}</h3><a class="rules-link" href="/rules">${esc(T('m.rules.link'))}</a>`;
     // accessories
     $('accGrid').innerHTML = ACC.map(a => {
       const ok = s.unlocked.includes(a), on = worn.includes(a);
@@ -489,6 +492,10 @@ label { font-weight: 700; font-size: 14px; }
   /* ---------- auth flow ---------- */
   data.onAuth(async (user) => {
     try {
+    if (location.hash === '#signout') {
+      history.replaceState(null, '', location.pathname + location.search);
+      if (user) { await data.signOut(); location.reload(); return; }
+    }
     if (!user) {
       $('signin').hidden = false; $('meBtn').hidden = true;
       siBox.signin(data.linkError);
@@ -506,6 +513,8 @@ label { font-weight: 700; font-size: 14px; }
     profile = await data.getProfile(user.uid);
     if (!profile) { $('setup').hidden = false; return; }
     await refresh();
+    // opened from the profile menu on another page
+    if (location.hash === '#me') { history.replaceState(null, '', location.pathname + location.search); setDrawer(true); }
     } catch (e) {
       // never leave an empty screen: say what went wrong
       console.error(e);
