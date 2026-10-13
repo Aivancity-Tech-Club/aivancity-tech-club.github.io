@@ -23,3 +23,5 @@
 .row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .row-actions .btn { padding: 8px 16px; font-size: .9rem; }
 @media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.bm-form { flex-basis: 100%; display: grid; gap: 12px; padding: 14px; border: 1px dashed var(--line); border-radius: 14px; margin-top: 6px; }
+.p-list .row-actions .chip { font-size: .8rem; }

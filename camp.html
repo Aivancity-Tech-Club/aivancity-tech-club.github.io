@@ -17,10 +17,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261013h">
-  <link rel="stylesheet" href="assets/village.css?v=20261013h">
-  <link rel="stylesheet" href="assets/camp.css?v=20261013h">
-  <script src="assets/i18n.js?v=20261013h"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261013j">
+  <link rel="stylesheet" href="assets/village.css?v=20261013j">
+  <link rel="stylesheet" href="assets/camp.css?v=20261013j">
+  <script src="assets/i18n.js?v=20261013j"></script>
 </head>
 <body data-i18n-title="camp.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -44,7 +44,7 @@
 
   <main id="main">
     <div class="wrap camp-wrap">
-      <p class="camp-back"><a href="/mountain" data-i18n="camp.back">← Back to the Mountain</a></p>
+      <p class="camp-back" id="campBack" hidden><a href="/mountain" id="campBackLink"></a></p>
 
       <!-- loading -->
       <div class="camp-skel" id="cLoading" role="status" aria-busy="true">
@@ -112,17 +112,28 @@
     </div>
   </footer>
 
-  <script src="assets/js-yaml.min.js?v=20261013h"></script>
-  <script src="assets/schedule.js?v=20261013h"></script>
-  <script src="assets/platform/config.js?v=20261013h"></script>
-  <script src="assets/platform/engine.js?v=20261013h"></script>
-  <script src="assets/platform/signin.js?v=20261013h"></script>
-  <script src="assets/platform/data.js?v=20261013h"></script>
+  <script src="assets/js-yaml.min.js?v=20261013j"></script>
+  <script src="assets/schedule.js?v=20261013j"></script>
+  <script src="assets/platform/config.js?v=20261013j"></script>
+  <script src="assets/platform/engine.js?v=20261013j"></script>
+  <script src="assets/platform/signin.js?v=20261013j"></script>
+  <script src="assets/platform/data.js?v=20261013j"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
     const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     $("yr").textContent = new Date().getFullYear();
+    // "Back" goes where the visitor actually came from (same site only); nothing is shown after a direct visit
+    (function backLink() {
+      let ref = null; try { ref = document.referrer ? new URL(document.referrer) : null; } catch (e) {}
+      if (!ref || ref.origin !== location.origin || /^\/camp/.test(ref.pathname)) return;
+      const page = ref.pathname.replace(/\.html$/, "").replace(/\/(index)?$/, "") || "/";
+      const KEY = { "/mountain": "camp.back.mountain", "/village": "camp.back.village", "/pulse": "camp.back.pulse", "/schedule": "camp.back.schedule", "/": "camp.back.home" };
+      const link = $("campBackLink"), label = () => { link.textContent = T(KEY[page] || "camp.back.any"); };
+      link.href = ref.pathname + ref.search;
+      link.addEventListener("click", (e) => { if (history.length > 1) { e.preventDefault(); history.back(); } });
+      label(); addEventListener("langchange", label); $("campBack").hidden = false;
+    })();
     const gates = ["cLoading", "gSignin", "gMember", "gProfile", "gMissing", "camp"];
     const gate = (id) => { gates.forEach(g => $(g).hidden = g !== id); $("campForm").hidden = true; };
     const COLORS = ClubData.CAMP_COLORS;

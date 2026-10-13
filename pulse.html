@@ -14,10 +14,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261013h">
-  <link rel="stylesheet" href="assets/village.css?v=20261013h">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261013h">
-  <script src="assets/i18n.js?v=20261013h"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261013j">
+  <link rel="stylesheet" href="assets/village.css?v=20261013j">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261013j">
+  <script src="assets/i18n.js?v=20261013j"></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -66,10 +66,10 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261013h"></script>
-  <script src="assets/platform/config.js?v=20261013h"></script>
-  <script src="assets/platform/signin.js?v=20261013h"></script>
-  <script src="assets/platform/data.js?v=20261013h"></script>
+  <script src="assets/schedule.js?v=20261013j"></script>
+  <script src="assets/platform/config.js?v=20261013j"></script>
+  <script src="assets/platform/signin.js?v=20261013j"></script>
+  <script src="assets/platform/data.js?v=20261013j"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -102,6 +102,19 @@
       return I18N.t("pulse.msg." + kind + "." + lang, { first, me: (me.name || "").split(" ")[0], next, when, link: SITE + "/feedback?topic=stopped" });
     }
 
+    // the buddy mission: the default text is filled in, edit it or post it as it is
+    let editing = null;
+    function buddyForm(p) {
+      const first = String(p.name || "").split(" ")[0];
+      return `<form class="bm-form" data-bm="${esc(p.uid)}" novalidate>
+        <div class="field"><label for="bmTitle">${esc(T("vb.form.title"))}</label><input class="input" id="bmTitle" maxlength="90" value="${esc(T("pulse.bm.title", { name: first }).slice(0, 90))}"></div>
+        <div class="field"><label for="bmBody">${esc(T("pulse.bm.body.label"))}</label><textarea class="textarea" id="bmBody" maxlength="800" rows="4">${esc(T("pulse.bm.body", { name: first }))}</textarea></div>
+        <div class="field"><label for="bmOutcome">${esc(T("vb.done.when"))}</label><input class="input" id="bmOutcome" maxlength="300" value="${esc(T("pulse.bm.outcome", { name: first }))}"></div>
+        <p class="help" style="margin:0">${esc(T("pulse.bm.hint"))}</p>
+        <div class="row-actions"><button type="submit" class="btn btn-primary">${esc(T("pulse.bm.post"))}</button><button type="button" class="btn btn-ghost" data-bm-cancel>${esc(T("vb.cancel"))}</button></div>
+      </form>`;
+    }
+
     function render() {
       const { members, facts, requests, pulse, rsvps, votes, board } = S;
       const name = (uid) => (members.find(m => m.uid === uid) || requests.find(r => r.uid === uid) || {}).name || "—";
@@ -121,11 +134,12 @@
         .sort((x, y) => (x.last < y.last ? 1 : -1));
       // signed up a week ago or more and never checked in
       const never = requests.filter(r => !attends[r.uid] && r.at && daysAgo(r.at) >= 7).map(r => ({ ...r, since: daysAgo(r.at) })).sort((a, b) => a.since - b.since);
-      // newcomers: first check-in in the last 3 weeks, or signed up in the last 3 weeks; no buddy mission yet
-      const hasBuddy = new Set(board.filter(p => p.kind === "mission" && p.for).map(p => p.for));
+      // newcomers: first check-in in the last 3 weeks, or signed up in the last 3 weeks (fewer than 3 sessions so far)
+      const buddyOf = {}; board.filter(p => p.kind === "mission" && p.for && p.status !== "closed").forEach(p => { buddyOf[p.for] = p; });
       const cutoff = new Date(Date.now() - 21 * DAY).toISOString().slice(0, 10);
       const newcomers = [...new Set([...Object.entries(attends).filter(([u, a]) => a[0] >= cutoff).map(([u]) => u), ...requests.filter(r => r.at && daysAgo(r.at) <= 21).map(r => r.uid)])]
-        .filter(u => !hasBuddy.has(u) && (attends[u] || []).length < 3).map(u => ({ uid: u, name: name(u), n: (attends[u] || []).length }));
+        .filter(u => (attends[u] || []).length < 3).map(u => ({ uid: u, name: name(u), n: (attends[u] || []).length, mission: buddyOf[u] || null }))
+        .sort((a, b) => (!!a.mission - !!b.mission));
 
       const max = Math.max(1, ...Object.values(perDate), going.length);
       const bars = pastThu.slice(-10).map(d => `<li><span class="bar" style="height:${Math.max(4, perDate[d] * 100 / max)}%"><b>${perDate[d]}</b></span><small>${esc(fmt(d))}</small></li>`).join("")
@@ -164,10 +178,13 @@
           ${list(never, T("pulse.never.none"), p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.never.row", { n: p.since }))}</small></div>${contactBtns(p, "never")}</li>`)}
         </section>
 
-        <section class="p-card"><h2>${esc(T("pulse.buddy.h"))} <small>${newcomers.length}</small></h2>
+        <section class="p-card"><h2>${esc(T("pulse.buddy.h"))} <small>${newcomers.filter(p => !p.mission).length}</small></h2>
           <p class="help">${esc(T("pulse.buddy.p"))}</p>
           ${list(newcomers, T("pulse.buddy.none"), p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.buddy.row", { n: p.n }))}</small></div>
-            <div class="row-actions"><button type="button" class="btn btn-ghost" data-buddy="${esc(p.uid)}">${esc(T("pulse.buddy.btn"))}</button></div></li>`)}
+            <div class="row-actions">${p.mission
+              ? `<span class="chip st-done">${esc(p.mission.takenBy ? T("pulse.buddy.is", { name: name(p.mission.takenBy) }) : T("pulse.buddy.posted"))}</span><a class="btn btn-ghost" href="/village?post=${encodeURIComponent(p.mission.id)}">${esc(T("pulse.buddy.view"))}</a>`
+              : editing === p.uid ? "" : `<button type="button" class="btn btn-ghost" data-buddy="${esc(p.uid)}">${esc(T("pulse.buddy.btn"))}</button>`}</div>
+            ${editing === p.uid && !p.mission ? buddyForm(p) : ""}</li>`)}
         </section>
 
         ${SESSIONS.filter(s => s.vote && s.date >= today).map(s => {
@@ -186,15 +203,24 @@
     $("pulse").addEventListener("click", async (e) => {
       const c = e.target.closest("[data-contacted]"), b = e.target.closest("[data-buddy]");
       if (c) { c.disabled = true; const r = await data.markContacted(c.dataset.contacted); if (r.ok) await load(); else c.disabled = false; }
-      if (b) {
-        const uid = b.dataset.buddy, nm = (S.members.find(m => m.uid === uid) || S.requests.find(r => r.uid === uid) || {}).name || "";
-        const first = nm.split(" ")[0];
-        b.disabled = true;
-        const r = await data.createPost({ kind: "mission", mtype: "help", as: "team", for: uid, title: T("pulse.bm.title", { name: first }).slice(0, 90),
-          body: T("pulse.bm.body", { name: first }), outcome: T("pulse.bm.outcome", { name: first }), time: "sessions", level: "all", skills: [], link: "" });
-        if (r.ok) { await load(); $("pMsg").textContent = T("pulse.bm.done", { name: first }); } else { b.disabled = false; $("pMsg").textContent = T(r.code || "err.generic"); }
-      }
+      if (b) { editing = b.dataset.buddy; render(); const t = $("bmBody"); if (t) t.focus(); }
+      if (e.target.closest("[data-bm-cancel]")) { const uid = editing; editing = null; render(); const again = document.querySelector(`[data-buddy="${uid}"]`); if (again) again.focus(); }
     });
+    $("pulse").addEventListener("submit", async (e) => {
+      const f = e.target.closest("[data-bm]"); if (!f) return;
+      e.preventDefault();
+      const uid = f.dataset.bm, nm = (S.members.find(m => m.uid === uid) || S.requests.find(r => r.uid === uid) || {}).name || "";
+      const title = $("bmTitle").value.trim(), body = $("bmBody").value.trim(), outcome = $("bmOutcome").value.trim();
+      if (title.length < 3) { $("bmTitle").focus(); return; }
+      if (outcome.length < 3) { $("bmOutcome").focus(); return; }
+      f.querySelector("[type=submit]").disabled = true;
+      const r = await data.createPost({ kind: "mission", mtype: "help", as: "team", for: uid, title, body, outcome, time: "sessions", level: "all", skills: [], link: "" });
+      if (r.ok) { editing = null; await load(); $("pMsg").textContent = T("pulse.bm.done", { name: nm.split(" ")[0] }); }
+      else { f.querySelector("[type=submit]").disabled = false; $("pMsg").textContent = T(r.code || "err.generic"); }
+    });
+    // coming back to this page (back button, other tab): show fresh data, e.g. after deleting a buddy mission on the board
+    addEventListener("pageshow", (e) => { if (e.persisted && S) load(); });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S && !editing) load(); });
     addEventListener("langchange", () => { if (S) render(); });
 
     data.onAuth(async (u) => {
