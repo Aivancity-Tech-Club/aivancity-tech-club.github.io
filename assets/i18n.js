@@ -117,6 +117,8 @@ en: {
   'rules.quick.3.h': 'Earn a skill badge or certification', 'rules.quick.3.p': 'Send the public link in My climb; an organizer checks it. A professional certification is worth +{c}.',
   'm.scenery': 'Scenery',
   'vb.posts.h': 'Posts',
+  'sched.f.lang': 'Language', 'sched.f.alllangs': 'Any language',
+  'lang.in.en': 'In English', 'lang.in.fr': 'In French', 'lang.in.both': 'English & French', 'lang.name.en': 'English', 'lang.name.fr': 'French', 'lang.subs': '{lang} · {subs} subtitles', 'lang.sub.en': 'English', 'lang.sub.fr': 'French',
   'vb.loading': 'Loading the board…',
   'vb.form.as': 'Post as',
   'vb.form.as.help': 'Elders only. A team or council post shows the club as the author; the details panel still says who posted it, so people know who to message.',
@@ -516,6 +518,8 @@ fr: {
   'rules.quick.3.h': 'Obtenez un skill badge ou une certification', 'rules.quick.3.p': 'Envoyez le lien public dans Mon ascension ; un organisateur le vérifie. Une certification professionnelle vaut +{c}.',
   'm.scenery': 'Paysage',
   'vb.posts.h': 'Publications',
+  'sched.f.lang': 'Langue', 'sched.f.alllangs': 'Toutes les langues',
+  'lang.in.en': 'En anglais', 'lang.in.fr': 'En français', 'lang.in.both': 'Anglais et français', 'lang.name.en': 'Anglais', 'lang.name.fr': 'Français', 'lang.subs': '{lang} · sous-titres en {subs}', 'lang.sub.en': 'anglais', 'lang.sub.fr': 'français',
   'vb.loading': 'Chargement du tableau…',
   'vb.form.as': 'Publier en tant que',
   'vb.form.as.help': 'Réservé aux anciens. Une publication de l\'équipe ou du conseil affiche le club comme auteur ; le détail indique toujours qui l\'a publiée, pour savoir à qui écrire.',
@@ -808,7 +812,9 @@ fr: {
 
 function detect() {
   try { const s = localStorage.getItem('lang'); if (s === 'en' || s === 'fr') return s; } catch (e) {}
-  return /^fr\b/i.test(navigator.language || '') ? 'fr' : 'en';
+  // first of the visitor's own languages that the site speaks (system / browser settings)
+  for (const l of (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])) { if (/^fr\b/i.test(l)) return 'fr'; if (/^en\b/i.test(l)) return 'en'; }
+  return 'en';
 }
 let lang = detect();
 function t(key, vars) {

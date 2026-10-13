@@ -80,3 +80,9 @@
 .recap p { margin: 0 !important; font-size: .92rem; }
 .recap p span { font-weight: 700; }
 .recap { background: var(--p-green); color: #1e1e1e; }
+/* the language a session is given in */
+.chip-lang { display: inline-flex; align-items: center; gap: 5px; }
+.chip-lang::before { content: ""; width: 12px; height: 12px; flex: none; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18'/></svg>") center/contain no-repeat; }
+@media (max-width: 600px) { .s-select { flex: 1 1 calc(50% - 4px); } }

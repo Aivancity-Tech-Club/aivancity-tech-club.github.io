@@ -13,6 +13,8 @@
      format      workshop | hackathon | competition | talk | trip | career | build   (the Type filter)
      level       beginner | intermediate | advanced | all   ("all" shows under every level)
      *_fr        French version of title, type, description, time (shown when the site is in French)
+     lang        the language the session is given in: "en" | "fr" | "both"   (shown as a tag, and the Language filter)
+     subs        optional support in the other language, e.g. "fr" = French slides/subtitles for an English talk
      recap       after the session, so people who missed it can catch up:
                  { link: "https://… notes or slides", task: "a 15-minute take-home task", task_fr: "…" }
      vote        for a Planned session, members choose what it will be (one vote each, can change it):
@@ -33,40 +35,40 @@ const CLUB = {
 
 const SESSIONS = [
   // ---------- September: kick-off ----------
-  { date: "2026-09-18", format: "hackathon", level: "all", track: "event", type: "Hackathon · In person", title: "RevenueCat Next Gen Hackathon",
+  { lang: "en", date: "2026-09-18", format: "hackathon", level: "all", track: "event", type: "Hackathon · In person", title: "RevenueCat Next Gen Hackathon",
     description: "Season opener: an in-person hackathon with RevenueCat Next Gen.", time: "Friday event",
     type_fr: "Hackathon · En présentiel",
     title_fr: "Hackathon RevenueCat Next Gen",
     description_fr: "Lancement de la saison : un hackathon en présentiel avec RevenueCat Next Gen.",
     time_fr: "Événement du vendredi" },
-  { date: "2026-09-24", format: "talk", level: "all", track: "event", type: "Presentations", title: "RevenueCat Next Gen: project presentations",
+  { lang: "en", date: "2026-09-24", format: "talk", level: "all", track: "event", type: "Presentations", title: "RevenueCat Next Gen: project presentations",
     description: "Teams presented the projects they built during the hackathon.",
     type_fr: "Présentations",
     title_fr: "RevenueCat Next Gen : présentation des projets",
     description_fr: "Les équipes ont présenté les projets construits pendant le hackathon." },
 
   // ---------- October: find the Thursday rhythm ----------
-  { date: "2026-10-01", format: "workshop", level: "beginner", track: "tech", type: "Workshop", title: "Basics of Coding",
+  { lang: "en", date: "2026-10-01", format: "workshop", level: "beginner", track: "tech", type: "Workshop", title: "Basics of Coding",
     description: "The basics of coding, from writing your first lines to putting a project online.",
     type_fr: "Atelier",
     title_fr: "Les bases du code",
     description_fr: "Les bases de la programmation, des premières lignes à la mise en ligne d'un projet." },
-  { date: "2026-10-08", format: "workshop", level: "intermediate", track: "tech", type: "CS50 2026", title: "CS50 2026: Memory",
+  { lang: "en", date: "2026-10-08", format: "workshop", level: "intermediate", track: "tech", type: "CS50 2026", title: "CS50 2026: Memory",
     description: "A CS50 session on memory: how programs store data, pointers and what really happens in RAM.",
     type_fr: "CS50 2026",
     title_fr: "CS50 2026 : la mémoire",
     description_fr: "Une séance CS50 sur la mémoire : comment les programmes stockent les données, les pointeurs et ce qui se passe vraiment dans la RAM." },
-  { date: "2026-10-15", format: "talk", level: "advanced", track: "tech", type: "Paper jam", title: "Paper Jam: a recent AI paper",
+  { lang: "en", date: "2026-10-15", format: "talk", level: "advanced", track: "tech", type: "Paper jam", title: "Paper Jam: a recent AI paper",
     description: "We break down a recent AI research paper together and try to rebuild its core idea in one session.",
     type_fr: "Paper jam",
     title_fr: "Paper Jam : un article récent en IA",
     description_fr: "On décortique ensemble un article de recherche récent en IA et on essaie d'en reconstruire l'idée centrale en une séance." },
-  { date: "2026-10-22", format: "workshop", level: "all", track: "event", type: "Workshop + build", title: "Ship-It Night: Halloween Edition",
+  { lang: "en", date: "2026-10-22", format: "workshop", level: "all", track: "event", type: "Workshop + build", title: "Ship-It Night: Halloween Edition",
     description: "A short walkthrough of how to build a simple game, then everyone builds and ships something Halloween-themed.",
     type_fr: "Atelier + build",
     title_fr: "Ship-It Night : spécial Halloween",
     description_fr: "Une courte démo pour créer un petit jeu, puis chacun construit et publie quelque chose sur le thème d'Halloween." },
-  { date: "2026-10-29", format: "trip", level: "beginner", track: "event", type: "Field trip · Beginners", title: "Learn to code in Swift at Apple",
+  { date: "2026-10-29", format: "trip", level: "beginner", track: "event", type: "Field trip · Beginners", title: "Learn to code in Swift at Apple", lang: "fr",
     description: "A beginners' trip to Apple on the Champs-Élysées: an iOS engineer introduces Swift with Swift Playgrounds (in French). Bring an iPad if you have one, and confirm only if you're sure to come.",
     time: "5:00 – 6:00 PM", room: "Apple Office, Champs-Élysées",
     link: "https://forms.cloud.microsoft/e/16AcR8eukd", linkText: "Confirm your attendance",
@@ -77,39 +79,39 @@ const SESSIONS = [
     linkText_fr: "Confirmer ma présence" },
 
   // ---------- November: going deeper ----------
-  { date: "2026-11-05", format: "talk", level: "all", track: "tech", type: "Discussion", title: "Speaker Spotlight", planned: true,
+  { lang: "en", date: "2026-11-05", format: "talk", level: "all", track: "tech", type: "Discussion", title: "Speaker Spotlight", planned: true,
     description: "We watch a talk by a well-known engineer or founder together, then discuss what we can take from it.",
     type_fr: "Discussion",
     title_fr: "Speaker Spotlight",
     description_fr: "On regarde ensemble la conférence d'un ingénieur ou d'une fondatrice reconnu(e), puis on discute de ce qu'on peut en retenir." },
-  { date: "2026-11-12", format: "competition", level: "intermediate", track: "event", type: "Coding league", title: "Coding Challenge", planned: true,
+  { lang: "en", date: "2026-11-12", format: "competition", level: "intermediate", track: "event", type: "Coding league", title: "Coding Challenge", planned: true,
     description: "A league-style coding competition. Points count toward your bandana.",
     type_fr: "Ligue de code",
     title_fr: "Coding Challenge",
     description_fr: "Une compétition de code façon ligue. Les points comptent pour votre bandana." },
-  { date: "2026-11-19", format: "career", level: "all", track: "tech", type: "Career", title: "Get Hired: make yourself more hireable", planned: true,
+  { lang: "en", date: "2026-11-19", format: "career", level: "all", track: "tech", type: "Career", title: "Get Hired: make yourself more hireable", planned: true,
     description: "CVs, GitHub profiles, LinkedIn and interview prep: practical steps to stand out for internships and jobs.",
     type_fr: "Carrière",
     title_fr: "Get Hired : devenir plus recrutable",
     description_fr: "CV, profil GitHub, LinkedIn et préparation aux entretiens : des conseils concrets pour se démarquer en stage et en emploi." },
-  { date: "2026-11-26", format: "career", level: "all", track: "tech", type: "Business", title: "Starting a Student Enterprise", planned: true,
+  { lang: "en", date: "2026-11-26", format: "career", level: "all", track: "tech", type: "Business", title: "Starting a Student Enterprise", planned: true,
     description: "What it takes to start a business as a student, from first idea to the paperwork.",
     type_fr: "Entrepreneuriat",
     title_fr: "Créer une entreprise étudiante",
     description_fr: "Ce qu'il faut pour lancer une entreprise en étant étudiant, de la première idée aux démarches." },
 
   // ---------- December: the big finish ----------
-  { date: "2026-12-03", format: "workshop", level: "advanced", track: "tech", type: "Systems design", title: "Systems Design: how would you build it?", planned: true,
+  { lang: "en", date: "2026-12-03", format: "workshop", level: "advanced", track: "tech", type: "Systems design", title: "Systems Design: how would you build it?", planned: true,
     description: "Pick one well-known system, such as a search engine, and design it together on the whiteboard.",
     type_fr: "Conception de systèmes",
     title_fr: "Systems Design : comment le construiriez-vous ?",
     description_fr: "On choisit un système connu, comme un moteur de recherche, et on le conçoit ensemble au tableau." },
-  { date: "2026-12-10", format: "build", level: "all", track: "tech", type: "Build day", title: "Demo Polish Day", planned: true,
+  { lang: "en", date: "2026-12-10", format: "build", level: "all", track: "tech", type: "Build day", title: "Demo Polish Day", planned: true,
     description: "Polish your projects and demos before the finale.",
     type_fr: "Journée build",
     title_fr: "Demo Polish Day",
     description_fr: "On peaufine projets et démos avant la finale." },
-  { date: "2026-12-17", format: "hackathon", level: "all", track: "event", type: "Hackathon", title: "Season Finale Hackathon", planned: true,
+  { lang: "en", date: "2026-12-17", format: "hackathon", level: "all", track: "event", type: "Hackathon", title: "Season Finale Hackathon", planned: true,
     description: "We close the season with a hackathon.",
     type_fr: "Hackathon",
     title_fr: "Hackathon de fin de saison",
@@ -147,6 +149,7 @@ function sessionHTML(s, { next = false, past = false } = {}) {
   const chips = [
     `<span class="chip">${esc(F(s, "type") || L("track." + s.track) || L("sched.session"))}</span>`,
     s.track === "gdg" ? `<span class="chip">GDG on Campus</span>` : "",
+    s.lang ? `<span class="chip chip-lang">${esc(langLabel(s))}</span>` : "",
     s.level ? `<span class="chip chip-level lv-${esc(s.level)}">${esc(L("level." + s.level))}</span>` : "",
     next ? `<span class="chip chip-next">${L("sched.next")}</span>` : "",
     past ? `<span class="chip chip-done">${L("sched.done")}</span>` : "",
@@ -170,6 +173,12 @@ function sessionHTML(s, { next = false, past = false } = {}) {
         ${!past ? `<p class="session-actions">${s.link ? `<a class="btn btn-primary session-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${esc(F(s, "linkText") || L("sched.more"))} ↗</a>` : ""}<button type="button" class="cal-btn" data-ics="${esc(s.date)}">${esc(L("sched.cal.one"))}</button></p>` : ""}
       </div>
     </article>`;
+}
+
+/* "In English", "In French · English subtitles", "English & French" */
+function langLabel(s) {
+  const main = L("lang.in." + s.lang);
+  return s.subs && s.subs !== s.lang && s.lang !== "both" ? L("lang.subs", { lang: main, subs: L("lang.sub." + s.subs) }) : main;
 }
 
 function recapHTML(s) {
@@ -269,7 +278,7 @@ function icsFold(line) {                                 // lines longer than 75
 }
 function icsEvent(s, stamp) {
   const t = icsTimes(s), title = F(s, "title"), room = F(s, "room") || L("sched.room");
-  const desc = [F(s, "description"), s.planned ? L("sched.cal.planned") : "", s.link ? s.link : "", SITE + "/schedule"].filter(Boolean).join("\n\n");
+  const desc = [F(s, "description"), s.lang ? langLabel(s) : "", s.planned ? L("sched.cal.planned") : "", s.link ? s.link : "", SITE + "/schedule"].filter(Boolean).join("\n\n");
   const next = (d) => { const x = parseDate(d); x.setDate(x.getDate() + 1); return x.getFullYear() + String(x.getMonth() + 1).padStart(2, "0") + String(x.getDate()).padStart(2, "0"); };
   return [
     "BEGIN:VEVENT",
@@ -316,13 +325,15 @@ document.addEventListener("click", (e) => {
    The choice is kept in the address (?when=past&level=beginner&type=workshop), so a filtered view can be shared. */
 const FORMATS = ["workshop", "hackathon", "competition", "talk", "trip", "career", "build"];
 const LEVELS = ["beginner", "intermediate", "advanced"];
-const FILTER = { when: "upcoming", level: "", type: "" };
+const LANGS = ["en", "fr"];
+const FILTER = { when: "upcoming", level: "", type: "", lang: "" };
 (function readFilters() {
   try {
     const q = new URLSearchParams(location.search);
     if (q.get("when") === "past") FILTER.when = "past";
     if (LEVELS.includes(q.get("level"))) FILTER.level = q.get("level");
     if (FORMATS.includes(q.get("type"))) FILTER.type = q.get("type");
+    if (LANGS.includes(q.get("lang"))) FILTER.lang = q.get("lang");
   } catch (e) {}
 })();
 function writeFilters() {
@@ -331,10 +342,12 @@ function writeFilters() {
     if (FILTER.when === "past") q.set("when", "past");
     if (FILTER.level) q.set("level", FILTER.level);
     if (FILTER.type) q.set("type", FILTER.type);
+    if (FILTER.lang) q.set("lang", FILTER.lang);
     history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
   } catch (e) {}
 }
-const matches = (s) => (!FILTER.level || s.level === FILTER.level || s.level === "all") && (!FILTER.type || s.format === FILTER.type);
+const matches = (s) => (!FILTER.level || s.level === FILTER.level || s.level === "all") && (!FILTER.type || s.format === FILTER.type)
+  && (!FILTER.lang || s.lang === FILTER.lang || s.lang === "both" || s.subs === FILTER.lang);
 
 function renderSeason(el) {
   if (!el) return;
@@ -342,7 +355,7 @@ function renderSeason(el) {
   const firstReal = all.find(s => s._d >= t && s.track !== "break");
   const real = all.filter(s => s.track !== "break");
   const nUp = real.filter(s => s._d >= t).length, nPast = real.filter(s => s._d < t).length;
-  const filtering = !!(FILTER.level || FILTER.type);
+  const filtering = !!(FILTER.level || FILTER.type || FILTER.lang);
   const past = FILTER.when === "past";
   let list = all.filter(s => (past ? s._d < t : s._d >= t));
   // breaks only make sense in the plain upcoming view (so nobody turns up to an empty room)
@@ -360,6 +373,8 @@ function renderSeason(el) {
           <select data-f="level">${opt("", L("sched.f.alllevels"), FILTER.level)}${LEVELS.map(l => opt(l, L("level." + l), FILTER.level)).join("")}</select></label>
         <label class="s-select${FILTER.type ? " on" : ""}"><span class="sr-only">${esc(L("sched.f.type"))}</span>
           <select data-f="type">${opt("", L("sched.f.alltypes"), FILTER.type)}${usedFormats.map(f => opt(f, L("fmt." + f), FILTER.type)).join("")}</select></label>
+        ${real.some(s => s.lang) ? `<label class="s-select${FILTER.lang ? " on" : ""}"><span class="sr-only">${esc(L("sched.f.lang"))}</span>
+          <select data-f="lang">${opt("", L("sched.f.alllangs"), FILTER.lang)}${LANGS.map(l => opt(l, L("lang.name." + l), FILTER.lang)).join("")}</select></label>` : ""}
         ${filtering ? `<button type="button" class="s-clear" data-reset>${esc(L("sched.reset"))}</button>` : ""}
       </div>
     </div>`;
@@ -388,7 +403,7 @@ function renderSeason(el) {
     el.dataset.wired = "1";
     el.addEventListener("click", (e) => {
       const b = e.target.closest("[data-when], [data-reset]"); if (!b) return;
-      if (b.hasAttribute("data-reset")) { FILTER.level = ""; FILTER.type = ""; } else FILTER.when = b.dataset.when;
+      if (b.hasAttribute("data-reset")) { FILTER.level = ""; FILTER.type = ""; FILTER.lang = ""; } else FILTER.when = b.dataset.when;
       writeFilters(); renderSeason(el);
       const again = el.querySelector(b.dataset.when ? `[data-when="${b.dataset.when}"]` : "select"); if (again) again.focus();
     });
