@@ -58,11 +58,11 @@ const SESSIONS = [
     type_fr: "CS50 2026",
     title_fr: "CS50 2026 : la mémoire",
     description_fr: "Une séance CS50 sur la mémoire : comment les programmes stockent les données, les pointeurs et ce qui se passe vraiment dans la RAM." },
-  { lang: "en", date: "2026-10-15", format: "talk", level: "advanced", track: "tech", type: "Paper jam", title: "Paper Jam: a recent AI paper",
-    description: "We break down a recent AI research paper together and try to rebuild its core idea in one session.",
-    type_fr: "Paper jam",
-    title_fr: "Paper Jam : un article récent en IA",
-    description_fr: "On décortique ensemble un article de recherche récent en IA et on essaie d'en reconstruire l'idée centrale en une séance." },
+  { lang: "en", date: "2026-10-15", format: "workshop", level: "beginner", track: "tech", type: "Workshop", title: "Version Control with Git and GitHub",
+    description: "Why every developer uses version control: commits, branches, merging and pull requests. Bring a laptop, you'll push your first repository to GitHub.",
+    type_fr: "Atelier",
+    title_fr: "Le versionnage avec Git et GitHub",
+    description_fr: "Pourquoi tous les développeurs utilisent le versionnage : commits, branches, fusions et pull requests. Apportez un ordinateur, vous publierez votre premier dépôt sur GitHub." },
   { lang: "en", date: "2026-10-22", format: "workshop", level: "all", track: "event", type: "Workshop + build", title: "Ship-It Night: Halloween Edition",
     description: "A short walkthrough of how to build a simple game, then everyone builds and ships something Halloween-themed.",
     type_fr: "Atelier + build",
@@ -123,7 +123,7 @@ const SESSIONS = [
 ];
 
 /* Ideas not placed yet (not shown on the site):
-   Trivia Night (league) · Game Night (league) · topic workshop + open discussion ·
+   Paper Jam: a recent AI paper (moved from 15 Oct) · Trivia Night (league) · Game Night (league) · topic workshop + open discussion ·
    Programming Time without AI (x2) · Algorithms sessions (x2) */
 
 /* ---------- rendering (no need to edit below) ---------- */
