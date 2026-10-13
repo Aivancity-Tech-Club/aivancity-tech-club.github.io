@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261012f">
+  <link rel="stylesheet" href="assets/styles.css?v=20261013e">
   <style>
     /* Category palette: tint (card ground), ink (accent text), solid (pills) */
     .c-show_up { --tint: #e3f4fb; --acc: #0b57d0; --solid: #1a73e8; }
@@ -42,6 +42,15 @@
     .toc a:hover { background: var(--ink); color: var(--bg); }
 
     .facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .quick { margin-top: 26px; background: var(--surface); border: var(--stroke) solid var(--line); border-radius: var(--radius); padding: clamp(18px, 3vw, 28px); max-width: 860px; }
+    .quick h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; margin: 0 0 14px; }
+    .quick-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+    .quick-list li { display: flex; gap: 14px; align-items: flex-start; }
+    .quick-list b { flex: none; min-width: 56px; text-align: center; padding: 6px 10px; border-radius: 999px; background: #1a73e8; color: #fff; font-variant-numeric: tabular-nums; }
+    .quick-list strong { display: block; }
+    .quick-list span { color: var(--ink-soft); font-size: .95rem; }
+    .quick-list a { color: inherit; font-weight: 700; }
+    .quick-more { margin: 14px 0 0; font-size: .92rem; color: var(--ink-soft); }
     .fact { font-family: var(--mono); font-size: .82rem; padding: 5px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); }
     .fact b { font-family: var(--sans); }
 
@@ -82,7 +91,7 @@
     .who.verify { color: #5b3cc4; border-color: #6f4fd8; background: #efeafd; }
     .pts { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
     .pill { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 14px; border-radius: 999px; background: var(--solid); color: #fff; font-weight: 800; font-size: 1.15rem; border: var(--stroke) solid var(--black); font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .pill small { font-size: .78rem; font-weight: 700; opacity: .9; }
+    .pill small { font-size: .78rem; font-weight: 700; }
     .pill.gold { background: #f9ab00; color: #1e1e1e; } .pill.silver { background: #c9ced6; color: #1e1e1e; } .pill.bronze { background: #d38b56; color: #1e1e1e; }
     .podium { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
     .podium .pill { font-size: 1rem; padding: 5px 11px; }
@@ -108,6 +117,7 @@
     .acc .art .base { opacity: .22; }
     .acc small { display: block; font-weight: 400; color: var(--ink-soft); font-size: .76rem; margin-top: 2px; }
     .acc.earned { border-color: #f9ab00; background: color-mix(in srgb, #ffe7a5 45%, var(--surface)); }
+    .acc.earned, .acc.earned small { color: #1e1e1e; } .acc.earned { background: #ffe7a5; }
 
     .fair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
     .fair li { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: var(--stroke) solid var(--line); border-radius: 18px; padding: 14px 16px; }
@@ -122,13 +132,13 @@
       .kv { grid-template-columns: 1fr; gap: 2px; } .kv dd { margin-bottom: 8px; }
     }
   </style>
-  <script src="assets/i18n.js?v=20261012f"></script>
+  <script src="assets/i18n.js?v=20261013e"></script>
 </head>
 <body data-i18n-title="nav.rules">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
   <header class="site-header">
     <div class="wrap">
-      <a class="brand" href="/">
+      <a class="brand" href="/" aria-label="aivancity Tech Club, home">
         <img src="assets/tech-club-logo.svg" alt="">
         <span>aivancity Tech Club</span>
       </a>
@@ -136,9 +146,10 @@
         <a href="/about" data-i18n="nav.about">About</a>
         <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
         <a href="/village" data-member data-i18n="nav.board">Village</a>
-        <a href="/join" class="nav-join" data-join data-i18n="nav.join">Join</a>
-        <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
-        <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
+        <a href="/mountain" class="nav-signin" data-join data-i18n="nav.signin">Sign in</a>
+        <a href="/apply" class="nav-cta nav-join" data-join data-i18n="nav.join">Join</a>
+        <a class="nav-cta" href="/mountain" data-member data-i18n="nav.mountain">Mountain</a>
+        <button type="button" class="lang-toggle" aria-label="FR: afficher le site en français" lang="fr">FR</button>
       </nav>
     </div>
   </header>
@@ -150,6 +161,7 @@
         <h1 data-i18n="rules.h1">Become <b>a ninja</b></h1>
         <p class="lede" data-i18n="rules.lede">Every point comes from something anyone can check. Organizers record what happened; these rules decide the points.</p>
         <div class="facts" id="facts"></div>
+        <section class="quick" id="quick" aria-labelledby="quickH" hidden></section>
       </div>
     </section>
 
@@ -166,12 +178,12 @@
   <footer class="site-footer">
     <div class="wrap">
       <span data-i18n="rules.source">Source of truth: <a href="rules/rules.yaml">rules/rules.yaml</a> · <a href="rules/GOVERNANCE.md">how rules change</a></span>
-      <span><a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span></span>
+      <span><a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a></span>
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
 
-  <script src="assets/js-yaml.min.js?v=20261012f"></script>
+  <script src="assets/js-yaml.min.js?v=20261013e"></script>
   <script>
   (() => {
     const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -213,6 +225,19 @@
       facts.innerHTML =
         `<span class="fact">${T("rules.fact.version", { v: esc(R.version) })}</span>` +
         `<span class="fact">${T("rules.fact.cap", { n: R.sessions.point_cap_per_regular_session })}</span><span class="fact">${T("rules.fact.ways", { n: R.rules.length })}</span>`;
+
+      // start here: the three easiest ways to earn your first points (numbers come from the rulebook)
+      const pts = (id) => ((R.rules.find(r => r.id === id) || {}).points || 0);
+      const mp = Math.min(...["mentoring", "collab", "club_quest"].map(pts).filter(Boolean));
+      const quick = document.getElementById("quick");
+      quick.innerHTML = `<h2 id="quickH">${T("rules.quick.h")}</h2>
+        <ol class="quick-list">
+          <li><b>+${pts("attend")}</b><div><strong>${esc(T("rules.quick.1.h"))}</strong><span>${esc(T("rules.quick.1.p"))}</span></div></li>
+          <li><b>+${mp}</b><div><strong>${esc(T("rules.quick.2.h"))}</strong><span>${T("rules.quick.2.p")}</span></div></li>
+          <li><b>+${pts("skill_badge")}</b><div><strong>${esc(T("rules.quick.3.h"))}</strong><span>${esc(T("rules.quick.3.p", { c: pts("certification") }))}</span></div></li>
+        </ol>
+        <p class="quick-more">${esc(T("rules.quick.more"))}</p>`;
+      quick.hidden = false;
 
       const peaks = R.ranks.map((k, i) => `
         <article class="peakcard ${esc(k.id)}" style="background:${RANK_BG[k.id] || "#fff"}">

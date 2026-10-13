@@ -113,6 +113,24 @@ Nothing to set up: it uses the `board` collection (comments live under each post
 - **Post as the team:** organizers can pick "Organizing team" or "Council of Elders" as the author when they post.
   The details panel still says who posted it, so people know who to message.
 
+## 7c. Keeping members coming back
+
+- **Club pulse (`/pulse`, organizers only):** attendance per Thursday, who is drifting away (came twice or more, missed the
+  last two Thursdays), who signed up but never came, and newcomers without a buddy. "Message on WhatsApp" opens a
+  ready-made message using the phone number from their `/apply` form; "Mark as contacted" (collection `pulse`) tells the
+  other organizers so nobody gets two messages. Organizers find the page in their profile menu.
+- **Buddies:** "Post a buddy mission" puts a Help mission on the Village board in the name of the organizing team. The
+  first member to take it is the newcomer's buddy; confirm it like any mission once they've met.
+- **"I'm going" (collection `rsvps`) and votes (collection `votes`):** members only, one per person and session.
+- **Votes on a planned session:** add a `vote` to the session in `assets/schedule.js`, for example
+  `vote: { question: "What should this session be?", options: [{ id: "trivia", title: "Trivia Night" }, { id: "algo", title: "Algorithms" }] }`.
+  Results show on `/pulse`; then replace the session's title with the winner.
+- **Recaps:** after a session, add `recap: { link: "https://… slides or notes", task: "a 15-minute take-home task" }`
+  to it in `assets/schedule.js`. Past sessions then show "Missed it? Catch up".
+- **Camps (collection `camps`):** each member's own page (`/camp`), members only. Members can report a camp; organizers
+  can hide it from the camp page.
+- **Feedback:** the `/feedback` form has a "Why I stopped coming" topic; the drifting-away message links to it.
+
 ## 8. Every Thursday: the check-in code
 Until the organizer screens are built (next step of the project), create the code in the console:
 1. **Firestore → Data → Start collection** (first time) named `checkinCodes`.

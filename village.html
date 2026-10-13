@@ -23,16 +23,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261012f">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261012f">
-  <link rel="stylesheet" href="assets/village.css?v=20261012f">
-  <script src="assets/i18n.js?v=20261012f"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261013e">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261013e">
+  <link rel="stylesheet" href="assets/village.css?v=20261013e">
+  <script src="assets/i18n.js?v=20261013e"></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
   <header class="site-header">
     <div class="wrap">
-      <a class="brand" href="/">
+      <a class="brand" href="/" aria-label="aivancity Tech Club, home">
         <img src="assets/tech-club-logo.svg" alt="">
         <span>aivancity Tech Club</span>
       </a>
@@ -40,9 +40,10 @@
         <a href="/about" data-i18n="nav.about">About</a>
         <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
         <a href="/village" aria-current="page" data-member data-i18n="nav.board">Village</a>
-        <a href="/join" class="nav-join" data-join data-i18n="nav.join">Join</a>
-        <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
-        <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
+        <a href="/mountain" class="nav-signin" data-join data-i18n="nav.signin">Sign in</a>
+        <a href="/apply" class="nav-cta nav-join" data-join data-i18n="nav.join">Join</a>
+        <a class="nav-cta" href="/mountain" data-member data-i18n="nav.mountain">Mountain</a>
+        <button type="button" class="lang-toggle" aria-label="FR: afficher le site en français" lang="fr">FR</button>
       </nav>
     </div>
   </header>
@@ -159,6 +160,9 @@
               <div class="field"><label for="wStart" data-i18n="vb.week.start">First day (a Monday)</label><input class="input" id="wStart" type="date"></div>
               <ol class="week-inputs" id="weekInputs"></ol>
             </div>
+            <div class="field" id="expField"><label for="pExpires" data-i18n="vb.form.expires">Closes on (optional)</label>
+              <input class="input" id="pExpires" type="date" style="max-width:240px">
+              <p class="help" data-i18n="vb.form.expires.help">After this day the post closes by itself. Leave empty to keep it up until you close it.</p></div>
             <div class="field"><label for="pLink" data-i18n="vb.form.link">Link (optional)</label>
               <input class="input" id="pLink" type="url" inputmode="url" maxlength="300" placeholder="https://"></div>
             <p class="notice bad form-msg" id="formMsg" role="alert"></p>
@@ -167,6 +171,7 @@
           </form>
 
           <p class="notice bad form-msg" id="msg" role="alert"></p>
+          <h2 class="sr-only" data-i18n="vb.posts.h">Posts</h2>
           <p class="vb-count help" id="count" aria-live="polite"></p>
           <div class="cards" id="posts"></div>
 
@@ -187,16 +192,16 @@
   <footer class="site-footer">
     <div class="wrap">
       <span class="copy">© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
-      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a>
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261012f"></script>
-  <script src="assets/schedule.js?v=20261012f"></script>
-  <script src="assets/platform/config.js?v=20261012f"></script>
-  <script src="assets/platform/engine.js?v=20261012f"></script>
-  <script src="assets/platform/signin.js?v=20261012f"></script>
-  <script src="assets/platform/data.js?v=20261012f"></script>
+  <script src="assets/js-yaml.min.js?v=20261013e"></script>
+  <script src="assets/schedule.js?v=20261013e"></script>
+  <script src="assets/platform/config.js?v=20261013e"></script>
+  <script src="assets/platform/engine.js?v=20261013e"></script>
+  <script src="assets/platform/signin.js?v=20261013e"></script>
+  <script src="assets/platform/data.js?v=20261013e"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -254,7 +259,7 @@
       const res = PointsEngine.compute(rb, facts, members, regular, today);
       ranks = Object.fromEntries(members.map(m => [m.uid, res.byUid[m.uid] && res.byUid[m.uid].isMember ? res.byUid[m.uid].rank : "white"]));
       const mine = res.byUid[me.uid];
-      if (window.ClubMe && names[me.uid]) ClubMe.save(names[me.uid], mine && mine.isMember ? mine.rank : null);
+      if (window.ClubMe && names[me.uid]) ClubMe.save(names[me.uid], mine && mine.isMember ? mine.rank : null, isOrg ? 'organizer' : 'member');
     }
     async function refresh() {
       [posts, active] = await Promise.all([data.loadBoard(isOrg), data.myMission()]);
@@ -277,7 +282,7 @@
       ].map(x => `<li>${x}</li>`).join("");
     }
     function renderFilters() {
-      const n = (kind) => posts.filter(p => visible(p) && (!kind || p.kind === kind)).length;
+      const n = (kind) => posts.filter(p => visible(p) && !(pastWeek(p) && kind !== "week") && (!kind || p.kind === kind)).length;
       const k = (v, label) => `<button type="button" class="vb-tab" data-kind="${v}" aria-pressed="${F.kind === v}">${esc(label)} <small>${n(v)}</small></button>`;
       $("filters").setAttribute("aria-label", T("vb.title"));
       $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) + k("week", T("vb.f.week"));
@@ -287,23 +292,30 @@
       $("subfilters").innerHTML = showSub ? `<button type="button" class="fchip" data-open aria-pressed="${F.openOnly}">${esc(T("vb.f.open"))}</button>` +
         m("help", T("vb.mt.help")) + m("build", T("vb.mt.build")) + m("club", T("vb.mt.club")) : "";
     }
-    const visible = (p) => (isOrg || p.by === me.uid || p.reportCount < AUTO_HIDE) && (p.status !== "closed" || p.by === me.uid || isOrg);
+    // expiry is worked out from the date on every visit, so nothing has to run on a server to close a post
+    const expired = (p) => p.kind !== "week" && !!p.expires && today > p.expires && (p.kind !== "mission" || p.status === "open");
+    const pastWeek = (p) => p.kind === "week" && weekState(p) === "past";
+    const visible = (p) => (isOrg || p.by === me.uid || p.reportCount < AUTO_HIDE)
+      && ((p.status !== "closed" && !expired(p)) || p.by === me.uid || isOrg)
+      && (!pastWeek(p) || F.kind === "week");
     function statusLine(p) {
-      if (p.kind !== "mission") return "";
+      if (expired(p)) return `<span class="chip st-closed">${esc(T("vb.st.expired"))}</span>`;
+      const until = p.expires && (p.kind !== "mission" || p.status === "open") ? `<span class="chip">${esc(T("vb.until", { d: fmtDate(p.expires) }))}</span>` : "";
+      if (p.kind !== "mission") return until;
       const key = { open: "vb.st.open", taken: "vb.st.taken", review: "vb.st.review", done: "vb.st.done", closed: "vb.st.closed" }[p.status] || "vb.st.open";
-      return `<span class="chip st-${esc(p.status)}">${esc(T(key, { name: nameOf(p.takenBy) }))}</span>` + (stale(p) ? `<span class="chip st-stale">${esc(T("vb.stale"))}</span>` : "");
+      return `<span class="chip st-${esc(p.status)}">${esc(T(key, { name: nameOf(p.takenBy) }))}</span>` + until + (stale(p) ? `<span class="chip st-stale">${esc(T("vb.stale"))}</span>` : "");
     }
     function actions(p) {
       const a = [], btn = (act, label, cls = "btn-ghost") => a.push(`<button type="button" class="btn ${cls} vb-act" data-act="${act}" data-id="${p.id}">${esc(label)}</button>`);
       const mineP = p.by === me.uid, takenByMe = p.takenBy === me.uid;
       if (p.kind === "mission") {
         const pts = missionPts(p.mtype).n;
-        if (p.status === "open" && !mineP) { if (active) a.push(`<span class="help">${esc(T("vb.busy.note"))}</span>`); else btn("take", T("vb.a.take"), "btn-primary"); }
+        if (p.status === "open" && !mineP && !expired(p)) { if (active) a.push(`<span class="help">${esc(T("vb.busy.note"))}</span>`); else btn("take", T("vb.a.take"), "btn-primary"); }
         if (p.status === "taken" && takenByMe) { btn("finish", T("vb.a.finish"), "btn-primary"); btn("release", T("vb.a.release")); }
         if (stale(p) && !takenByMe) btn("reopen", T("vb.a.reopen"));
         if (p.status === "review" && (mineP || (isOrg && !takenByMe))) btn("confirm", T("vb.a.confirm", { n: pts, name: nameOf(p.takenBy) }), "btn-primary");
         if (p.status === "review" && takenByMe) a.push(`<span class="help">${esc(T("vb.wait.poster", { name: nameOf(p.by) }))}</span>`);
-        if (p.status === "open" && mineP) btn("close", T("vb.a.close"));
+        if (p.status === "open" && mineP && !expired(p)) btn("close", T("vb.a.close"));
       }
       if (mineP && (p.kind !== "mission" || ["open", "closed"].includes(p.status))) btn("delete", armedDelete === p.id ? T("vb.a.sure") : T("vb.a.delete"), armedDelete === p.id ? "btn-danger" : "btn-ghost");
       return a.join("");
@@ -413,13 +425,13 @@
       renderHow(); renderFilters();
       const mine = posts.find(p => p.id === active);
       $("mine").innerHTML = mine ? `<div class="mine"><p class="eyebrow" style="margin:0">${esc(T("vb.mine.h"))}</p>${cardHTML(mine, "is-mine")}</div>` : "";
-      const pin = F.kind && F.kind !== "week" || F.q ? null : pinnedWeek();
+      const pin = pinnedWeek(); // always on top while there is a current or upcoming theme
       $("weekPin").innerHTML = pin ? cardHTML(pin, "is-pin") : "";
       const q = F.q.toLowerCase();
       const list = posts.filter(p => p.id !== active && (!pin || p.id !== pin.id))
         .filter(visible)
         .filter(p => !F.kind || p.kind === F.kind)
-        .filter(p => !F.openOnly || (p.kind === "mission" && p.status === "open"))
+        .filter(p => !F.openOnly || (p.kind === "mission" && p.status === "open" && !expired(p)))
         .filter(p => !F.mtype || (p.kind === "mission" && p.mtype === F.mtype))
         .filter(p => !q || [p.title, p.body, p.outcome, (p.skills || []).join(" ")].join(" ").toLowerCase().includes(q));
       $("count").textContent = F.q || F.kind || F.openOnly || F.mtype ? T("vb.count", { n: list.length }) : "";
@@ -515,7 +527,7 @@
     }
     function syncForm() {
       const k = (document.querySelector("[name=kind]:checked") || {}).value;
-      $("mtypeField").hidden = k !== "mission"; $("missionFields").hidden = k !== "mission"; $("eventFields").hidden = k !== "event"; $("weekFields").hidden = k !== "week";
+      $("mtypeField").hidden = k !== "mission"; $("missionFields").hidden = k !== "mission"; $("eventFields").hidden = k !== "event"; $("weekFields").hidden = k !== "week"; $("expField").hidden = k === "week"; $("pExpires").min = today;
       if (k === "week" && !$("weekInputs").children.length)
         $("weekInputs").innerHTML = [0, 1, 2, 3, 4, 5, 6].map(i => `<li class="week-input"><input class="input" data-wt="${i}" maxlength="90" aria-label="${esc(T("vb.week.day", { n: i + 1 }) + " · " + T("vb.week.task"))}" placeholder="${esc(T("vb.week.day", { n: i + 1 }))}"><input class="input" data-wl="${i}" type="url" maxlength="300" placeholder="https://" aria-label="${esc(T("vb.week.day", { n: i + 1 }) + " · " + T("vb.week.link"))}"></li>`).join("");
     }
@@ -526,6 +538,7 @@
     $("postForm").addEventListener("submit", async (e) => {
       e.preventDefault(); say($("formMsg"), "");
       const p = { kind: document.querySelector("[name=kind]:checked").value, mtype: (document.querySelector("[name=mtype]:checked") || {}).value,
+        expires: $("pExpires").value,
         as: isOrg ? ((document.querySelector("[name=as]:checked") || {}).value || "") : "",
         title: $("pTitle").value.trim(), body: $("pBody").value.trim(), link: $("pLink").value.trim(), date: $("pDate").value, where: $("pWhere").value.trim() };
       if (p.title.length < 3) { say($("formMsg"), T("vb.err.title")); $("pTitle").focus(); return; }
@@ -534,6 +547,8 @@
         p.skills = $("pSkills").value.split(",").map(x => x.trim()).filter(Boolean).slice(0, 5).map(x => x.slice(0, 24));
         if (p.outcome.length < 3) { say($("formMsg"), T("vb.err.outcome")); $("pOutcome").focus(); return; }
       }
+      if (p.kind === "week" || !/^\d{4}-\d{2}-\d{2}$/.test(p.expires)) p.expires = "";
+      if (p.expires && p.expires < today) { say($("formMsg"), T("vb.err.expires")); $("pExpires").focus(); return; }
       if (p.link && !/^https:\/\/\S+$/.test(p.link)) { say($("formMsg"), T("vb.err.link")); $("pLink").focus(); return; }
       if (p.kind === "week") {
         p.start = $("wStart").value;

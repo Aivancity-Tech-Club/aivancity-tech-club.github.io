@@ -35,9 +35,9 @@
 .k-oss .chip.kind { background: var(--p-green); color: var(--black); }
 .chip.pts { font-weight: 700; }
 .chip.st-open { border-style: dashed; }
-.chip.st-taken, .chip.st-review { background: var(--p-yellow); color: var(--black); }
-.chip.st-done { background: var(--p-green); color: var(--black); }
-.chip.st-stale, .chip.st-reported { background: var(--p-red); color: var(--black); }
+.chip.st-taken, .chip.st-review { background: var(--p-yellow); color: #1e1e1e; }
+.chip.st-done { background: var(--p-green); color: #1e1e1e; }
+.chip.st-stale, .chip.st-reported { background: var(--p-red); color: #1e1e1e; }
 .vb-body { margin: 0; color: var(--ink-soft); overflow-wrap: anywhere; }
 .vb-when { margin: 0; font-family: var(--mono); font-size: .85rem; }
 .vb-link { font-weight: 700; color: var(--accent); justify-self: start; }
@@ -209,3 +209,6 @@ details.elder-tools > p, details.elder-tools > button { margin: 0 0 10px; }
 .sk-dot { height: 32px; width: 32px; }
 .sk-name { height: 14px; width: 110px; border-radius: 6px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* status chips sit on light pastel backgrounds in both themes */
+.card .chip.st-taken, .card .chip.st-review, .card .chip.st-done, .card .chip.st-stale, .card .chip.st-reported,
+.post .chip.st-taken, .post .chip.st-review, .post .chip.st-done, .post .chip.st-stale, .post .chip.st-reported { color: #1e1e1e; }

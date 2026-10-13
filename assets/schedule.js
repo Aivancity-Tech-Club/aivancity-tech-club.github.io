@@ -13,6 +13,11 @@
      format      workshop | hackathon | competition | talk | trip | career | build   (the Type filter)
      level       beginner | intermediate | advanced | all   ("all" shows under every level)
      *_fr        French version of title, type, description, time (shown when the site is in French)
+     recap       after the session, so people who missed it can catch up:
+                 { link: "https://… notes or slides", task: "a 15-minute take-home task", task_fr: "…" }
+     vote        for a Planned session, members choose what it will be (one vote each, can change it):
+                 { question: "What should this session be?", question_fr: "…",
+                   options: [{ id: "trivia", title: "Trivia Night", title_fr: "…" }, { id: "algo", title: "Algorithms" }] }
 
    Past sessions stay on the site automatically, so people can see
    what the club has already done.
@@ -141,6 +146,7 @@ function sessionHTML(s, { next = false, past = false } = {}) {
   }
   const chips = [
     `<span class="chip">${esc(F(s, "type") || L("track." + s.track) || L("sched.session"))}</span>`,
+    s.track === "gdg" ? `<span class="chip">GDG on Campus</span>` : "",
     s.level ? `<span class="chip chip-level lv-${esc(s.level)}">${esc(L("level." + s.level))}</span>` : "",
     next ? `<span class="chip chip-next">${L("sched.next")}</span>` : "",
     past ? `<span class="chip chip-done">${L("sched.done")}</span>` : "",
@@ -158,10 +164,70 @@ function sessionHTML(s, { next = false, past = false } = {}) {
         ${desc ? `<p>${esc(desc)}</p>` : ""}
         ${s.speaker ? `<p class="speaker">${esc(s.speaker)}</p>` : ""}
         <p class="where">${esc(Wk)} · ${esc(F(s, "time") || L("sched.time"))} · ${esc(F(s, "room") || L("sched.room"))}</p>
-        ${s.link && !past ? `<p><a class="btn btn-primary session-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${esc(F(s, "linkText") || L("sched.more"))} ↗</a></p>` : ""}
+        ${!past && s.vote && s.vote.options ? `<div class="poll" data-poll="${esc(s.date)}" hidden></div>` : ""}
+        ${past && s.recap ? recapHTML(s) : ""}
+        ${!past ? `<div class="rsvp" data-rsvp="${esc(s.date)}" hidden></div>` : ""}
+        ${!past ? `<p class="session-actions">${s.link ? `<a class="btn btn-primary session-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${esc(F(s, "linkText") || L("sched.more"))} ↗</a>` : ""}<button type="button" class="cal-btn" data-ics="${esc(s.date)}">${esc(L("sched.cal.one"))}</button></p>` : ""}
       </div>
     </article>`;
 }
+
+function recapHTML(s) {
+  const r = s.recap || {}, task = F(r, "task");
+  if (!r.link && !task) return "";
+  return `<div class="recap"><b>${esc(L("sched.recap.h"))}</b>
+    ${r.link ? `<a href="${esc(r.link)}" target="_blank" rel="noopener">${esc(F(r, "linkText") || L("sched.recap.link"))} ↗</a>` : ""}
+    ${task ? `<p><span>${esc(L("sched.recap.task"))}</span> ${esc(task)}</p>` : ""}</div>`;
+}
+
+/* ---------- members only: "I'm going" and votes (filled in once live.js has loaded the platform) ---------- */
+function initials(n) { return String(n || "?").split(/\s+/).map(w => w[0] || "").join("").slice(0, 2).toUpperCase(); }
+function fillLive(root) {
+  const X = window.CLUB_LIVE; if (!X || !root) return;
+  root.querySelectorAll("[data-rsvp]").forEach(box => {
+    const date = box.dataset.rsvp, who = X.rsvps.filter(r => r.date === date).map(r => r.uid);
+    const mine = who.includes(X.uid), others = who.filter(u => u !== X.uid).map(u => X.names[u]).filter(Boolean);
+    const shown = (mine ? [L("rsvp.you")] : []).concat(others);
+    const line = !who.length ? L("rsvp.first")
+      : shown.length <= 2 ? L("rsvp.names", { names: shown.join(L("rsvp.and")) })
+      : L("rsvp.more", { names: shown.slice(0, 2).join(", "), n: shown.length - 2 });
+    box.hidden = false;
+    box.innerHTML = `<button type="button" class="rsvp-btn" data-going="${esc(date)}" aria-pressed="${mine}">${esc(L(mine ? "rsvp.yes" : "rsvp.btn"))}</button>
+      <span class="rsvp-faces" aria-hidden="true">${who.slice(0, 5).map(u => `<i>${esc(initials(u === X.uid ? (X.names[u] || "You") : X.names[u]))}</i>`).join("")}</span>
+      <span class="rsvp-line">${who.length ? `<b>${esc(L("rsvp.count", { n: who.length }))}</b> · ` : ""}${esc(line)}</span>`;
+  });
+  root.querySelectorAll("[data-poll]").forEach(box => {
+    const s = SESSIONS.find(x => x.date === box.dataset.poll); if (!s || !s.vote) return;
+    const votes = X.votes.filter(v => v.date === s.date), mine = (votes.find(v => v.uid === X.uid) || {}).choice;
+    const total = votes.length;
+    box.hidden = false;
+    box.innerHTML = `<p class="poll-q">${esc(F(s.vote, "question") || L("poll.q"))}</p>
+      <div class="poll-opts" role="group" aria-label="${esc(F(s.vote, "question") || L("poll.q"))}">${s.vote.options.map(o => {
+        const n = votes.filter(v => v.choice === o.id).length, pct = total ? Math.round(n * 100 / total) : 0;
+        return `<button type="button" class="poll-opt" data-vote="${esc(s.date)}" data-choice="${esc(o.id)}" aria-pressed="${mine === o.id}">
+          ${mine ? `<i class="poll-bar" style="width:${pct}%"></i>` : ""}<span>${esc(F(o, "title"))}</span>${mine ? `<small>${pct}%</small>` : ""}</button>`;
+      }).join("")}</div>
+      <p class="poll-meta">${esc(mine ? L(total === 1 ? "poll.voted1" : "poll.voted", { n: total }) : L("poll.hint"))}</p>`;
+  });
+}
+addEventListener("club:live", () => document.querySelectorAll("#season, #upcoming-list").forEach(fillLive));
+document.addEventListener("click", async (e) => {
+  const X = window.CLUB_LIVE; if (!X) return;
+  const g = e.target.closest("[data-going]"), v = e.target.closest("[data-vote]");
+  if (g) {
+    const date = g.dataset.going, on = g.getAttribute("aria-pressed") !== "true", before = X.rsvps.slice();
+    X.rsvps = X.rsvps.filter(r => !(r.date === date && r.uid === X.uid)); if (on) X.rsvps.push({ date, uid: X.uid });
+    const box = g.closest("[data-rsvp]"); fillLive(box.parentElement); box.querySelector("[data-going]").focus();
+    const r = await X.data.setRsvp(date, on); if (!r.ok) { X.rsvps = before; fillLive(box.parentElement); }
+  }
+  if (v) {
+    const date = v.dataset.vote, choice = v.dataset.choice, before = X.votes.slice();
+    X.votes = X.votes.filter(x => !(x.date === date && x.uid === X.uid)); X.votes.push({ date, uid: X.uid, choice });
+    const box = v.closest("[data-poll]"); fillLive(box.parentElement);
+    const again = box.querySelector(`[data-choice="${choice}"]`); if (again) again.focus();
+    const r = await X.data.vote(date, choice); if (!r.ok) { X.votes = before; fillLive(box.parentElement); }
+  }
+});
 
 /* Home page: the next few sessions (breaks included so nobody turns up to an empty room). */
 function renderSchedule(el, { limit = 3 } = {}) {
@@ -172,6 +238,7 @@ function renderSchedule(el, { limit = 3 } = {}) {
   el.innerHTML = up.length
     ? up.map(s => sessionHTML(s, { next: s === firstReal })).join("")
     : `<p class="empty">${L("sched.empty")}</p>`;
+  fillLive(el);
 }
 
 /* Home page: what we did recently, so visitors can see the club is active. */
@@ -183,9 +250,70 @@ function renderRecent(el, { limit = 3 } = {}) {
   const wrap = el.closest("[data-hide-empty]"); if (wrap) wrap.hidden = !past.length;
 }
 
-/* Schedule page: upcoming sessions by default, past ones behind a filter,
-   plus Level and Type filters. The choice is kept in the address (?when=past&level=beginner&type=workshop),
-   so a filtered view can be shared. */
+/* ---------- calendar files (.ics) ----------
+   One session, or every upcoming one. Times are Paris time; calendars convert for the reader.
+   Planned sessions are marked tentative. Importing the file again updates the same events (stable UIDs). */
+const SITE = "https://aivancity-tech-club.github.io";
+function icsTimes(s) {
+  const m = /(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i.exec(s.time || CLUB.defaultTime);
+  if (!m) return null;                                   // e.g. "Friday event": all day
+  const h24 = (h) => (+h % 12) + (/pm/i.test(m[5]) ? 12 : 0);
+  const p2 = (n) => String(n).padStart(2, "0"), ymd = s.date.replace(/-/g, "");
+  return { start: `${ymd}T${p2(h24(m[1]))}${m[2]}00`, end: `${ymd}T${p2(h24(m[3]))}${m[4]}00` };
+}
+function icsEscape(t) { return String(t || "").replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/([,;])/g, "\\$1"); }
+function icsFold(line) {                                 // lines longer than 75 octets are folded
+  const out = []; let cur = "";
+  for (const ch of line) { if (new TextEncoder().encode(cur + ch).length > 74) { out.push(cur); cur = " " + ch; } else cur += ch; }
+  return out.concat(cur).join("\r\n");
+}
+function icsEvent(s, stamp) {
+  const t = icsTimes(s), title = F(s, "title"), room = F(s, "room") || L("sched.room");
+  const desc = [F(s, "description"), s.planned ? L("sched.cal.planned") : "", s.link ? s.link : "", SITE + "/schedule"].filter(Boolean).join("\n\n");
+  const next = (d) => { const x = parseDate(d); x.setDate(x.getDate() + 1); return x.getFullYear() + String(x.getMonth() + 1).padStart(2, "0") + String(x.getDate()).padStart(2, "0"); };
+  return [
+    "BEGIN:VEVENT",
+    `UID:${s.date}-${(s.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}@aivancity-tech-club.github.io`,
+    `DTSTAMP:${stamp}`,
+    t ? `DTSTART;TZID=Europe/Paris:${t.start}` : `DTSTART;VALUE=DATE:${s.date.replace(/-/g, "")}`,
+    t ? `DTEND;TZID=Europe/Paris:${t.end}` : `DTEND;VALUE=DATE:${next(s.date)}`,
+    `SUMMARY:${icsEscape(title)}`,
+    `LOCATION:${icsEscape(room)}`,
+    `DESCRIPTION:${icsEscape(desc)}`,
+    `URL:${SITE}/schedule`,
+    `STATUS:${s.planned ? "TENTATIVE" : "CONFIRMED"}`,
+    ...(t ? ["BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${icsEscape(title)}`, "TRIGGER:-PT1H", "END:VALARM"] : []),
+    "END:VEVENT",
+  ].map(icsFold).join("\r\n");
+}
+function icsFile(list) {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  return [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//aivancity Tech Club//Schedule//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "X-WR-CALNAME:aivancity Tech Club", "X-WR-TIMEZONE:Europe/Paris",
+    "BEGIN:VTIMEZONE", "TZID:Europe/Paris",
+    "BEGIN:DAYLIGHT", "TZOFFSETFROM:+0100", "TZOFFSETTO:+0200", "TZNAME:CEST", "DTSTART:19700329T020000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU", "END:DAYLIGHT",
+    "BEGIN:STANDARD", "TZOFFSETFROM:+0200", "TZOFFSETTO:+0100", "TZNAME:CET", "DTSTART:19701025T030000", "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU", "END:STANDARD",
+    "END:VTIMEZONE",
+    ...list.map(s => icsEvent(s, stamp)),
+    "END:VCALENDAR", "",
+  ].join("\r\n");
+}
+function downloadICS(list, name) {
+  const url = URL.createObjectURL(new Blob([icsFile(list)], { type: "text/calendar;charset=utf-8" }));
+  const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+const upcomingReal = () => { const t = today0(); return sorted().filter(s => s._d >= t && s.track !== "break"); };
+// any "Add to calendar" button on any page (home or schedule)
+document.addEventListener("click", (e) => {
+  const one = e.target.closest("[data-ics]"), all = e.target.closest("[data-ics-all]");
+  if (one) { const s = SESSIONS.find(x => x.date === one.dataset.ics && x.track !== "break"); if (s) downloadICS([s], `tech-club-${s.date}.ics`); }
+  if (all) downloadICS(upcomingReal(), "aivancity-tech-club.ics");
+});
+
+/* Schedule page: Upcoming / Past, plus two small dropdowns (level, type).
+   The choice is kept in the address (?when=past&level=beginner&type=workshop), so a filtered view can be shared. */
 const FORMATS = ["workshop", "hackathon", "competition", "talk", "trip", "career", "build"];
 const LEVELS = ["beginner", "intermediate", "advanced"];
 const FILTER = { when: "upcoming", level: "", type: "" };
@@ -221,24 +349,18 @@ function renderSeason(el) {
   list = list.filter(s => (s.track === "break" ? !past && !filtering : matches(s)));
   if (past) list.reverse();
 
-  const btn = (group, value, label, on, extra = "") =>
-    `<button type="button" class="fchip" data-f="${group}" data-v="${value}" aria-pressed="${on}"${extra}>${label}</button>`;
+  const tab = (v, label, n, on) => `<button type="button" class="s-tab" data-when="${v}" aria-pressed="${on}">${esc(label)} <small>${n}</small></button>`;
+  const opt = (v, label, cur) => `<option value="${v}"${v === cur ? " selected" : ""}>${esc(label)}</option>`;
   const usedFormats = FORMATS.filter(f => real.some(s => s.format === f));
   const bar = `
-    <div class="filters">
-      <div class="seg" role="group" aria-label="${esc(L("sched.f.when"))}">
-        ${btn("when", "upcoming", `${esc(L("sched.f.upcoming"))} <small>${nUp}</small>`, !past)}
-        ${btn("when", "past", `${esc(L("sched.f.past"))} <small>${nPast}</small>`, past)}
-      </div>
-      <div class="fgroup" role="group" aria-label="${esc(L("sched.f.level"))}">
-        <span class="flabel">${esc(L("sched.f.level"))}</span>
-        ${btn("level", "", esc(L("sched.f.any")), !FILTER.level)}
-        ${LEVELS.map(l => btn("level", l, `<i class="dot lv-${l}"></i>${esc(L("level." + l))}`, FILTER.level === l)).join("")}
-      </div>
-      <div class="fgroup" role="group" aria-label="${esc(L("sched.f.type"))}">
-        <span class="flabel">${esc(L("sched.f.type"))}</span>
-        ${btn("type", "", esc(L("sched.f.any")), !FILTER.type)}
-        ${usedFormats.map(f => btn("type", f, esc(L("fmt." + f)), FILTER.type === f)).join("")}
+    <div class="s-bar">
+      <div class="s-tabs" role="group" aria-label="${esc(L("sched.f.when"))}">${tab("upcoming", L("sched.f.upcoming"), nUp, !past)}${tab("past", L("sched.f.past"), nPast, past)}</div>
+      <div class="s-selects">
+        <label class="s-select${FILTER.level ? " on" : ""}"><span class="sr-only">${esc(L("sched.f.level"))}</span>
+          <select data-f="level">${opt("", L("sched.f.alllevels"), FILTER.level)}${LEVELS.map(l => opt(l, L("level." + l), FILTER.level)).join("")}</select></label>
+        <label class="s-select${FILTER.type ? " on" : ""}"><span class="sr-only">${esc(L("sched.f.type"))}</span>
+          <select data-f="type">${opt("", L("sched.f.alltypes"), FILTER.type)}${usedFormats.map(f => opt(f, L("fmt." + f), FILTER.type)).join("")}</select></label>
+        ${filtering ? `<button type="button" class="s-clear" data-reset>${esc(L("sched.reset"))}</button>` : ""}
       </div>
     </div>`;
 
@@ -253,22 +375,27 @@ function renderSeason(el) {
     ? `<div class="filter-empty"><p>${esc(L(filtering ? "sched.none" : past ? "sched.nopast" : "sched.empty"))}</p>${filtering ? `<button type="button" class="btn btn-ghost" data-reset>${esc(L("sched.reset"))}</button>` : ""}</div>`
     : "";
   el.innerHTML = bar +
-    `<p class="season-count mono" aria-live="polite">${esc(L("sched.count", { season: L("sched.season"), done: nPast, left: nUp }))}</p>` +
+    `<p class="season-count mono" aria-live="polite">${esc(filtering ? L("sched.shown", { n: list.filter(s => s.track !== "break").length }) : L("sched.count", { season: L("sched.season"), done: nPast, left: nUp }))}</p>` +
     empty +
     months.map(m => `
       <section class="month">
         <h2 class="month-head">${esc(m.key)}</h2>
         <div class="session-list">${m.items.map(s => sessionHTML(s, { next: s === firstReal, past: s._d < t })).join("")}</div>
       </section>`).join("");
+  fillLive(el);
 
   if (!el.dataset.wired) {
     el.dataset.wired = "1";
     el.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-f], [data-reset]"); if (!b) return;
-      if (b.hasAttribute("data-reset")) { FILTER.level = ""; FILTER.type = ""; }
-      else FILTER[b.dataset.f] = b.dataset.v || (b.dataset.f === "when" ? "upcoming" : "");
+      const b = e.target.closest("[data-when], [data-reset]"); if (!b) return;
+      if (b.hasAttribute("data-reset")) { FILTER.level = ""; FILTER.type = ""; } else FILTER.when = b.dataset.when;
       writeFilters(); renderSeason(el);
-      const again = el.querySelector(`[data-f="${b.dataset.f}"][data-v="${b.dataset.v}"]`); if (again) again.focus();
+      const again = el.querySelector(b.dataset.when ? `[data-when="${b.dataset.when}"]` : "select"); if (again) again.focus();
+    });
+    el.addEventListener("change", (e) => {
+      const sel = e.target.closest("select[data-f]"); if (!sel) return;
+      FILTER[sel.dataset.f] = sel.value; writeFilters(); renderSeason(el);
+      const again = el.querySelector(`select[data-f="${sel.dataset.f}"]`); if (again) again.focus();
     });
   }
 }

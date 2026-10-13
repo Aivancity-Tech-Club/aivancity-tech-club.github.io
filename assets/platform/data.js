@@ -65,6 +65,20 @@ function demoBackend() {
   ], comments: { p1: [{ id: 'c1', by: 'noah', text: 'I can do Thursday after the session if nobody takes it before.', createdAt: now - day, hidden: false, reports: {} }] } });
   const board = () => store.get('nw-demo-board-v1') || boardSeed();
   const saveBoard = (B) => store.set('nw-demo-board-v1', B);
+  // demo extras: a few "going", a vote, two camps, applications (one person who never came)
+  const extraSeed = () => {
+    const up = (typeof SESSIONS !== 'undefined' ? SESSIONS : []).map(x => x.date).filter(d => d >= todayStr()).sort();
+    const rsvps = up.length ? ['lucas', 'sofia', 'noah', 'ines', 'maya', 'zoe'].map(uid => ({ date: up[0], uid })) : [];
+    const requests = state.members.filter(m => m.uid !== 'you').map((m, i) => ({ uid: m.uid, name: m.name, phone: '+33 6 00 00 00 ' + String(10 + i), at: now - (30 - i) * day }));
+    requests.push({ uid: 'amir', name: 'Amir N.', phone: '+33 6 11 22 33 44', at: now - 9 * day }, { uid: 'clara', name: 'Clara B.', phone: '+33 6 55 66 77 88', at: now - 4 * day });
+    return { rsvps, votes: [], pulse: {}, requests, camps: {
+      noah: { color: 'night', working: 'A Flutter app that splits rent between flatmates', dream: 'Spotify', askMe: 'Flutter, Firebase, getting your first hackathon win', about: 'Second year. I like building small apps that fix annoying things.',
+        song: 'https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT', proud: [{ title: 'Won the September hackathon', text: 'Team of three, built in 24 hours with RevenueCat.', link: 'https://github.com/example/hackathon-app' }], hidden: false, reports: {} },
+      sofia: { color: 'mint', working: 'Google Cloud Associate Engineer prep', dream: 'Google DeepMind', askMe: 'Cloud certifications, Python', about: '', song: '', proud: [], hidden: false, reports: {} },
+    } };
+  };
+  const extra = () => store.get('nw-demo-extra-v1') || extraSeed();
+  const saveExtra = (X) => store.set('nw-demo-extra-v1', X);
   const demoTarget = (B, postId, commentId) => (commentId ? (B.comments[postId] || []).find(c => c.id === commentId) : B.posts.find(p => p.id === postId));
   const user = { uid: 'you', email: 'you@' + DOMAIN, demo: true };
   return {
@@ -102,6 +116,8 @@ function demoBackend() {
       if (p.kind === 'mission') Object.assign(post, { mtype: p.mtype, status: 'open', takenBy: null, takenAt: null });
       if (p.kind === 'mission') { for (const k of ['outcome', 'time', 'level']) if (p[k]) post[k] = String(p[k]); if ((p.skills || []).length) post.skills = p.skills.slice(0, 5); }
       if (['team', 'council'].includes(p.as)) post.as = p.as;
+      if (p.for && typeof p.for === 'string') post.for = p.for.slice(0, 128);
+      if (p.kind !== 'week' && /^\d{4}-\d{2}-\d{2}$/.test(p.expires || '')) post.expires = p.expires;
       if (p.kind === 'event') Object.assign(post, { date: p.date || '', where: p.where || '' });
       if (p.kind === 'week') Object.assign(post, { start: p.start, days: p.days || [] });
       if (p.id) { if (B.posts.some(x => x.id === p.id)) return { ok: true, skipped: true }; post.id = p.id; }
@@ -129,7 +145,20 @@ function demoBackend() {
     async loadComments(postId, isOrg) { return (board().comments[postId] || []).filter(c => isOrg || !c.hidden).map(c => normPost(c.id, c)).sort((a, b) => a.at - b.at); },
     async addComment(postId, text) { const B = board(); (B.comments[postId] = B.comments[postId] || []).push({ id: 'c' + Date.now(), by: 'you', text, createdAt: Date.now(), hidden: false, reports: {} }); saveBoard(B); return { ok: true }; },
     async deleteComment(postId, cid) { const B = board(); B.comments[postId] = (B.comments[postId] || []).filter(c => c.id !== cid); saveBoard(B); return { ok: true }; },
-    reset() { store.del('nw-demo-v1'); store.del('nw-demo-board-v1'); state = demoSeed(); },
+    // ---------- sessions: "I'm going" and votes; camps; organizer follow-ups ----------
+    async loadRsvps() { return extra().rsvps; },
+    async setRsvp(date, on) { const X = extra(); X.rsvps = X.rsvps.filter(r => !(r.date === date && r.uid === 'you')); if (on) X.rsvps.push({ date, uid: 'you' }); saveExtra(X); return { ok: true }; },
+    async loadVotes() { return extra().votes; },
+    async vote(date, choice) { const X = extra(); X.votes = X.votes.filter(v => !(v.date === date && v.uid === 'you')); if (choice) X.votes.push({ date, uid: 'you', choice }); saveExtra(X); return { ok: true }; },
+    async getCamp(uid) { const c = extra().camps[uid]; return c ? { uid, ...c } : null; },
+    async saveCamp(c) { const X = extra(), old = X.camps.you || { hidden: false, reports: {} }; X.camps.you = { ...old, ...cleanCamp(c), updatedAt: Date.now() }; saveExtra(X); return { ok: true }; },
+    async reportCamp(uid) { const X = extra(); if (X.camps[uid]) { X.camps[uid].reports = { ...(X.camps[uid].reports || {}), you: true }; saveExtra(X); } return { ok: true }; },
+    async hideCamp(uid, hidden) { const X = extra(); if (X.camps[uid]) { X.camps[uid].hidden = !!hidden; saveExtra(X); } return { ok: true }; },
+    async loadRequests() { return extra().requests; },
+    async loadPulse() { return extra().pulse; },
+    async markContacted(uid) { const X = extra(); X.pulse[uid] = { contactedAt: Date.now(), by: 'you' }; saveExtra(X); return { ok: true }; },
+    currentUid() { return 'you'; },
+    reset() { store.del('nw-demo-v1'); store.del('nw-demo-board-v1'); store.del('nw-demo-extra-v1'); state = demoSeed(); },
   };
 }
 
@@ -172,6 +201,20 @@ function msErrorText(e) {
   return tr('err.ms.other', 'Microsoft sign-in did not finish (' + (c || (e && e.message) || '?') + ').', { e: c || (e && e.message) || '?' });
 }
 let checkSchoolAccount = async () => ({ ok: true });
+/* ---------- camps (a member's own space on the Mountain): only these fields, trimmed to size ---------- */
+const CAMP_COLORS = ['sky', 'mint', 'sun', 'rose', 'lilac', 'sand', 'night', 'forest'];
+const httpsOr = (u) => (/^https:\/\/\S+$/.test(String(u || '').trim()) ? String(u).trim().slice(0, 300) : '');
+function cleanCamp(c) {
+  c = c || {};
+  const str = (v, n) => String(v || '').trim().slice(0, n);
+  return {
+    color: CAMP_COLORS.includes(c.color) ? c.color : 'sky',
+    working: str(c.working, 140), dream: str(c.dream, 60), askMe: str(c.askMe, 140), about: str(c.about, 280),
+    song: httpsOr(c.song),
+    proud: (Array.isArray(c.proud) ? c.proud : []).map(x => ({ title: str(x && x.title, 80), text: str(x && x.text, 200), link: httpsOr(x && x.link) }))
+      .filter(x => x.title).slice(0, 4),
+  };
+}
 function firebaseBackend() {
   let auth, db;
   const FV = () => firebase.firestore.FieldValue;
@@ -355,6 +398,8 @@ function firebaseBackend() {
       if (p.kind === 'mission') Object.assign(doc, { mtype: p.mtype, status: 'open', takenBy: null, takenAt: null });
       if (p.kind === 'mission') { for (const k of ['outcome', 'time', 'level']) if (p[k]) doc[k] = String(p[k]); if ((p.skills || []).length) doc.skills = p.skills.slice(0, 5); }
       if (['team', 'council'].includes(p.as)) doc.as = p.as;
+      if (p.for && typeof p.for === 'string') doc.for = p.for.slice(0, 128);
+      if (p.kind !== 'week' && /^\d{4}-\d{2}-\d{2}$/.test(p.expires || '')) doc.expires = p.expires;
       if (p.kind === 'event') Object.assign(doc, { date: p.date || '', where: p.where || '' });
       if (p.kind === 'week') Object.assign(doc, { start: p.start, days: p.days || [] });
       try {
@@ -415,6 +460,50 @@ function firebaseBackend() {
       } catch (e) { return fail(e); }
     },
     async deleteComment(postId, cid) { try { await target(postId, cid).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    // ---------- sessions: "I'm going" and votes (doc id = date_uid, so one per person and session) ----------
+    async loadRsvps(fromDate) {
+      const s = await db.collection('rsvps').where('date', '>=', fromDate || '2000-01-01').get();
+      return s.docs.map(d => ({ date: d.data().date, uid: d.data().uid }));
+    },
+    async setRsvp(date, on) {
+      const uid = auth.currentUser.uid, ref = db.collection('rsvps').doc(date + '_' + uid);
+      try { if (on) await ref.set({ date, uid, at: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    async loadVotes(fromDate) {
+      const s = await db.collection('votes').where('date', '>=', fromDate || '2000-01-01').get();
+      return s.docs.map(d => ({ date: d.data().date, uid: d.data().uid, choice: d.data().choice }));
+    },
+    async vote(date, choice) {
+      const uid = auth.currentUser.uid, ref = db.collection('votes').doc(date + '_' + uid);
+      try { if (choice) await ref.set({ date, uid, choice: String(choice).slice(0, 40), at: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    // ---------- camps ----------
+    async getCamp(uid) { try { const d = await db.collection('camps').doc(uid).get(); return d.exists ? { uid, ...d.data() } : null; } catch (e) { if (e && e.code === 'permission-denied') return null; throw e; } },
+    async saveCamp(c) {
+      const uid = auth.currentUser.uid, ref = db.collection('camps').doc(uid), doc = { ...cleanCamp(c), updatedAt: FV().serverTimestamp() };
+      try {
+        const cur = await ref.get();
+        if (cur.exists) await ref.update(doc); else await ref.set({ ...doc, hidden: false, reports: {} });
+        return { ok: true };
+      } catch (e) { return fail(e); }
+    },
+    async reportCamp(uid) { try { await db.collection('camps').doc(uid).update('reports.' + auth.currentUser.uid, true); return { ok: true }; } catch (e) { return fail(e); } },
+    async hideCamp(uid, hidden) { try { await db.collection('camps').doc(uid).update({ hidden: !!hidden }); return { ok: true }; } catch (e) { return fail(e); } },
+    // ---------- organizers: applications and who has been contacted ----------
+    async loadRequests() {
+      const s = await db.collection('requests').get();
+      return s.docs.map(d => { const x = d.data(); return { uid: d.id, name: x.name, phone: x.phone, lang: x.lang || 'en', status: x.status || '', at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; })
+        .filter(r => r.status !== 'removed');
+    },
+    async loadPulse() {
+      const s = await db.collection('pulse').get(), out = {};
+      s.docs.forEach(d => { const x = d.data(); out[d.id] = { contactedAt: x.contactedAt && x.contactedAt.toMillis ? x.contactedAt.toMillis() : 0, by: x.by }; });
+      return out;
+    },
+    async markContacted(uid) {
+      try { await db.collection('pulse').doc(uid).set({ contactedAt: FV().serverTimestamp(), by: auth.currentUser.uid }); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    currentUid() { return auth.currentUser ? auth.currentUser.uid : null; },
     async submit(s) {
       if (!SUBMIT_TYPES.includes(s.type)) return { ok: false, message: tr('m.proof.badtype', 'That kind of proof is not on the list.') };
       const uid = auth.currentUser.uid;
@@ -424,5 +513,5 @@ function firebaseBackend() {
   };
 }
 
-window.ClubData = { create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
+window.ClubData = { CAMP_COLORS, cleanCamp, create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
 })();

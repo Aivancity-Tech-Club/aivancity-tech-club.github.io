@@ -1,0 +1,74 @@
+/* ---------- a member's camp ---------- */
+.camp-wrap { padding-top: 8px; padding-bottom: 56px; display: grid; gap: 18px; }
+.camp-back { margin: 0; font-size: .92rem; }
+.camp-back a { color: var(--ink-soft); }
+#camp { display: grid; gap: 22px; }
+#camp[hidden] { display: none; }
+
+.c-sky { --c: #c3ecf6; } .c-mint { --c: #ccf6c5; } .c-sun { --c: #ffe7a5; } .c-rose { --c: #f8d8d8; }
+.c-lilac { --c: #e3dcf7; } .c-sand { --c: #f3e3c8; } .c-night { --c: #2a2d4f; } .c-forest { --c: #1f4d3a; }
+
+.camp-hero { background: var(--c); color: #1e1e1e; border: var(--stroke) solid var(--line); border-radius: var(--radius);
+  padding: clamp(20px, 4vw, 34px); display: grid; grid-template-columns: auto 1fr auto; gap: 18px 24px; align-items: center; }
+.camp-hero.is-dark { color: #fff; }
+.camp-ninja { width: clamp(84px, 14vw, 128px); height: auto; }
+.camp-id h1 { margin: 0; font-size: clamp(1.7rem, 4.5vw, 2.6rem); letter-spacing: -0.02em; line-height: 1.05; }
+.camp-you { font-size: .9rem; font-weight: 700; font-family: var(--mono); vertical-align: middle; padding: 3px 10px; border-radius: 999px; border: 1.5px solid currentColor; }
+.camp-belt { margin: 6px 0 0; font-weight: 700; }
+.camp-about { margin: 10px 0 0; max-width: 58ch; }
+.camp-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.camp-hero .btn-primary { background: #1e1e1e; color: #fff; border-color: #1e1e1e; }
+.camp-hero.is-dark .btn-primary { background: #fff; color: #1e1e1e; border-color: #fff; }
+.camp-play { background: transparent; color: inherit; border: var(--stroke) solid currentColor; text-decoration: none; display: inline-flex; justify-content: center; gap: 8px; }
+.camp-play::before { content: "▶"; font-size: .8em; }
+.camp-play[aria-expanded="true"]::before { content: "■"; }
+.camp-player iframe { display: block; width: 100%; border: 0; border-radius: 14px; background: var(--surface); }
+
+.camp-empty { border: var(--stroke) dashed var(--line); border-radius: 18px; padding: 16px 18px; }
+.camp-empty p { margin: 0; }
+.camp-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 14px; }
+.camp-card { background: var(--surface); border: var(--stroke) solid var(--line); border-radius: 18px; padding: 16px 18px; }
+.camp-card small { display: block; font-family: var(--mono); font-size: .78rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
+.camp-card p { margin: 6px 0 0; font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; }
+
+.camp-sec h2 { margin: 0 0 12px; font-size: 1.4rem; letter-spacing: -0.015em; }
+.proud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+.proud { background: var(--surface); border: var(--stroke) solid var(--line); border-radius: 18px; padding: 16px 18px; box-shadow: 4px 4px 0 var(--line); }
+.proud h3 { margin: 0; font-size: 1.1rem; }
+.proud h3 a { color: inherit; }
+.proud p { margin: 6px 0 0; color: var(--ink-soft); }
+
+.camp-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.camp-stats div { background: var(--surface); border: var(--stroke) solid var(--line); border-radius: 16px; padding: 12px; text-align: center; }
+.camp-stats b { display: block; font-size: 1.6rem; }
+.camp-stats span { font-size: .82rem; color: var(--ink-soft); }
+.camp-wins { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid color-mix(in srgb, var(--line) 15%, transparent); }
+.camp-wins li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 2px; border-bottom: 1px solid color-mix(in srgb, var(--line) 15%, transparent); }
+.camp-wins small { font-family: var(--mono); color: var(--ink-soft); white-space: nowrap; }
+.camp-mod { margin: 0; display: flex; gap: 14px; align-items: center; }
+.camp-mod:empty { display: none; }
+
+/* edit form */
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatch { position: relative; width: 44px; height: 44px; border-radius: 50%; background: var(--c); border: var(--stroke) solid var(--line); cursor: pointer; }
+.swatch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.swatch:has(input:checked) { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--ink); }
+.swatch:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 4px; }
+.proud-edit { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.proud-row { display: grid; grid-template-columns: 1fr 1.4fr 1fr auto; gap: 10px; align-items: end; padding: 12px; border: 1px dashed var(--line); border-radius: 14px; }
+.proud-row .linkbtn { padding-bottom: 12px; }
+
+/* loading */
+.camp-skel .sk-hero { display: block; height: 170px; border-radius: 22px; margin-bottom: 18px; }
+.camp-skel .sk-card { min-height: 90px; }
+
+@media (max-width: 720px) {
+  .camp-hero { grid-template-columns: auto 1fr; }
+  .camp-actions { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
+  .camp-actions > * { flex: 1; }
+  .camp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .proud-row { grid-template-columns: 1fr; }
+  .proud-row .linkbtn { justify-self: start; padding-bottom: 0; }
+}
+#camp > section { padding: 0; }
+@media (max-width: 720px) { .camp-ninja { width: 64px; } .camp-hero { gap: 14px 16px; } }

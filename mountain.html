@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261012f"></script>
+<script src="assets/i18n.js?v=20261013e"></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
@@ -100,6 +100,9 @@ label { font-weight: 700; font-size: 14px; }
 .x { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper); cursor: pointer; font-size: 20px; line-height: 1; }
 .box { background: var(--paper); border: 2px solid var(--ink); border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
 .box h3 { margin: 0; font-size: 17px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.scenery { flex-wrap: wrap; justify-content: space-between; background: var(--paper); }
+.scenery button { min-height: 40px; }
 .box .rules-link { font-weight: 700; font-size: 14px; color: inherit; justify-self: start; }
 .hero { align-items: center; text-align: center; }
 .hero img { width: 150px; height: 142px; object-fit: contain; }
@@ -135,7 +138,26 @@ label { font-weight: 700; font-size: 14px; }
 .climber .grow { flex: 1; min-width: 0; }
 .climber .mini { height: 6px; border-radius: 999px; background: #e3e3e3; overflow: hidden; margin-top: 3px; }
 .climber .mini i { display: block; height: 100%; background: var(--green); }
-.pop { position: fixed; z-index: 7; background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 10px 14px; font-size: 13px; pointer-events: none; transform: translate(-50%, -110%); white-space: nowrap; }
+.pop { position: fixed; z-index: 7; background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 10px 14px; font-size: 13px; pointer-events: auto; transform: translate(-50%, -110%); white-space: nowrap; }
+.pop a { display: inline-block; margin-top: 6px; font-weight: 700; color: var(--blue); }
+.wins-btn { margin-left: auto; padding: 0 14px; min-height: 44px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--ink); }
+.wins-btn[aria-expanded="true"] { background: var(--ink); color: var(--on-dark); }
+.climber .grow a { color: inherit; font-weight: 700; }
+.win { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid #e3e3e3; }
+.win:first-of-type { border-top: 0; }
+.win img { width: 34px; height: 32px; object-fit: contain; flex: none; }
+.win p { margin: 0; font-size: 14px; } .win small { display: block; color: var(--ink-soft); font-size: 12px; margin-top: 2px; }
+.win a { color: inherit; font-weight: 700; }
+.hero .camp-link { font-weight: 700; color: var(--blue); }
+.steps h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.steps h3 small { font-family: var(--mono); font-weight: 400; font-size: 12px; color: var(--ink-soft); }
+.steps ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.steps li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.steps li a { color: var(--blue); font-weight: 700; }
+.steps li.done > span:last-child { color: var(--ink-soft); text-decoration: line-through; }
+.steps .hide-steps { align-self: flex-start; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; color: var(--ink-soft); }
+.me-btn.has-steps { position: relative; }
+.me-btn.has-steps::after { content: ""; position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--red); border: 2px solid var(--paper); }
 .loading { position: fixed; inset: 0; display: grid; place-items: center; color: #fff; font-family: var(--mono); z-index: 1;
   background: linear-gradient(#79b8f2, #bfe0fb 70%, #e8f4ff); animation: nw-wait 0.25s 0.6s both; }
 /* only show the "painting" message when loading actually takes a while */
@@ -176,18 +198,18 @@ label { font-weight: 700; font-size: 14px; }
 </style>
 </head>
 <body data-i18n-title="m.title">
+<header class="bar">
+  <a class="pill brand" href="/" aria-label="The Mountain, aivancity Tech Club home"><img src="assets/tech-club-logo.svg" alt=""><b data-i18n="m.title">The Mountain</b></a>
+  <button type="button" class="pill wins-btn" id="winsBtn" hidden aria-controls="peakPanel" aria-expanded="false"><span data-i18n="wins.btn">Wins</span></button>
+  <button type="button" class="me-btn" id="meBtn" hidden aria-controls="drawer" aria-expanded="false"><img id="meAvatar" alt=""><span data-i18n="m.myclimb">My climb</span></button>
+  <button type="button" class="pill lang-btn lang-toggle" aria-label="FR: afficher le site en français" lang="fr">FR</button>
+</header>
+<main id="main">
+<h1 class="sr-only" data-i18n="m.title">The Mountain</h1>
 <div id="stage" role="img" aria-label="The six peaks, with every club member's ninja standing on the peak of their bandana color"></div>
 <div id="labels"></div>
 <div class="loading" id="loading" data-i18n="m.loading">painting the world…</div>
 
-<div class="bar">
-  <a class="pill brand" href="/"><img src="assets/tech-club-logo.svg" alt=""><b data-i18n="m.title">The Mountain</b></a>
-  <div class="pill" role="group" aria-label="Time of day" data-i18n-attr="aria-label:m.time.aria" id="modes">
-    <button type="button" data-mode="auto" data-i18n="m.mode.auto">Auto</button><button type="button" data-mode="dawn" data-i18n="m.mode.dawn">Dawn</button><button type="button" data-mode="day" data-i18n="m.mode.day">Day</button><button type="button" data-mode="evening" data-i18n="m.mode.evening">Evening</button><button type="button" data-mode="night" data-i18n="m.mode.night">Night</button>
-  </div>
-  <button type="button" class="me-btn" id="meBtn" hidden aria-controls="drawer" aria-expanded="false"><img id="meAvatar" alt=""><span data-i18n="m.myclimb">My climb</span></button>
-  <button type="button" class="pill lang-btn lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
-</div>
 
 <div class="demo" id="demoBar" hidden><span data-i18n="m.demo"><b>Demo:</b> sample members, saved only in this browser. Check-in code: <span class="mono">DEMO</span></span><button type="button" id="demoReset" data-i18n="m.reset">Reset</button></div>
 
@@ -230,6 +252,7 @@ label { font-weight: 700; font-size: 14px; }
 <aside class="drawer" id="drawer" aria-label="My climb" data-i18n-attr="aria-label:m.myclimb" aria-hidden="true">
   <div class="drawer-head"><h2 style="margin:0;font-size:22px" data-i18n="m.myclimb">My climb</h2><button type="button" class="x" id="closeDrawer" aria-label="Close" data-i18n-attr="aria-label:m.close">×</button></div>
   <section class="box hero" id="heroBox"></section>
+  <section class="box steps" id="stepsBox" hidden></section>
   <section class="box" id="nextBox"></section>
   <section class="box">
     <h3 data-i18n="m.checkin.h">Thursday check-in</h3>
@@ -265,6 +288,11 @@ label { font-weight: 700; font-size: 14px; }
   </section>
   <section class="box"><h3 data-i18n="m.badges.h">Badges</h3><div class="badges" id="badges"></div></section>
   <section class="box"><h3 data-i18n="m.activity.h">Activity</h3><ul class="list log" id="log"></ul></section>
+  <section class="box"><h3 data-i18n="m.scenery">Scenery</h3>
+    <div class="pill scenery" role="group" aria-label="Time of day" data-i18n-attr="aria-label:m.time.aria" id="modes">
+    <button type="button" data-mode="auto" data-i18n="m.mode.auto">Auto</button><button type="button" data-mode="dawn" data-i18n="m.mode.dawn">Dawn</button><button type="button" data-mode="day" data-i18n="m.mode.day">Day</button><button type="button" data-mode="evening" data-i18n="m.mode.evening">Evening</button><button type="button" data-mode="night" data-i18n="m.mode.night">Night</button>
+  </div>
+  </section>
   <a class="btn ghost" href="/village" style="display:grid;place-items:center;text-decoration:none" data-i18n="vb.title">Village board</a>
   <a class="btn ghost" href="/feedback?topic=platform" style="display:grid;place-items:center;text-decoration:none" data-i18n="m.feedback">Give feedback</a>
   <button type="button" class="btn ghost" id="signOut" data-i18n="m.signout">Sign out</button>
@@ -274,16 +302,17 @@ label { font-weight: 700; font-size: 14px; }
 <nav class="peaks-strip" id="peaksStrip" aria-label="Peaks" data-i18n-attr="aria-label:m.peaks"></nav>
 <section class="box peak-panel" id="peakPanel" hidden aria-live="polite"></section>
 <div class="pop" id="pop" hidden></div>
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261012f"></script>
-<script src="assets/world/world.js?v=20261012f"></script>
-<script src="assets/js-yaml.min.js?v=20261012f"></script>
-<script src="assets/schedule.js?v=20261012f"></script>
-<script src="assets/platform/config.js?v=20261012f"></script>
-<script src="assets/platform/engine.js?v=20261012f"></script>
-<script src="assets/platform/signin.js?v=20261012f"></script>
-<script src="assets/platform/data.js?v=20261012f"></script>
+<script src="assets/world/world-data.js?v=20261013e"></script>
+<script src="assets/world/world.js?v=20261013e"></script>
+<script src="assets/js-yaml.min.js?v=20261013e"></script>
+<script src="assets/schedule.js?v=20261013e"></script>
+<script src="assets/platform/config.js?v=20261013e"></script>
+<script src="assets/platform/engine.js?v=20261013e"></script>
+<script src="assets/platform/signin.js?v=20261013e"></script>
+<script src="assets/platform/data.js?v=20261013e"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -345,9 +374,9 @@ label { font-weight: 700; font-size: 14px; }
       peakLabel: (p) => T('m.peak.h', { rank: RANK(p.id), name: rankName(p.id) || p.name }),
       onNinjaClick: (m, g) => {
         const s = result && result.byUid[m.id];
-        pop.innerHTML = `<b>${esc(m.name)}</b><br>${esc(T('m.pop', { rank: RANK(m.rank), pts: s ? s.lifetime : 0 }))}`;
+        pop.innerHTML = `<b>${esc(m.name)}</b><br>${esc(T('m.pop', { rank: RANK(m.rank), pts: s ? s.lifetime : 0 }))}<br><a href="/camp?u=${encodeURIComponent(m.id)}">${esc(T(m.isMe ? 'camp.mine' : 'camp.visit'))} →</a>`;
         pop.style.left = g.x + 'px'; pop.style.top = g.y + 'px'; pop.hidden = false;
-        clearTimeout(pop.t); pop.t = setTimeout(() => pop.hidden = true, 2600);
+        clearTimeout(pop.t); pop.t = setTimeout(() => pop.hidden = true, 6000);
       },
     });
   } catch (e) { $('loading').textContent = T('m.webgl'); }
@@ -378,17 +407,53 @@ label { font-weight: 700; font-size: 14px; }
       return { id: m.uid, name: m.uid === me.uid ? (m.name || T('peak.you')) : m.name, rank: s.rank, progress: s.waiting ? 1 : s.progress, accessories: m.accessories || [], isMe: m.uid === me.uid };
     });
     world && world.setMembers(onMountain);
-    renderDrawer(); renderStrip();
+    $('winsBtn').hidden = false;
+    renderDrawer(); renderStrip(); renderSteps();
+    if (!$('peakPanel').hidden && $('winsBtn').getAttribute('aria-expanded') === 'true') showWins();
+  }
+
+  /* ---------- your first Thursdays: a short checklist for new members ---------- */
+  let extras = { board: [], camp: null };
+  async function loadExtras() {
+    const [board, camp] = await Promise.all([data.loadBoard(false).catch(() => []), data.getCamp(me.uid).catch(() => null)]);
+    extras = { board, camp }; renderSteps();
+  }
+  const STEPS_KEY = 'nw-steps-hidden';
+  function renderSteps() {
+    const box = $('stepsBox'); if (!result || !me) return;
+    const s = result.byUid[me.uid], attend = (s.counts && s.counts.attend) || 0;
+    const nameOf = (uid) => (members.find(m => m.uid === uid) || {}).name || '';
+    const buddy = extras.board.find(p => p.kind === 'mission' && p.for === me.uid && p.status !== 'closed');
+    const tookMission = extras.board.some(p => p.kind === 'mission' && p.takenBy === me.uid && p.for !== me.uid)
+      || s.history.some(h => ['mentoring', 'collab', 'club_quest'].includes(h.fact.type) && h.fact.uid === me.uid);
+    const steps = [
+      { done: attend >= 1, text: T('steps.checkin') },
+      { done: !!(buddy && ['taken', 'review', 'done'].includes(buddy.status)), text: buddy && buddy.takenBy ? T('steps.buddy.is', { name: nameOf(buddy.takenBy) }) : T('steps.buddy.soon') },
+      { done: !!extras.camp, html: `<a href="/camp?u=${encodeURIComponent(me.uid)}&edit">${esc(T('steps.camp'))}</a>` },
+      { done: tookMission, html: `<a href="/village">${esc(T('steps.mission'))}</a>` },
+      { done: attend >= 3, text: T('steps.three', { n: Math.min(attend, 3) }) },
+    ];
+    const n = steps.filter(x => x.done).length;
+    let gone = false; try { gone = localStorage.getItem(STEPS_KEY) === '1'; } catch (e) {}
+    const show = n < steps.length && !gone;
+    box.hidden = !show; $('meBtn').classList.toggle('has-steps', show);
+    if (!show) return;
+    box.innerHTML = `<h3>${esc(T('steps.h'))} <small>${esc(T('steps.count', { n, total: steps.length }))}</small></h3>
+      <div class="bar-track" role="progressbar" aria-label="${esc(T('steps.h'))}" aria-valuemin="0" aria-valuemax="${steps.length}" aria-valuenow="${n}"><div class="bar-fill" style="width:${Math.round(n * 100 / steps.length)}%"></div></div>
+      <ol>${steps.map(x => `<li class="${x.done ? 'done' : ''}"><span class="tick${x.done ? ' done' : ''}">${x.done ? '✓' : ''}</span><span>${x.html || esc(x.text)}</span></li>`).join('')}</ol>
+      <button type="button" class="hide-steps" id="hideSteps">${esc(T('steps.hide'))}</button>`;
+    $('hideSteps').onclick = () => { try { localStorage.setItem(STEPS_KEY, '1'); } catch (e) {} renderSteps(); };
   }
 
   function renderDrawer() {
     const s = result.byUid[me.uid];
     $('meAvatar').src = ninjaURI(s.rank, worn); $('meBtn').hidden = false;
-    if (window.ClubMe) ClubMe.save(profile.name, s.isMember ? s.rank : null);
+    if (window.ClubMe) ClubMe.save(profile.name, s.isMember ? s.rank : null, profile.role);
     const seasonRank = Object.values(result.byUid).filter(x => x.isMember).sort((a, b) => b.season - a.season).findIndex(x => x.uid === me.uid) + 1;
     $('heroBox').style.background = { white: '#ffffff', yellow: '#ffe7a5', green: '#ccf6c5', blue: '#c3ecf6', red: '#f8d8d8', black: '#d9dbef' }[s.rank];
     $('heroBox').innerHTML = `<img src="${ninjaURI(s.rank, worn)}" alt="">
       <h2 style="margin:0;font-size:24px">${esc(profile.name)}</h2>
+      <a class="camp-link" href="/camp?u=${encodeURIComponent(me.uid)}">${esc(T('camp.mine'))} →</a>
       <div style="font-weight:700">${s.isMember ? esc(T('m.bandana', { rank: RANK(s.rank), name: rankName(s.rank) })) : T('m.notyet')}</div>
       <div class="stats"><div><b>${s.lifetime}</b><span>${T('m.lifetime')}</span></div><div><b>${s.season}</b><span>${T('m.season')}</span></div><div><b>${s.isMember ? '#' + seasonRank : '–'}</b><span>${T('m.seasonrank')}</span></div></div>`;
     $('nextBox').innerHTML = s.next
@@ -432,12 +497,34 @@ label { font-weight: 700; font-size: 14px; }
     const list = members.filter(m => result.byUid[m.uid].isMember && result.byUid[m.uid].rank === id)
       .map(m => ({ m, s: result.byUid[m.uid] })).sort((a, b) => b.s.lifetime - a.s.lifetime);
     $('peakPanel').innerHTML = `<div class="drawer-head"><h3>${esc(T('m.peak.h', { rank: RANK(id), name: rankName(id) || peak.name }))}</h3><button type="button" class="x" id="closePeak" aria-label="${T('m.close')}">×</button></div>
-      ${list.length ? list.map(({ m, s }) => `<div class="climber"><img src="${ninjaURI(s.rank, m.accessories)}" alt=""><div class="grow"><b>${esc(m.name)}</b>${m.uid === me.uid ? T('m.peak.you') : ''}${s.champion ? T('m.peak.champion') : ''}
+      ${list.length ? list.map(({ m, s }) => `<div class="climber"><img src="${ninjaURI(s.rank, m.accessories)}" alt=""><div class="grow"><a href="/camp?u=${encodeURIComponent(m.uid)}">${esc(m.name)}</a>${m.uid === me.uid ? T('m.peak.you') : ''}${s.champion ? T('m.peak.champion') : ''}
         <div class="mini"><i style="width:${Math.round((s.waiting ? 1 : s.progress) * 100)}%"></i></div></div><span class="mono">${s.lifetime}</span></div>`).join('')
         : `<p style="margin:0">${T('m.peak.empty')}</p>`}`;
-    $('peakPanel').hidden = false; $('peakPanel').dataset.peak = id; renderStrip();
+    $('peakPanel').hidden = false; $('peakPanel').dataset.peak = id; $('winsBtn').setAttribute('aria-expanded', 'false'); renderStrip();
     $('closePeak').onclick = () => { $('peakPanel').hidden = true; delete $('peakPanel').dataset.peak; renderStrip(); };
   }
+
+  /* ---------- wins: what members did lately (the wall of fame) ---------- */
+  const WIN = ['ship_project', 'open_source', 'certification', 'skill_badge', 'compete_place', 'talk_lightning', 'workshop', 'host_event', 'mentoring', 'collab', 'club_quest', 'club_contribution'];
+  function showWins() {
+    if (!result) return;
+    const byUid = Object.fromEntries(members.map(m => [m.uid, m]));
+    const wins = [];
+    for (const [uid, st] of Object.entries(result.byUid)) for (const h of st.history)
+      if (h.points > 0 && WIN.includes(h.fact.type) && h.fact.status === 'approved' && byUid[uid]) wins.push({ uid, h, rank: st.isMember ? st.rank : 'white' });
+    wins.sort((a, b) => (a.h.fact.date < b.h.fact.date ? 1 : a.h.fact.date > b.h.fact.date ? -1 : 0));
+    const fmt = (d) => new Date(d + 'T12:00').toLocaleDateString(I18N.locale(), { day: 'numeric', month: 'short' });
+    $('peakPanel').innerHTML = `<div class="drawer-head"><h3>${esc(T('wins.h'))}</h3><button type="button" class="x" id="closePeak" aria-label="${T('m.close')}">×</button></div>
+      <p style="margin:0;font-size:13px;color:var(--ink-soft)">${esc(T('wins.p'))}</p>
+      ${wins.length ? wins.slice(0, 30).map(({ uid, h, rank }) => {
+        const f = h.fact, key = 'fact.' + f.type, label = T(key, { n: f.place }) !== key ? T(key, { n: f.place }) : h.rule;
+        return `<div class="win"><img src="${ninjaURI(rank, byUid[uid].accessories)}" alt=""><p><a href="/camp?u=${encodeURIComponent(uid)}">${esc(uid === me.uid ? T('peak.you') : byUid[uid].name)}</a> · ${esc(label)}${f.title ? ' · ' + esc(f.title) : ''}<small>${esc(fmt(f.date))} · +${h.points}</small></p></div>`;
+      }).join('') : `<p style="margin:0">${esc(T('wins.none'))}</p>`}`;
+    $('peakPanel').hidden = false; delete $('peakPanel').dataset.peak; $('winsBtn').setAttribute('aria-expanded', 'true'); renderStrip();
+    $('closePeak').onclick = () => { $('peakPanel').hidden = true; $('winsBtn').setAttribute('aria-expanded', 'false'); $('winsBtn').focus(); };
+  }
+  $('winsBtn').addEventListener('click', () => { if ($('winsBtn').getAttribute('aria-expanded') === 'true') { $('peakPanel').hidden = true; $('winsBtn').setAttribute('aria-expanded', 'false'); } else showWins(); });
+  document.addEventListener('click', (e) => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('#stage')) pop.hidden = true; });
 
   /* ---------- drawer + forms ---------- */
   const drawer = $('drawer');
@@ -478,14 +565,14 @@ label { font-weight: 700; font-size: 14px; }
     const name = $('name').value.trim(), github = $('github').value.trim().replace(/^@/, '');
     if (!name) return show($('setupMsg'), T('m.setup.err.name'), false);
     if (!$('consent').checked) return show($('setupMsg'), T('m.setup.err.consent'), false);
-    await data.saveProfile({ name, github }); $('setup').hidden = true; await refresh();
+    await data.saveProfile({ name, github }); $('setup').hidden = true; await refresh(); await loadExtras(); setDrawer(true);
   });
 
   /* ---------- language switch: redraw everything built in script ---------- */
   let notlistedEmail = '';
   addEventListener('langchange', () => {
     if (notlistedEmail) $('notlistedP1').textContent = T('m.notlisted.p1', { email: notlistedEmail });
-    if (result && me) { renderDrawer(); renderStrip(); if ($('peakPanel').dataset.peak && !$('peakPanel').hidden) showPeak($('peakPanel').dataset.peak); }
+    if (result && me) { renderDrawer(); renderStrip(); renderSteps(); if (!$('peakPanel').hidden && $('winsBtn').getAttribute('aria-expanded') === 'true') showWins(); if ($('peakPanel').dataset.peak && !$('peakPanel').hidden) showPeak($('peakPanel').dataset.peak); }
     world && world.refreshText && world.refreshText();
   });
 
@@ -512,7 +599,7 @@ label { font-weight: 700; font-size: 14px; }
     }
     profile = await data.getProfile(user.uid);
     if (!profile) { $('setup').hidden = false; return; }
-    await refresh();
+    await refresh(); loadExtras();
     // opened from the profile menu on another page
     if (location.hash === '#me') { history.replaceState(null, '', location.pathname + location.search); setDrawer(true); }
     } catch (e) {

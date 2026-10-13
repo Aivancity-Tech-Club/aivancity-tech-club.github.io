@@ -23,14 +23,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261012f">
-  <script src="assets/i18n.js?v=20261012f"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261013e">
+  <script src="assets/i18n.js?v=20261013e"></script>
 </head>
 <body data-i18n-title="apply.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
   <header class="site-header">
     <div class="wrap">
-      <a class="brand" href="/">
+      <a class="brand" href="/" aria-label="aivancity Tech Club, home">
         <img src="assets/tech-club-logo.svg" alt="">
         <span>aivancity Tech Club</span>
       </a>
@@ -38,9 +38,10 @@
         <a href="/about" data-i18n="nav.about">About</a>
         <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
         <a href="/village" data-member data-i18n="nav.board">Village</a>
-        <a href="/join" class="nav-join" aria-current="page" data-join data-i18n="nav.join">Join</a>
-        <a class="nav-cta" href="/mountain" data-i18n="nav.mountain">Mountain</a>
-        <button type="button" class="lang-toggle" aria-label="Afficher le site en français" lang="fr">FR</button>
+        <a href="/mountain" class="nav-signin" data-join data-i18n="nav.signin">Sign in</a>
+        <a href="/apply" class="nav-cta nav-join" aria-current="page" data-join data-i18n="nav.join">Join</a>
+        <a class="nav-cta" href="/mountain" data-member data-i18n="nav.mountain">Mountain</a>
+        <button type="button" class="lang-toggle" aria-label="FR: afficher le site en français" lang="fr">FR</button>
       </nav>
     </div>
   </header>
@@ -126,18 +127,12 @@
         </div>
 
         <aside class="form-side">
-          <div class="meet-card" aria-label="Weekly meeting" data-i18n-attr="aria-label:meet.aria">
-            <p class="label" data-i18n="meet.label">// we meet every week</p>
-            <p class="day" data-i18n="meet.day">Thursdays</p>
-            <p class="time" data-i18n="meet.time">1:00 – 2:00 PM</p>
-            <span class="room"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> <span data-i18n="meet.room">AIClinic – Room 107</span></span>
-          </div>
           <div class="form-card" style="padding:22px">
-            <h3 style="margin:0 0 6px" data-i18n="apply.why.h"></h3>
+            <h2 class="side-h" data-i18n="apply.why.h"></h2>
             <p class="help" style="font-size:.95rem" data-i18n="apply.why.p"></p>
           </div>
           <div class="form-card" style="padding:22px">
-            <h3 style="margin:0 0 6px" data-i18n="apply.priv.h"></h3>
+            <h2 class="side-h" data-i18n="apply.priv.h"></h2>
             <p class="help" style="font-size:.95rem" data-i18n="apply.priv.p"></p>
           </div>
         </aside>
@@ -148,14 +143,14 @@
   <footer class="site-footer">
     <div class="wrap">
       <span class="copy">© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
-      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a> <span class="mono">#GDGOnCampus</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a>
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
 
-  <script src="assets/platform/config.js?v=20261012f"></script>
-  <script src="assets/platform/signin.js?v=20261012f"></script>
-  <script src="assets/platform/data.js?v=20261012f"></script>
+  <script src="assets/platform/config.js?v=20261013e"></script>
+  <script src="assets/platform/signin.js?v=20261013e"></script>
+  <script src="assets/platform/data.js?v=20261013e"></script>
   <script>
   (async () => {
     const $ = id => document.getElementById(id), T = (k, v) => I18N.t(k, v);

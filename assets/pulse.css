@@ -1,0 +1,25 @@
+/* ---------- organizers: club pulse ---------- */
+.pulse-sec { padding-top: 8px; }
+#pulse { display: grid; gap: 18px; }
+#pulse[hidden] { display: none; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpis div { background: var(--surface); border: var(--stroke) solid var(--line); border-radius: 18px; padding: 16px; }
+.kpis b { display: block; font-size: 2rem; line-height: 1; }
+.kpis span { display: block; margin-top: 6px; font-size: .88rem; color: var(--ink-soft); }
+.p-card { background: var(--surface); border: var(--stroke) solid var(--line); border-radius: var(--radius); padding: clamp(16px, 3vw, 24px); display: grid; gap: 10px; }
+.p-card h2 { margin: 0; font-size: 1.3rem; display: flex; gap: 10px; align-items: baseline; }
+.p-card h2 small { font-family: var(--mono); font-size: .85rem; font-weight: 400; padding: 2px 10px; border-radius: 999px; border: 1.5px solid var(--line); }
+.p-card .help { margin: 0; }
+.chart { list-style: none; margin: 8px 0 0; padding: 0; display: flex; gap: 8px; align-items: flex-end; height: 180px; overflow-x: auto; }
+.chart li { flex: 1 0 44px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 6px; }
+.chart .bar { display: flex; justify-content: center; align-items: flex-start; background: var(--p-blue); border: 2px solid var(--line); border-radius: 10px 10px 4px 4px; min-height: 22px; color: #1e1e1e; }
+.chart .bar b { font-size: .85rem; padding-top: 2px; }
+.chart .next .bar { background: repeating-linear-gradient(45deg, var(--p-green), var(--p-green) 6px, transparent 6px, transparent 12px); border-style: dashed; }
+.chart small { text-align: center; font-family: var(--mono); font-size: .72rem; color: var(--ink-soft); white-space: nowrap; }
+.p-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.p-list li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--line) 15%, transparent); }
+.p-list li:first-child { border-top: 0; }
+.p-list small { display: block; color: var(--ink-soft); font-size: .85rem; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row-actions .btn { padding: 8px 16px; font-size: .9rem; }
+@media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

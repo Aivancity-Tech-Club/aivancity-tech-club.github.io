@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Camp · aivancity Tech Club</title>
+  <meta name="description" content="Members only: a Tech Club member's camp on the Mountain.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f0f0f0">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Tech Club">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css?v=20261013e">
+  <link rel="stylesheet" href="assets/village.css?v=20261013e">
+  <link rel="stylesheet" href="assets/camp.css?v=20261013e">
+  <script src="assets/i18n.js?v=20261013e"></script>
+</head>
+<body data-i18n-title="camp.title">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="aivancity Tech Club, home">
+        <img src="assets/tech-club-logo.svg" alt="">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="/about" data-i18n="nav.about">About</a>
+        <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
+        <a href="/village" data-member data-i18n="nav.board">Village</a>
+        <a href="/mountain" class="nav-signin" data-join data-i18n="nav.signin">Sign in</a>
+        <a href="/apply" class="nav-cta nav-join" data-join data-i18n="nav.join">Join</a>
+        <a class="nav-cta" href="/mountain" data-member data-i18n="nav.mountain">Mountain</a>
+        <button type="button" class="lang-toggle" aria-label="FR: afficher le site en français" lang="fr">FR</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap camp-wrap">
+      <p class="camp-back"><a href="/mountain" data-i18n="camp.back">← Back to the Mountain</a></p>
+
+      <!-- loading -->
+      <div class="camp-skel" id="cLoading" role="status" aria-busy="true">
+        <span class="sr-only" data-i18n="camp.loading">Loading the camp…</span>
+        <div aria-hidden="true"><span class="sk sk-hero"></span><div class="sk-cards"><div class="sk-card"></div><div class="sk-card"></div><div class="sk-card"></div></div></div>
+      </div>
+
+      <!-- not signed in / not a member -->
+      <div class="form-card gate" id="gSignin" hidden>
+        <h2 data-si-intro data-i18n="camp.gate.h">Camps are for club members</h2>
+        <p data-si-intro data-i18n="camp.gate.p">Sign in with your school account to see it.</p>
+        <div id="siBox"></div>
+      </div>
+      <div class="form-card gate" id="gMember" hidden>
+        <p data-i18n="camp.gate.member">Camps are for club members.</p>
+        <a class="btn btn-primary" href="/apply" data-i18n="vb.gate.apply">Join the club →</a>
+      </div>
+      <div class="form-card gate" id="gProfile" hidden>
+        <p data-i18n="vb.gate.profile"></p>
+        <a class="btn btn-primary" href="/mountain" data-i18n="vb.gate.mountain">Go to the Mountain →</a>
+      </div>
+      <div class="form-card gate" id="gMissing" hidden>
+        <p data-i18n="camp.missing">We couldn't find this member.</p>
+        <a class="btn btn-ghost" href="/mountain" data-i18n="camp.back">← Back to the Mountain</a>
+      </div>
+
+      <!-- the camp -->
+      <article id="camp" hidden></article>
+
+      <!-- edit (owner only) -->
+      <form class="form-card form-grid camp-form" id="campForm" hidden novalidate>
+        <h2 style="margin:0" data-i18n="camp.edit.h">Edit your camp</h2>
+        <p class="help" style="margin:0" data-i18n="camp.edit.p">Everything is optional, and only club members can see your camp. Your record fills itself in from what you do.</p>
+        <fieldset class="field"><legend data-i18n="camp.f.color">Colour</legend><div class="swatches" id="swatches"></div></fieldset>
+        <div class="field"><label for="fAbout" data-i18n="camp.f.about">A line about you</label>
+          <textarea class="textarea" id="fAbout" maxlength="280" rows="2" data-i18n-attr="placeholder:camp.f.about.ph"></textarea></div>
+        <div class="field"><label for="fWorking" data-i18n="camp.working">What I'm working on</label>
+          <input class="input" id="fWorking" maxlength="140" data-i18n-attr="placeholder:camp.f.working.ph"></div>
+        <div class="vb-row">
+          <div class="field"><label for="fDream" data-i18n="camp.dream">Dream company</label>
+            <input class="input" id="fDream" maxlength="60" data-i18n-attr="placeholder:camp.f.dream.ph"></div>
+          <div class="field"><label for="fAsk" data-i18n="camp.ask">Ask me about</label>
+            <input class="input" id="fAsk" maxlength="140" data-i18n-attr="placeholder:camp.f.ask.ph"></div>
+        </div>
+        <fieldset class="field"><legend data-i18n="camp.proud">Proud of</legend>
+          <p class="help" style="margin:0" data-i18n="camp.f.proud.help">Up to 4: a project, a hackathon, a certificate, anything you're proud of.</p>
+          <ol class="proud-edit" id="proudEdit"></ol>
+          <button type="button" class="btn btn-ghost" id="addProud" data-i18n="camp.f.proud.add">+ Add one</button>
+        </fieldset>
+        <div class="field"><label for="fSong" data-i18n="camp.f.song">Your song (a link)</label>
+          <input class="input" id="fSong" type="url" inputmode="url" maxlength="300" placeholder="https://open.spotify.com/track/…">
+          <p class="help" style="margin:0" data-i18n="camp.f.song.help">Spotify, YouTube, SoundCloud, Deezer or Apple Music. It only plays when someone taps it.</p></div>
+        <p class="notice bad form-msg" id="formMsg" role="alert"></p>
+        <div class="btns" style="margin:0"><button class="btn btn-primary" type="submit" id="fSave" data-i18n="camp.save">Save my camp</button>
+          <button class="btn btn-ghost" type="button" id="fCancel" data-i18n="vb.cancel">Cancel</button></div>
+      </form>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span class="copy">© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a>
+      <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
+    </div>
+  </footer>
+
+  <script src="assets/js-yaml.min.js?v=20261013e"></script>
+  <script src="assets/schedule.js?v=20261013e"></script>
+  <script src="assets/platform/config.js?v=20261013e"></script>
+  <script src="assets/platform/engine.js?v=20261013e"></script>
+  <script src="assets/platform/signin.js?v=20261013e"></script>
+  <script src="assets/platform/data.js?v=20261013e"></script>
+  <script>
+  (async () => {
+    const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    $("yr").textContent = new Date().getFullYear();
+    const gates = ["cLoading", "gSignin", "gMember", "gProfile", "gMissing", "camp"];
+    const gate = (id) => { gates.forEach(g => $(g).hidden = g !== id); $("campForm").hidden = true; };
+    const COLORS = ClubData.CAMP_COLORS;
+    const DARK = ["night", "forest"];
+    // facts worth showing off (check-ins and streaks are in the numbers instead)
+    const WIN = ["ship_project", "open_source", "certification", "skill_badge", "compete_place", "compete_enter", "talk_lightning", "workshop", "host_event", "mentoring", "collab", "club_quest", "club_contribution", "referral"];
+
+    const data = ClubData.create();
+    const ready = data.init().then(() => null, (e) => e);
+    const rb = jsyaml.load(await (await fetch("rules/rules.yaml", { cache: "no-cache" })).text());
+    const today = ClubData.todayStr();
+    const regular = SESSIONS.filter(s => s.track !== "break" && parseDate(s.date).getDay() === 4 && s.date <= today).map(s => s.date).sort();
+    const rankName = (id) => { const r = (rb.ranks || []).find(x => x.id === id); return r ? I18N.pick(r, "name") : ""; };
+    const fmtDate = (d) => new Date(d + "T12:00").toLocaleDateString(I18N.locale(), { day: "numeric", month: "short", year: "numeric" });
+
+    const err = await ready;
+    if (err) { gate("cLoading"); $("cLoading").textContent = T("m.dberror", { e: err.code || err.message || "?" }); return; }
+    const siBox = ClubSignIn.mount($("siBox"), data);
+
+    let me = null, isOrg = false, who = null, member = null, stats = null, camp = null, editing = [];
+
+    /* ---------- songs: only known players are embedded, and only after a tap ---------- */
+    function songEmbed(url) {
+      let m, u; try { u = new URL(url); } catch (e) { return null; }
+      if (u.protocol !== "https:") return null;
+      if (u.hostname === "open.spotify.com" && (m = u.pathname.match(/^\/(?:intl-[a-z-]+\/)?(track|album|playlist|episode|artist)\/([A-Za-z0-9]+)/)))
+        return { src: `https://open.spotify.com/embed/${m[1]}/${m[2]}`, h: 152, name: "Spotify" };
+      if (/(^|\.)youtube\.com$/.test(u.hostname) || u.hostname === "youtu.be") {
+        const id = u.hostname === "youtu.be" ? u.pathname.slice(1) : (u.searchParams.get("v") || (u.pathname.match(/^\/(?:shorts|embed)\/([\w-]{6,})/) || [])[1]);
+        if (id && /^[\w-]{6,}$/.test(id)) return { src: `https://www.youtube-nocookie.com/embed/${id}`, h: 200, name: "YouTube", video: true };
+      }
+      if (u.hostname === "soundcloud.com" || u.hostname === "on.soundcloud.com")
+        return { src: `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%231a73e8&visual=false&show_comments=false`, h: 166, name: "SoundCloud" };
+      if (/(^|\.)deezer\.com$/.test(u.hostname) && (m = u.pathname.match(/\/(track|album|playlist)\/(\d+)/)))
+        return { src: `https://widget.deezer.com/widget/auto/${m[1]}/${m[2]}`, h: 152, name: "Deezer" };
+      if (u.hostname === "music.apple.com") return { src: `https://embed.music.apple.com${u.pathname}${u.search}`, h: 175, name: "Apple Music" };
+      return null;
+    }
+
+    /* ---------- view ---------- */
+    function card(label, value) { return value ? `<div class="camp-card"><small>${esc(label)}</small><p>${esc(value)}</p></div>` : ""; }
+    function render() {
+      const own = me.uid === who, c = camp || {}, s = stats, color = COLORS.includes(c.color) ? c.color : "sky";
+      const first = (member.name || "").split(" ")[0];
+      const rep = !!(c.reports || {})[me.uid], hidden = !!c.hidden;
+      const filled = c.working || c.dream || c.askMe || c.about || (c.proud || []).length || c.song;
+      const wins = s.history.filter(h => h.points > 0 && WIN.includes(h.fact.type) && h.fact.status === "approved").slice(0, 12);
+      const missions = (s.counts.mentoring || 0) + (s.counts.collab || 0) + (s.counts.club_quest || 0);
+      const song = c.song ? songEmbed(c.song) : null;
+      document.title = T("camp.title.of", { name: member.name }) + " · aivancity Tech Club";
+      $("camp").innerHTML = `
+        ${hidden ? `<p class="notice bad">${esc(T(own ? "camp.hidden.own" : "camp.hidden.org"))}</p>` : ""}
+        <header class="camp-hero c-${color}${DARK.includes(color) ? " is-dark" : ""}">
+          <img class="camp-ninja" src="assets/ninjas/ninja-${s.isMember ? s.rank : "white"}.svg" alt="">
+          <div class="camp-id">
+            <h1>${esc(member.name)}${own ? ` <span class="camp-you">${esc(T("camp.you"))}</span>` : ""}</h1>
+            <p class="camp-belt">${esc(s.isMember ? T("m.bandana", { rank: T("rank." + s.rank), name: rankName(s.rank) }) : T("camp.nobelt"))}</p>
+            ${c.about ? `<p class="camp-about">${esc(c.about)}</p>` : ""}
+          </div>
+          <div class="camp-actions">
+            ${own ? `<button type="button" class="btn btn-primary" data-act="edit">${esc(T(filled ? "camp.edit" : "camp.setup"))}</button>` : ""}
+            ${song ? `<button type="button" class="btn camp-play" data-act="play" aria-expanded="false">${esc(own ? T("camp.play.own") : T("camp.play", { name: first }))}</button>`
+              : c.song ? `<a class="btn camp-play" href="${esc(c.song)}" target="_blank" rel="noopener">${esc(T("camp.listen"))} ↗</a>` : ""}
+          </div>
+        </header>
+        <div class="camp-player" id="player" hidden></div>
+
+        ${!filled ? `<div class="camp-empty">${own
+          ? `<p><b>${esc(T("camp.empty.own.h"))}</b> ${esc(T("camp.empty.own.p"))}</p>`
+          : `<p>${esc(T("camp.empty.other", { name: first }))}</p>`}</div>` : ""}
+
+        ${c.working || c.dream || c.askMe ? `<section class="camp-cards" aria-label="${esc(T("camp.about.h", { name: first }))}">
+          ${card(T("camp.working"), c.working)}${card(T("camp.dream"), c.dream)}${card(T("camp.ask"), c.askMe)}</section>` : ""}
+
+        ${(c.proud || []).length ? `<section class="camp-sec"><h2>${esc(T("camp.proud"))}</h2><div class="proud-grid">${c.proud.map(p => `
+          <div class="proud"><h3>${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener ugc">${esc(p.title)} ↗</a>` : esc(p.title)}</h3>${p.text ? `<p>${esc(p.text)}</p>` : ""}</div>`).join("")}</div></section>` : ""}
+
+        <section class="camp-sec">
+          <h2>${esc(T("camp.record"))}</h2>
+          <div class="camp-stats">
+            <div><b>${s.lifetime}</b><span>${esc(T("m.lifetime"))}</span></div>
+            <div><b>${s.counts.attend || 0}</b><span>${esc(T("camp.sessions"))}</span></div>
+            <div><b>${missions}</b><span>${esc(T("camp.missions"))}</span></div>
+            <div><b>${s.badges.length}</b><span>${esc(T("m.badges.h"))}</span></div>
+          </div>
+          ${wins.length ? `<ul class="camp-wins">${wins.map(h => {
+            const f = h.fact, key = "fact." + f.type, label = T(key, { n: f.place }) !== key ? T(key, { n: f.place }) : h.rule;
+            return `<li><span><b>${esc(label)}</b>${f.title ? " · " + esc(f.title) : ""}</span><small>${esc(fmtDate(f.date))} · +${h.points}</small></li>`;
+          }).join("")}</ul>` : `<p class="help">${esc(T(own ? "camp.wins.none.own" : "camp.wins.none", { name: first }))}</p>`}
+          <p class="help" style="margin:10px 0 0"><a href="/rules" data-i18n="m.rules.link">${esc(T("m.rules.link"))}</a></p>
+        </section>
+
+        <p class="camp-mod">
+          ${!own && !isOrg ? `<button type="button" class="linkbtn" data-act="report" ${rep ? "disabled" : ""}>${esc(T(rep ? "vb.a.reported" : "vb.a.report"))}</button>` : ""}
+          ${isOrg && !own && camp ? `<button type="button" class="linkbtn" data-act="${hidden ? "unhide" : "hide"}">${esc(T(hidden ? "vb.a.unhide" : "vb.a.hide"))}</button>` : ""}
+          ${isOrg && Object.keys(c.reports || {}).length ? `<span class="chip st-reported">${esc(T("vb.reported.tag", { n: Object.keys(c.reports).length }))}</span>` : ""}
+        </p>`;
+      gate("camp");
+    }
+
+    /* ---------- edit ---------- */
+    function proudRow(p, i) {
+      return `<li class="proud-row"><div class="field"><label for="pt${i}">${esc(T("camp.f.proud.title"))}</label><input class="input" id="pt${i}" data-p="title" maxlength="80" value="${esc(p.title)}"></div>
+        <div class="field"><label for="px${i}">${esc(T("camp.f.proud.text"))}</label><input class="input" id="px${i}" data-p="text" maxlength="200" value="${esc(p.text)}"></div>
+        <div class="field"><label for="pl${i}">${esc(T("camp.f.proud.link"))}</label><input class="input" id="pl${i}" data-p="link" type="url" inputmode="url" maxlength="300" placeholder="https://" value="${esc(p.link)}"></div>
+        <button type="button" class="linkbtn" data-rm="${i}">${esc(T("camp.f.proud.rm"))}</button></li>`;
+    }
+    const readProud = () => [...$("proudEdit").children].map(li => ({ title: li.querySelector('[data-p="title"]').value, text: li.querySelector('[data-p="text"]').value, link: li.querySelector('[data-p="link"]').value }));
+    function drawProud() { $("proudEdit").innerHTML = editing.map(proudRow).join(""); $("addProud").hidden = editing.length >= 4; }
+    function openEdit() {
+      const c = camp || {};
+      $("swatches").innerHTML = COLORS.map(k => `<label class="swatch c-${k}"><input type="radio" name="color" value="${k}"${(c.color || "sky") === k ? " checked" : ""}><span class="sr-only">${esc(T("camp.color." + k))}</span></label>`).join("");
+      $("fAbout").value = c.about || ""; $("fWorking").value = c.working || ""; $("fDream").value = c.dream || ""; $("fAsk").value = c.askMe || ""; $("fSong").value = c.song || "";
+      editing = (c.proud || []).map(p => ({ ...p })); if (!editing.length) editing.push({ title: "", text: "", link: "" });
+      drawProud(); $("formMsg").textContent = "";
+      $("camp").hidden = true; $("campForm").hidden = false; $("fAbout").focus();
+    }
+    $("addProud").addEventListener("click", () => { editing = readProud(); if (editing.length < 4) editing.push({ title: "", text: "", link: "" }); drawProud(); $("proudEdit").lastElementChild.querySelector("input").focus(); });
+    $("proudEdit").addEventListener("click", (e) => { const b = e.target.closest("[data-rm]"); if (!b) return; editing = readProud(); editing.splice(+b.dataset.rm, 1); drawProud(); $("addProud").focus(); });
+    $("fCancel").addEventListener("click", () => { $("campForm").hidden = true; $("camp").hidden = false; });
+    $("campForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const say = (k) => { $("formMsg").className = "notice bad form-msg"; $("formMsg").textContent = T(k); };
+      const proud = readProud().map(p => ({ title: p.title.trim(), text: p.text.trim(), link: p.link.trim() })).filter(p => p.title || p.text || p.link);
+      if (proud.some(p => !p.title)) return say("camp.err.title");
+      if (proud.some(p => p.link && !/^https:\/\/\S+$/.test(p.link))) return say("vb.err.link");
+      const song = $("fSong").value.trim();
+      if (song && !/^https:\/\/\S+$/.test(song)) return say("vb.err.link");
+      const c = { color: (document.querySelector("[name=color]:checked") || {}).value, about: $("fAbout").value, working: $("fWorking").value, dream: $("fDream").value, askMe: $("fAsk").value, song, proud };
+      $("fSave").disabled = true; const r = await data.saveCamp(c); $("fSave").disabled = false;
+      if (!r.ok) { $("formMsg").textContent = T(r.code || "err.generic"); return; }
+      camp = await data.getCamp(me.uid); render(); $("camp").querySelector("h1").focus && $("camp").querySelector("h1").setAttribute("tabindex", "-1"); $("camp").querySelector("h1").focus();
+    });
+
+    $("camp").addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-act]"); if (!b) return;
+      const act = b.dataset.act;
+      if (act === "edit") openEdit();
+      if (act === "play") {
+        const s = songEmbed(camp.song), p = $("player"), on = p.hidden;
+        p.hidden = !on; b.setAttribute("aria-expanded", String(on));
+        if (on && !p.firstChild) p.innerHTML = `<iframe title="${esc(T("camp.song.of", { name: member.name }))} (${esc(s.name)})" src="${esc(s.src)}" height="${s.h}" loading="lazy"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+        if (!on) p.innerHTML = "";
+      }
+      if (act === "report") { b.disabled = true; const r = await data.reportCamp(who); if (r.ok) { camp.reports = { ...(camp.reports || {}), [me.uid]: true }; render(); } else b.disabled = false; }
+      if (act === "hide" || act === "unhide") { const r = await data.hideCamp(who, act === "hide"); if (r.ok) { camp.hidden = act === "hide"; render(); } }
+    });
+
+    addEventListener("langchange", () => { if (member && !$("camp").hidden) render(); });
+
+    data.onAuth(async (u) => {
+      try {
+        if (!u) { gate("gSignin"); siBox.signin(data.linkError); return; }
+        if (!u.verified) { gate("gSignin"); siBox.verify(u.email); return; }
+        if (!(await data.onRoster())) { gate("gMember"); return; }
+        const profile = await data.getProfile(u.uid);
+        if (!profile) { gate("gProfile"); return; }
+        me = u;
+        isOrg = profile.role === "organizer" || (data.mode === "demo" && new URLSearchParams(location.search).has("elder"));
+        who = new URLSearchParams(location.search).get("u") || u.uid;
+        const [members, facts] = await Promise.all([data.loadMembers(), data.loadFacts()]);
+        member = members.find(m => m.uid === who);
+        if (!member) { gate("gMissing"); return; }
+        const res = PointsEngine.compute(rb, facts, members, regular, today);
+        stats = res.byUid[who];
+        camp = await data.getCamp(who);
+        if (camp && camp.hidden && who !== u.uid && !isOrg) camp = null;
+        render();
+        if (who === u.uid && new URLSearchParams(location.search).has("edit")) openEdit();
+      } catch (e) { console.error(e); gate("cLoading"); $("cLoading").textContent = T("m.dberror", { e: e.code || e.message || "?" }); }
+    });
+  })();
+  </script>
+</body>
+</html>
