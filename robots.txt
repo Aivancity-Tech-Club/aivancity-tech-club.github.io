@@ -1,4 +1,5 @@
 User-agent: *
 Disallow: /camp
 Disallow: /pulse
+Disallow: /checkin
 Sitemap: https://aivancity-tech-club.github.io/sitemap.xml

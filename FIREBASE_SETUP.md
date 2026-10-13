@@ -132,14 +132,12 @@ Nothing to set up: it uses the `board` collection (comments live under each post
 - **Feedback:** the `/feedback` form has a "Why I stopped coming" topic; the drifting-away message links to it.
 
 ## 8. Every Thursday: the check-in code
-Until the organizer screens are built (next step of the project), create the code in the console:
-1. **Firestore → Data → Start collection** (first time) named `checkinCodes`.
-2. **Add document** with the code as the **Document ID**, for example `K7Q2`, and these fields:
-   - `date` (string): `2026-10-15`
-   - `validFrom` (timestamp): that day, 13:00
-   - `validUntil` (timestamp): that day, 14:15
-   - `double` (boolean): `false`
-3. Show the code on the projector. Members type it in **My climb → Thursday check-in**.
+An organizer opens **/checkin** (also in their profile menu, and on /pulse) on the laptop connected to the projector:
+1. Pick how long the code works (1 hour by default) and tap **Show a check-in code**. A new random code appears in big letters,
+   with a countdown and the number of people checked in.
+2. Members type it on the Mountain: **My climb → Thursday check-in**. Each person can check in once per day.
+3. **New code** replaces it (for example if it was shared outside the room); **End check-in** closes it early.
+If the page is reloaded, the code that is still open today comes back.
 
 ## How the data is protected
 - Only verified `@aivancity.education` accounts **on the club roster** can read anything.

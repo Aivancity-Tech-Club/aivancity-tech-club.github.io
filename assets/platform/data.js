@@ -157,6 +157,11 @@ function demoBackend() {
     async loadRequests() { return extra().requests; },
     async loadPulse() { return extra().pulse; },
     async markContacted(uid) { const X = extra(); X.pulse[uid] = { contactedAt: Date.now(), by: 'you' }; saveExtra(X); return { ok: true }; },
+    // ---------- organizers: Thursday check-in codes ----------
+    async activeCheckinCodes() { const c = extra().code; return c && c.until > Date.now() ? [c] : []; },
+    async createCheckinCode(minutes, double) { const X = extra(); X.code = { code: 'DEMO', date: todayStr(), until: Date.now() + minutes * 60e3, double: !!double }; saveExtra(X); return { ok: true, ...X.code }; },
+    async endCheckinCode() { const X = extra(); X.code = null; saveExtra(X); return { ok: true }; },
+    async countCheckins(date) { return state.facts.filter(f => f.type === 'attend' && f.date === date).length; },
     currentUid() { return 'you'; },
     reset() { store.del('nw-demo-v1'); store.del('nw-demo-board-v1'); store.del('nw-demo-extra-v1'); state = demoSeed(); },
   };
@@ -502,6 +507,28 @@ function firebaseBackend() {
     },
     async markContacted(uid) {
       try { await db.collection('pulse').doc(uid).set({ contactedAt: FV().serverTimestamp(), by: auth.currentUser.uid }); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    // ---------- organizers: Thursday check-in codes (checkinCodes/{CODE} { date, validFrom, validUntil, double }) ----------
+    async activeCheckinCodes() {
+      const s = await db.collection('checkinCodes').where('date', '==', todayStr()).get();
+      return s.docs.map(d => ({ code: d.id, date: d.data().date, until: d.data().validUntil.toMillis(), double: !!d.data().double }))
+        .filter(c => c.until > Date.now()).sort((a, b) => b.until - a.until);
+    },
+    async createCheckinCode(minutes, double) {
+      const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', r = new Uint32Array(5); crypto.getRandomValues(r);
+      const code = Array.from(r, n => A[n % A.length]).join(''), now = Date.now(), until = now + minutes * 60e3;
+      try {
+        await db.collection('checkinCodes').doc(code).set({ date: todayStr(), validFrom: firebase.firestore.Timestamp.fromMillis(now - 60e3),
+          validUntil: firebase.firestore.Timestamp.fromMillis(until), double: !!double, by: auth.currentUser.uid });
+        return { ok: true, code, date: todayStr(), until, double: !!double };
+      } catch (e) { return fail(e); }
+    },
+    async endCheckinCode(code) {
+      try { await db.collection('checkinCodes').doc(code).update({ validUntil: firebase.firestore.Timestamp.now() }); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    async countCheckins(date) {
+      const s = await db.collection('facts').where('type', '==', 'attend').where('date', '==', date).get();
+      return s.size;
     },
     currentUid() { return auth.currentUser ? auth.currentUser.uid : null; },
     async submit(s) {

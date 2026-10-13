@@ -119,6 +119,14 @@ en: {
   'vb.posts.h': 'Posts',
   'sched.f.lang': 'Language', 'sched.f.alllangs': 'Any language',
   'lang.in.en': 'In English', 'lang.in.fr': 'In French', 'lang.in.both': 'English & French', 'lang.name.en': 'English', 'lang.name.fr': 'French', 'lang.subs': '{lang} · {subs} subtitles', 'lang.sub.en': 'English', 'lang.sub.fr': 'French',
+  'ci.title': 'Check-in', 'ci.h1': 'Thursday <b>check-in</b>', 'ci.only': 'This page is for organizers.', 'ci.menu': 'Check-in screen',
+  'ci.lede': 'Organizers only. Start the check-in, put this screen on the projector, and members type the code in My climb on the Mountain.',
+  'ci.demo': 'Demo: the code is always DEMO and nothing is saved online.',
+  'ci.start.h': 'Start today\'s check-in', 'ci.today': 'Today: {s}', 'ci.nosession': 'no session on the schedule today',
+  'ci.minutes': 'Code works for', 'ci.m30': '30 minutes', 'ci.m60': '1 hour', 'ci.m90': '1 hour 30', 'ci.m180': '3 hours (events)',
+  'ci.go': 'Show a check-in code', 'ci.how': 'Check in on the Mountain: <b>My climb → Thursday check-in</b>',
+  'ci.left': 'Closes in {t}', 'ci.closed': 'Check-in closed', 'ci.count': '{n} checked in',
+  'ci.full': 'Full screen', 'ci.new': 'New code', 'ci.end': 'End check-in',
   'vb.loading': 'Loading the board…',
   'vb.form.as': 'Post as',
   'vb.form.as.help': 'Elders only. A team or council post shows the club as the author; the details panel still says who posted it, so people know who to message.',
@@ -520,6 +528,14 @@ fr: {
   'vb.posts.h': 'Publications',
   'sched.f.lang': 'Langue', 'sched.f.alllangs': 'Toutes les langues',
   'lang.in.en': 'En anglais', 'lang.in.fr': 'En français', 'lang.in.both': 'Anglais et français', 'lang.name.en': 'Anglais', 'lang.name.fr': 'Français', 'lang.subs': '{lang} · sous-titres en {subs}', 'lang.sub.en': 'anglais', 'lang.sub.fr': 'français',
+  'ci.title': 'Présence', 'ci.h1': 'Présence du <b>jeudi</b>', 'ci.only': 'Cette page est réservée aux organisateurs.', 'ci.menu': 'Écran de présence',
+  'ci.lede': 'Réservé aux organisateurs. Lancez l\'enregistrement, affichez cet écran au projecteur, et les membres tapent le code dans Mon ascension sur la Montagne.',
+  'ci.demo': 'Démo : le code est toujours DEMO et rien n\'est enregistré en ligne.',
+  'ci.start.h': 'Lancer l\'enregistrement du jour', 'ci.today': 'Aujourd\'hui : {s}', 'ci.nosession': 'pas de séance au programme aujourd\'hui',
+  'ci.minutes': 'Code valable', 'ci.m30': '30 minutes', 'ci.m60': '1 heure', 'ci.m90': '1 h 30', 'ci.m180': '3 heures (événements)',
+  'ci.go': 'Afficher un code', 'ci.how': 'Enregistrez-vous sur la Montagne : <b>Mon ascension → Présence du jeudi</b>',
+  'ci.left': 'Se ferme dans {t}', 'ci.closed': 'Enregistrement fermé', 'ci.count': '{n} présents',
+  'ci.full': 'Plein écran', 'ci.new': 'Nouveau code', 'ci.end': 'Terminer',
   'vb.loading': 'Chargement du tableau…',
   'vb.form.as': 'Publier en tant que',
   'vb.form.as.help': 'Réservé aux anciens. Une publication de l\'équipe ou du conseil affiche le club comme auteur ; le détail indique toujours qui l\'a publiée, pour savoir à qui écrire.',
@@ -868,6 +884,7 @@ function addProfile() {
       <a href="/mountain#me" data-i18n="me.climb">My climb</a>
       <a href="/rules" data-i18n="me.rules">How to level up</a>
       ${me.org ? '<a href="/pulse" data-i18n="pulse.menu">Club pulse</a>' : ''}
+      ${me.org ? '<a href="/checkin" data-i18n="ci.menu">Check-in screen</a>' : ''}
       <a href="/feedback" data-i18n="footer.feedback">Give feedback</a>
       <a href="/mountain#signout" data-i18n="m.signout">Sign out</a>
     </div>`;
