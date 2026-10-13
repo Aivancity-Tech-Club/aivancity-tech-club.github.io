@@ -23,9 +23,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261013f">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261013f">
-  <script src="assets/i18n.js?v=20261013f"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261013g">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261013g">
+  <script src="assets/i18n.js?v=20261013g"></script>
 </head>
 <body data-i18n-title="nav.schedule">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -54,7 +54,7 @@
         <h1 data-i18n="schedule.h1">Every Thursday, <b>1–2 PM</b></h1>
         <p class="lede" style="font-size:1.15rem;color:var(--ink-soft);margin:0" data-i18n="schedule.lede">AIClinic – Room 107 · open to all aivancity students. Sessions marked <b>Planned</b> may still change.</p>
         <div class="cal-cta">
-          <button type="button" class="btn btn-primary" data-ics-all data-i18n="sched.cal.all">Add all sessions to my calendar</button>
+          <button type="button" class="btn btn-ghost cal-all" data-ics-all data-i18n="sched.cal.all">Add all sessions to my calendar</button>
           <p class="help" data-i18n="sched.cal.help">Works with Google Calendar, Apple Calendar and Outlook. Planned sessions may still change, so download it again later in the season.</p>
         </div>
       </div>
@@ -73,8 +73,8 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261013f"></script>
-  <script src="assets/platform/live.js?v=20261013f"></script>
+  <script src="assets/schedule.js?v=20261013g"></script>
+  <script src="assets/platform/live.js?v=20261013g"></script>
   <script>
     const draw = () => renderSeason(document.getElementById("season"));
     draw(); addEventListener("langchange", draw);

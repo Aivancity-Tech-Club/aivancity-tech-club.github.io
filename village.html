@@ -23,10 +23,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261013f">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261013f">
-  <link rel="stylesheet" href="assets/village.css?v=20261013f">
-  <script src="assets/i18n.js?v=20261013f"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261013g">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261013g">
+  <link rel="stylesheet" href="assets/village.css?v=20261013g">
+  <script src="assets/i18n.js?v=20261013g"></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -88,10 +88,6 @@
         <!-- the board -->
         <div id="board" hidden>
           <p class="notice info" id="demoNote" hidden data-i18n="vb.demo"></p>
-          <details class="elder-tools" id="elderTools" hidden>
-            <summary data-i18n="vb.elder.h">Elder tools</summary>
-            <p data-i18n="vb.elder.p"></p>
-          </details>
 
           <!-- how missions work: a banner until opened; can be collapsed, or dismissed for good (remembered in this browser) -->
           <div id="howWrap">
@@ -196,12 +192,12 @@
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261013f"></script>
-  <script src="assets/schedule.js?v=20261013f"></script>
-  <script src="assets/platform/config.js?v=20261013f"></script>
-  <script src="assets/platform/engine.js?v=20261013f"></script>
-  <script src="assets/platform/signin.js?v=20261013f"></script>
-  <script src="assets/platform/data.js?v=20261013f"></script>
+  <script src="assets/js-yaml.min.js?v=20261013g"></script>
+  <script src="assets/schedule.js?v=20261013g"></script>
+  <script src="assets/platform/config.js?v=20261013g"></script>
+  <script src="assets/platform/engine.js?v=20261013g"></script>
+  <script src="assets/platform/signin.js?v=20261013g"></script>
+  <script src="assets/platform/data.js?v=20261013g"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -282,10 +278,10 @@
       ].map(x => `<li>${x}</li>`).join("");
     }
     function renderFilters() {
-      const n = (kind) => posts.filter(p => visible(p) && !(pastWeek(p) && kind !== "week") && (!kind || p.kind === kind)).length;
+      const n = (kind) => posts.filter(p => visible(p) && (kind === "week" ? pastWeek(p) : !pastWeek(p)) && (!kind || p.kind === kind)).length;
       const k = (v, label) => `<button type="button" class="vb-tab" data-kind="${v}" aria-pressed="${F.kind === v}">${esc(label)} <small>${n(v)}</small></button>`;
       $("filters").setAttribute("aria-label", T("vb.title"));
-      $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) + k("week", T("vb.f.week"));
+      $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) + (n("week") || F.kind === "week" ? k("week", T("vb.f.week")) : "");
       const showSub = !F.kind || F.kind === "mission";
       $("subfilters").hidden = !showSub;
       const m = (v, label) => `<button type="button" class="fchip" data-mtype="${v}" aria-pressed="${F.mtype === v}">${esc(label)}</button>`;
@@ -296,8 +292,7 @@
     const expired = (p) => p.kind !== "week" && !!p.expires && today > p.expires && (p.kind !== "mission" || p.status === "open");
     const pastWeek = (p) => p.kind === "week" && weekState(p) === "past";
     const visible = (p) => (isOrg || p.by === me.uid || p.reportCount < AUTO_HIDE)
-      && ((p.status !== "closed" && !expired(p)) || p.by === me.uid || isOrg)
-      && (!pastWeek(p) || F.kind === "week");
+      && ((p.status !== "closed" && !expired(p)) || p.by === me.uid || isOrg);
     function statusLine(p) {
       if (expired(p)) return `<span class="chip st-closed">${esc(T("vb.st.expired"))}</span>`;
       const until = p.expires && (p.kind !== "mission" || p.status === "open") ? `<span class="chip">${esc(T("vb.until", { d: fmtDate(p.expires) }))}</span>` : "";
@@ -431,6 +426,7 @@
       const list = posts.filter(p => p.id !== active && (!pin || p.id !== pin.id))
         .filter(visible)
         .filter(p => !F.kind || p.kind === F.kind)
+        .filter(p => (F.kind === "week") === pastWeek(p) || (p.kind !== "week"))
         .filter(p => !F.openOnly || (p.kind === "mission" && p.status === "open" && !expired(p)))
         .filter(p => !F.mtype || (p.kind === "mission" && p.mtype === F.mtype))
         .filter(p => !q || [p.title, p.body, p.outcome, (p.skills || []).join(" ")].join(" ").toLowerCase().includes(q));
@@ -588,7 +584,6 @@
         if (!profile) { gate("gProfile"); return; }
         me = u;
         isOrg = profile.role === "organizer" || (data.mode === "demo" && new URLSearchParams(location.search).has("elder"));
-        $("elderTools").hidden = !isOrg;
         await loadPeople(); await refresh(); gate("board");
         const deep = new URLSearchParams(location.search).get("post"); if (deep) openPost(deep, false);
       } catch (e) { console.error(e); gate("vLoading"); $("vLoading").textContent = T("m.dberror", { e: e.code || e.message || "?" }); }
