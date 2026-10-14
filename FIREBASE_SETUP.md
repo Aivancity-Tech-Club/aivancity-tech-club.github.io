@@ -131,6 +131,13 @@ Nothing to set up: it uses the `board` collection (comments live under each post
   can hide it from the camp page.
 - **Feedback:** the `/feedback` form has a "Why I stopped coming" topic; the drifting-away message links to it.
 
+## 7d. Approving new accounts (no confirmation email for now)
+The school's Microsoft email blocks our confirmation emails, so for now (`CONFIRM: "organizer"` in
+`assets/platform/config.js`) nobody gets an email. A student creates an account (name, school email, password) and sees
+"Waiting for approval". They appear at the top of **/pulse** under "New accounts to approve": **Approve** the people you know
+are aivancity students (writes `confirmed/{uid}`); **Refuse** blocks the account (`blocked/{uid}`).
+To go back to confirmation emails once the school allows aivancitytechclub@gmail.com, set `CONFIRM: "email"`.
+
 ## 8. Every Thursday: the check-in code
 An organizer opens **/checkin** (also in their profile menu, and on /pulse) on the laptop connected to the projector:
 1. Pick how long the code works (1 hour by default) and tap **Show a check-in code**. A new random code appears in big letters,

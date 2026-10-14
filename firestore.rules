@@ -8,9 +8,14 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     // Only @aivancity.education accounts: verified by the email link, or signed in with Microsoft.
     // The Microsoft app is registered single-tenant (aivancity's directory only), so Microsoft vouches for the address.
+    // An organizer can also confirm someone by hand (confirmed/{uid}) when the confirmation email never arrives.
+    function schoolEmail() { return signedIn() && request.auth.token.email.matches('.*@aivancity[.]education$'); }
+    // A school account counts once its email is confirmed, OR (while the school's email blocks our confirmation emails)
+    // once an organizer has approved it on /pulse (confirmed/{uid}). An organizer can also refuse an account (blocked/{uid}).
     function school() {
-      return signedIn() && request.auth.token.email.matches('.*@aivancity[.]education$')
-        && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'microsoft.com');
+      return schoolEmail() && !exists(/databases/$(db)/documents/blocked/$(request.auth.uid))
+        && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'microsoft.com'
+            || exists(/databases/$(db)/documents/confirmed/$(request.auth.uid)));
     }
     function email() { return request.auth.token.email.lower(); }
     // Who is in the club: a verified school account that either
@@ -104,6 +109,25 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
       allow read, delete: if isOrganizer();
       allow update: if false;
+    }
+
+    // The confirmation email didn't arrive: the person asks an organizer to confirm them by hand.
+    match /confirmPending/{uid} {
+      allow create, update: if schoolEmail() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'name', 'at'])
+        && request.resource.data.email == email()
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
+        && request.resource.data.at == request.time;
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow read, delete: if isOrganizer();
+    }
+    match /confirmed/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow read, write: if isOrganizer();
+    }
+    match /blocked/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow read, write: if isOrganizer();
     }
 
     // Email addresses: only the person and organizers can read them.

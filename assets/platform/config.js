@@ -16,6 +16,11 @@ window.CLUB_PLATFORM = {
        storageBucket: "….appspot.com", messagingSenderId: "…", appId: "…"
      }, */
   EMAIL_DOMAIN: "aivancity.education",
+  /* How new accounts are confirmed:
+     "organizer" = no confirmation email; a new account waits until an organizer approves it on /pulse.
+                   Use this while the school's email blocks our messages.
+     "email"     = the usual confirmation email. */
+  CONFIRM: "organizer",
   /* "Sign in with Microsoft" (school accounts). Leave null to hide the button.
      When the app is registered (see FIREBASE_SETUP.md, step 2b), set it to:
      MICROSOFT: { tenant: "the Directory (tenant) ID from the Microsoft app's Overview page" }, */

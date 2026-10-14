@@ -7,6 +7,7 @@
 'use strict';
 const CFG = window.CLUB_PLATFORM || {};
 const DOMAIN = (CFG.EMAIL_DOMAIN || 'aivancity.education').toLowerCase();
+const ORG_CONFIRM = CFG.CONFIRM === 'organizer';   // no confirmation email: organizers review new accounts
 const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
@@ -162,6 +163,9 @@ function demoBackend() {
     async createCheckinCode(minutes, double) { const X = extra(); X.code = { code: 'DEMO', date: todayStr(), until: Date.now() + minutes * 60e3, double: !!double }; saveExtra(X); return { ok: true, ...X.code }; },
     async endCheckinCode() { const X = extra(); X.code = null; saveExtra(X); return { ok: true }; },
     async countCheckins(date) { return state.facts.filter(f => f.type === 'attend' && f.date === date).length; },
+    async requestManualConfirm() { return { ok: true }; }, async manualConfirmPending() { return false; },
+    async loadPendingConfirms() { const X = extra(); return X.pending || [{ uid: 'newbie', email: 'jane.doe@' + DOMAIN, name: 'Jane D.', at: now - 3600e3 }]; },
+    async confirmByHand(uid) { const X = extra(); X.pending = (X.pending || [{ uid: 'newbie' }]).filter(p => p.uid !== uid); saveExtra(X); return { ok: true }; },
     currentUid() { return 'you'; },
     reset() { store.del('nw-demo-v1'); store.del('nw-demo-board-v1'); store.del('nw-demo-extra-v1'); state = demoSeed(); },
   };
@@ -231,6 +235,17 @@ function firebaseBackend() {
     b.update(db.collection('members').doc(auth.currentUser.uid), { activeMission: null });
     try { await b.commit(); return { ok: true }; } catch (e) { return fail(e); }
   };
+  // organizer-confirm mode: make sure a new account is in the organizers' review list (once)
+  const reviewQueue = async (u, name) => {
+    try {
+      if (await manuallyConfirmed(u.uid) || await isBlocked(u.uid)) return;
+      const ref = db.collection('confirmPending').doc(u.uid), cur = await ref.get();
+      if (cur.exists && !name) return;
+      await ref.set({ email: (u.email || '').toLowerCase(), name: String(name || (cur.exists && cur.data().name) || u.email.split('@')[0]).trim().slice(0, 60), at: FV().serverTimestamp() });
+    } catch (e) {}
+  };
+  const isBlocked = async (uid) => { try { const d = await db.collection('blocked').doc(uid).get(); return d.exists; } catch (e) { return false; } };
+  const manuallyConfirmed = async (uid) => { try { const d = await db.collection('confirmed').doc(uid).get(); return d.exists; } catch (e) { return false; } };
   const V = '10.12.2', base = 'https://www.gstatic.com/firebasejs/' + V + '/';
   return {
     mode: 'firebase',
@@ -287,10 +302,13 @@ function firebaseBackend() {
     },
     // verified: the email is confirmed (email link, confirmation email or Microsoft). Unverified accounts can't read club data.
     onAuth(cb) {
-      auth.onAuthStateChanged(u => {
+      auth.onAuthStateChanged(async u => {
         if (!u) markMember(false);
         const ms = u && (u.providerData || []).some(p => p.providerId === 'microsoft.com');
-        cb(u ? { uid: u.uid, email: u.email, verified: !!(u.emailVerified || ms) } : null);
+        let verified = !!(u && (u.emailVerified || ms));
+        if (u && !verified) verified = await manuallyConfirmed(u.uid);
+        if (u && !verified && ORG_CONFIRM && validEmail(u.email)) reviewQueue(u);   // waits for an organizer
+        cb(u ? { uid: u.uid, email: u.email, verified } : null);
       });
     },
     /* ---------- email + password (free plan friendly: no email at each sign-in) ---------- */
@@ -299,12 +317,13 @@ function firebaseBackend() {
       try { await auth.signInWithEmailAndPassword(email.trim(), pw); return { ok: true }; }
       catch (e) { return { ok: false, message: pwErrorText(e) }; }
     },
-    async signUp(email, pw) {
+    async signUp(email, pw, name) {
       if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
       if (String(pw || '').length < 8) return { ok: false, message: tr('err.pw.weak', 'Use at least 8 characters.') };
       try {
         const cred = await auth.createUserWithEmailAndPassword(email.trim(), pw);
-        await cred.user.sendEmailVerification({ url: location.origin + location.pathname });
+        if (ORG_CONFIRM) await reviewQueue(cred.user, name);
+        else await cred.user.sendEmailVerification({ url: location.origin + location.pathname });
         return { ok: true };
       } catch (e) { return { ok: false, message: pwErrorText(e) }; }
     },
@@ -317,7 +336,28 @@ function firebaseBackend() {
       const u = auth.currentUser; if (!u) return false;
       await u.reload();
       if (auth.currentUser.emailVerified) { await auth.currentUser.getIdToken(true); return true; }
-      return false;
+      return manuallyConfirmed(u.uid);
+    },
+    // the email never arrived: ask an organizer to confirm this account by hand
+    async requestManualConfirm(name) {
+      const u = auth.currentUser;
+      try { await db.collection('confirmPending').doc(u.uid).set({ email: (u.email || '').toLowerCase(), name: String(name || '').trim().slice(0, 60), at: FV().serverTimestamp() }); return { ok: true }; }
+      catch (e) { return fail(e); }
+    },
+    async accountRefused() { return auth.currentUser ? isBlocked(auth.currentUser.uid) : false; },
+    async manualConfirmPending() {
+      try { const d = await db.collection('confirmPending').doc(auth.currentUser.uid).get(); return d.exists; } catch (e) { return false; }
+    },
+    async loadPendingConfirms() {
+      const s = await db.collection('confirmPending').get();
+      return s.docs.map(d => { const x = d.data(); return { uid: d.id, email: x.email, name: x.name, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; });
+    },
+    async confirmByHand(uid, yes) {
+      const b = db.batch();
+      if (yes) b.set(db.collection('confirmed').doc(uid), { by: auth.currentUser.uid, at: FV().serverTimestamp() });
+      else if (ORG_CONFIRM) b.set(db.collection('blocked').doc(uid), { by: auth.currentUser.uid, at: FV().serverTimestamp() });
+      b.delete(db.collection('confirmPending').doc(uid));
+      try { await b.commit(); return { ok: true }; } catch (e) { return fail(e); }
     },
     async resetPassword(email) {
       if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
@@ -540,5 +580,5 @@ function firebaseBackend() {
   };
 }
 
-window.ClubData = { CAMP_COLORS, cleanCamp, create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
+window.ClubData = { ORG_CONFIRM, CAMP_COLORS, cleanCamp, create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
 })();

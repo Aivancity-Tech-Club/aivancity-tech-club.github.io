@@ -26,6 +26,8 @@ const CSS = `
 .si .si-hint { margin: 0; font-size: .85rem; opacity: .8; }
 .si .si-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .si button[disabled] { opacity: .55; cursor: default; }
+.si .si-manual summary { cursor: pointer; font-weight: 700; font-size: .92rem; }
+.si .si-manual[open] { display: grid; gap: 10px; }
 .si .ms-btn { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .si .or { display: flex; align-items: center; gap: 10px; font-size: .85rem; opacity: .8; margin: 0; }
 .si .or::before, .si .or::after { content: ""; flex: 1; border-top: 1px solid currentColor; opacity: .3; }
@@ -37,12 +39,13 @@ function injectCss() {
 
 function mount(el, data) {
   injectCss();
-  let mode = 'signin', verifyEmail = '', msg = null, busy = false, showPw = false;
-  const kept = { email: '', pw: '' };
+  let mode = 'signin', verifyEmail = '', msg = null, busy = false, showPw = false, asked = false, openManual = false, refused = false;
+  const kept = { email: '', pw: '', name: '' };
 
   function keep() {
     const e = el.querySelector('#si-email'), p = el.querySelector('#si-pw');
     if (e) kept.email = e.value; if (p) kept.pw = p.value;
+    const n = el.querySelector('#si-name'); if (n) kept.name = n.value;
   }
   function msgHTML() { return msg ? `<p class="si-msg ${msg.ok ? 'ok' : 'bad'}" role="${msg.ok ? 'status' : 'alert'}">${esc(msg.text)}</p>` : ''; }
 
@@ -50,6 +53,15 @@ function mount(el, data) {
     keep();
     // the page's own heading/intro make no sense on the "confirm your email" step
     (el.parentElement || document).querySelectorAll('[data-si-intro]').forEach(x => { x.hidden = mode === 'verify'; });
+    if (mode === 'verify' && window.ClubData && ClubData.ORG_CONFIRM) {
+      el.innerHTML = `<div class="si"><div class="si-verify">
+        <h2 style="margin:0;font-weight:400">${T(refused ? 'pw.wait.refused.h' : 'pw.wait.h')}</h2>
+        <p style="margin:0">${T(refused ? 'pw.wait.refused.p' : 'pw.wait.p', { email: esc(verifyEmail) })}</p>
+        ${msgHTML()}
+        ${refused ? '' : `<div class="si-row"><button type="button" class="btn btn-primary" data-si="done" ${busy ? 'disabled' : ''}>${esc(T('pw.wait.check'))}</button></div>`}
+        <p class="si-links"><a href="#" data-si="other">${esc(T('pw.other'))}</a></p></div></div>`;
+      return;
+    }
     if (mode === 'verify') {
       el.innerHTML = `<div class="si"><div class="si-verify">
         <h2 style="margin:0;font-weight:400">${T('pw.verify.h')}</h2>
@@ -57,6 +69,12 @@ function mount(el, data) {
         ${msgHTML()}
         <div class="si-row"><button type="button" class="btn btn-primary" data-si="done" ${busy ? 'disabled' : ''}>${esc(T('pw.verify.done'))}</button>
         <button type="button" class="btn btn-ghost ghost" data-si="resend" ${busy ? 'disabled' : ''}>${esc(T('pw.verify.resend'))}</button></div>
+        ${data.requestManualConfirm ? (asked
+          ? `<p class="si-msg ok" role="status">${esc(T('pw.manual.sent'))}</p>`
+          : `<details class="si-manual"${openManual ? ' open' : ''}><summary>${esc(T('pw.manual.q'))}</summary>
+              <p class="si-hint">${esc(T('pw.manual.p'))}</p>
+              <div class="field"><label for="si-name">${esc(T('pw.manual.name'))}</label><input class="input" id="si-name" maxlength="60" autocomplete="name" value="${esc(kept.name || '')}"></div>
+              <div><button type="button" class="btn btn-ghost ghost" data-si="manual" ${busy ? 'disabled' : ''}>${esc(T('pw.manual.btn'))}</button></div></details>`) : ''}
         <p class="si-links"><a href="#" data-si="other">${esc(T('pw.other'))}</a></p></div></div>`;
       return;
     }
@@ -65,6 +83,8 @@ function mount(el, data) {
       ${data.microsoft && !forgot && !link ? `<div class="ms-block" style="display:grid;gap:10px"><button class="btn ghost btn-ghost ms-btn" type="button" data-si="ms">${MS}<span>${esc(T('ms.btn'))}</span></button><p class="or"><span>${esc(T('ms.or.pw'))}</span></p></div>` : ''}
       ${link ? `<p style="margin:0">${esc(T('m.signin.otherdevice'))}</p>` : ''}
       ${forgot ? `<p style="margin:0">${esc(T('pw.forgot.p'))}</p>` : ''}
+      ${create && window.ClubData && ClubData.ORG_CONFIRM ? `<div class="field"><label for="si-name">${esc(T('pw.manual.name'))}</label>
+        <input class="input" id="si-name" maxlength="60" autocomplete="name" required value="${esc(kept.name || '')}"></div>` : ''}
       <div class="field"><label for="si-email">${esc(T('m.signin.email'))}</label>
         <input class="input" id="si-email" type="email" inputmode="email" autocomplete="${create ? 'email' : 'username'}" autocapitalize="off" spellcheck="false" required value="${esc(kept.email)}"></div>
       ${forgot || link ? '' : `<div class="field"><label for="si-pw">${esc(T(create ? 'pw.password.new' : 'pw.password'))}</label>
@@ -77,7 +97,7 @@ function mount(el, data) {
         ${create || forgot ? `<a href="#" data-si="signin">${esc(T('pw.toSignin'))}</a>` : ''}
       </p>
       ${mode === 'signin' ? `<p class="si-hint">${esc(T('pw.legacy'))}</p>` : ''}
-      ${create ? `<p class="si-hint">${esc(T('pw.create.hint'))}</p>` : ''}
+      ${create ? `<p class="si-hint">${esc(T(window.ClubData && ClubData.ORG_CONFIRM ? 'pw.create.hint.org' : 'pw.create.hint'))}</p>` : ''}
     </form></div>`;
   }
 
@@ -91,7 +111,13 @@ function mount(el, data) {
     if (k === 'ms') { await run(async () => { const r = await data.signInMicrosoft(); msg = r.ok ? null : { text: r.message }; }); return; }
     if (k === 'resend') { await run(async () => { const r = await data.resendVerification(); msg = r.ok ? { ok: true, text: T('pw.verify.resent') } : { text: r.message }; }); return; }
     if (k === 'done') {
-      await run(async () => { const ok = await data.refreshVerified(); if (ok) location.reload(); else msg = { text: T('pw.verify.notyet') }; });
+      await run(async () => { const ok = await data.refreshVerified(); if (ok) location.reload(); else msg = { text: T(window.ClubData && ClubData.ORG_CONFIRM ? 'pw.wait.notyet' : 'pw.verify.notyet') }; });
+      return;
+    }
+    if (k === 'manual') {
+      keep(); openManual = true;
+      if (!kept.name.trim()) { msg = { text: T('pw.manual.noname') }; render(); const n = el.querySelector('#si-name'); if (n) n.focus(); return; }
+      await run(async () => { const r = await data.requestManualConfirm(kept.name); if (r.ok) { asked = true; msg = null; } else msg = { text: r.message || T('err.generic') }; });
       return;
     }
     if (k === 'other') { await data.signOut(); mode = 'signin'; msg = null; render(); }
@@ -100,6 +126,7 @@ function mount(el, data) {
     e.preventDefault(); keep();
     const email = kept.email.trim(), pw = kept.pw;
     if (!email || (!['forgot', 'link'].includes(mode) && !pw)) { msg = { text: T('err.pw.empty') }; render(); return; }
+    if (mode === 'create' && window.ClubData && ClubData.ORG_CONFIRM && !String(kept.name || '').trim()) { msg = { text: T('pw.manual.noname') }; render(); const n = el.querySelector('#si-name'); if (n) n.focus(); return; }
     await run(async () => {
       if (mode === 'forgot') {
         const r = await data.resetPassword(email);
@@ -107,7 +134,7 @@ function mount(el, data) {
       } else if (mode === 'link') {
         try { await data.completeLink(email); msg = null; } catch (x) { msg = { text: x.message || T('err.generic') }; }
       } else {
-        const r = mode === 'create' ? await data.signUp(email, pw) : await data.signInPassword(email, pw);
+        const r = mode === 'create' ? await data.signUp(email, pw, kept.name) : await data.signInPassword(email, pw);
         msg = r.ok ? null : { text: r.message };
         if (r.ok) kept.pw = '';
       }
@@ -117,7 +144,9 @@ function mount(el, data) {
 
   return {
     signin(error) { mode = data.pendingLink ? 'link' : 'signin'; msg = error ? { text: error } : null; render(); },
-    verify(email) { mode = 'verify'; verifyEmail = email || ''; msg = null; render(); },
+    verify(email) { mode = 'verify'; verifyEmail = email || ''; msg = null; render();
+      if (data.accountRefused) data.accountRefused().then(r => { if (r) { refused = true; render(); } });
+      if (data.manualConfirmPending) data.manualConfirmPending().then(p => { if (p && !asked) { asked = true; render(); } }); },
   };
 }
 window.ClubSignIn = { mount };
