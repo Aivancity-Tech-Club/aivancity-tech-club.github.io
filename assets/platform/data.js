@@ -335,7 +335,11 @@ function firebaseBackend() {
     async refreshVerified() {
       const u = auth.currentUser; if (!u) return false;
       await u.reload();
-      if (auth.currentUser.emailVerified) { await auth.currentUser.getIdToken(true); return true; }
+      if (auth.currentUser.emailVerified) {
+        await auth.currentUser.getIdToken(true);
+        try { await db.collection('confirmPending').doc(u.uid).delete(); } catch (e) {}   // no organizer approval needed any more
+        return true;
+      }
       return manuallyConfirmed(u.uid);
     },
     // the email never arrived: ask an organizer to confirm this account by hand

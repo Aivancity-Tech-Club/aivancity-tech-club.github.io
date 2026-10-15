@@ -28,6 +28,9 @@ const CSS = `
 .si button[disabled] { opacity: .55; cursor: default; }
 .si .si-manual summary { cursor: pointer; font-weight: 700; font-size: .92rem; }
 .si .si-manual[open] { display: grid; gap: 10px; }
+.si .si-steps { margin: 0; padding-left: 20px; display: grid; gap: 10px; font-size: .95rem; }
+.si .si-steps a { color: inherit; font-weight: 700; }
+.si .si-steps .btn { margin-top: 8px; }
 .si .ms-btn { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .si .or { display: flex; align-items: center; gap: 10px; font-size: .85rem; opacity: .8; margin: 0; }
 .si .or::before, .si .or::after { content: ""; flex: 1; border-top: 1px solid currentColor; opacity: .3; }
@@ -58,7 +61,13 @@ function mount(el, data) {
         <h2 style="margin:0;font-weight:400">${T(refused ? 'pw.wait.refused.h' : 'pw.wait.h')}</h2>
         <p style="margin:0">${T(refused ? 'pw.wait.refused.p' : 'pw.wait.p', { email: esc(verifyEmail) })}</p>
         ${msgHTML()}
-        ${refused ? '' : `<div class="si-row"><button type="button" class="btn btn-primary" data-si="done" ${busy ? 'disabled' : ''}>${esc(T('pw.wait.check'))}</button></div>`}
+        ${refused ? '' : `<div class="si-row"><button type="button" class="btn btn-primary" data-si="done" ${busy ? 'disabled' : ''}>${esc(T('pw.wait.check'))}</button></div>
+        <details class="si-manual"${openManual ? ' open' : ''}><summary>${esc(T('pw.fast.q'))}</summary>
+          <ol class="si-steps">
+            <li>${esc(T('pw.fast.1'))}<div><button type="button" class="btn btn-ghost ghost" data-si="fastmail" ${busy ? 'disabled' : ''}>${esc(T('pw.fast.btn'))}</button></div></li>
+            <li>${T('pw.fast.2')}</li>
+            <li>${esc(T('pw.fast.3'))}</li>
+          </ol></details>`}
         <p class="si-links"><a href="#" data-si="other">${esc(T('pw.other'))}</a></p></div></div>`;
       return;
     }
@@ -96,7 +105,7 @@ function mount(el, data) {
         ${mode === 'signin' ? `<a href="#" data-si="create">${esc(T('pw.toCreate'))}</a><a href="#" data-si="forgot">${esc(T('pw.forgot'))}</a>` : ''}
         ${create || forgot ? `<a href="#" data-si="signin">${esc(T('pw.toSignin'))}</a>` : ''}
       </p>
-      ${mode === 'signin' ? `<p class="si-hint">${esc(T('pw.legacy'))}</p>` : ''}
+      ${mode === 'signin' && !(window.ClubData && ClubData.ORG_CONFIRM) ? `<p class="si-hint">${esc(T('pw.legacy'))}</p>` : ''}
       ${create ? `<p class="si-hint">${esc(T(window.ClubData && ClubData.ORG_CONFIRM ? 'pw.create.hint.org' : 'pw.create.hint'))}</p>` : ''}
     </form></div>`;
   }
@@ -109,6 +118,7 @@ function mount(el, data) {
     if (k === 'eye') { keep(); showPw = !showPw; render(); const p = el.querySelector('#si-pw'); if (p) p.focus(); return; }
     if (['create', 'signin', 'forgot'].includes(k)) { keep(); mode = k; msg = null; render(); const i = el.querySelector('#si-email'); if (i) i.focus(); return; }
     if (k === 'ms') { await run(async () => { const r = await data.signInMicrosoft(); msg = r.ok ? null : { text: r.message }; }); return; }
+    if (k === 'fastmail') { openManual = true; await run(async () => { const r = await data.resendVerification(); msg = r.ok ? { ok: true, text: T('pw.fast.sent') } : { text: r.message }; }); return; }
     if (k === 'resend') { await run(async () => { const r = await data.resendVerification(); msg = r.ok ? { ok: true, text: T('pw.verify.resent') } : { text: r.message }; }); return; }
     if (k === 'done') {
       await run(async () => { const ok = await data.refreshVerified(); if (ok) location.reload(); else msg = { text: T(window.ClubData && ClubData.ORG_CONFIRM ? 'pw.wait.notyet' : 'pw.verify.notyet') }; });

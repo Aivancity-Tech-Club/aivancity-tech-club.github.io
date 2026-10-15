@@ -118,7 +118,7 @@ service cloud.firestore {
         && request.resource.data.email == email()
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
         && request.resource.data.at == request.time;
-      allow get: if signedIn() && request.auth.uid == uid;
+      allow get, delete: if signedIn() && request.auth.uid == uid;
       allow read, delete: if isOrganizer();
     }
     match /confirmed/{uid} {
