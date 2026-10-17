@@ -127,6 +127,7 @@ const SESSIONS = [
    Programming Time without AI (x2) · Algorithms sessions (x2) */
 
 /* ---------- rendering (no need to edit below) ---------- */
+const ASSET_V = (document.currentScript && document.currentScript.src.split("?")[1]) || "";
 
 const L = (k, v) => (window.I18N ? I18N.t(k, v) : k);
 const F = (s, field) => (window.I18N ? I18N.pick(s, field) : s[field]);
@@ -143,16 +144,22 @@ function skeletonHTML(n) {
   const card = `<div class="sk-session" aria-hidden="true"><span class="skx sk-date"></span><div><span class="skx sk-chips"></span><span class="skx sk-h"></span><span class="skx sk-l"></span><span class="skx sk-l short"></span></div></div>`;
   return `<div class="sched-skel" role="status" aria-busy="true"><span class="sr-only">${esc(L("ev.loading"))}</span>${card.repeat(n)}</div>`;
 }
-const allSessions = () => SESSIONS.concat(SITE_EVENTS);
+function allSessions() {
+  const over = Object.fromEntries(SITE_EVENTS.filter(e => /^d-\d{4}-\d{2}-\d{2}$/.test(e.id || "")).map(e => [e.id.slice(2), e]));
+  return SESSIONS.map(s => (over[s.date] && s.track !== "break" ? { ...s, ...over[s.date] } : s))
+    .concat(SITE_EVENTS.filter(e => !(/^d-/.test(e.id || "") && SESSIONS.some(s => s.date === e.id.slice(2)))));
+}
 const sessionKey = (s) => (s.id ? "ev:" + s.id : s.date);
+const regKey = (s) => s.id || "d-" + s.date;
 const eventHref = (s) => (s.id ? "/event?id=" + encodeURIComponent(s.id) : "/event?d=" + s.date);
 function sorted() { return allSessions().filter(s => s.date).map(s => ({ ...s, _d: parseDate(s.date) })).sort((a, b) => a._d - b._d); }
 /* places: "12 / 30", or "Full" when every place is taken (pending + confirmed both hold a place) */
-function regOpen(s) { const t = today0(); return !!s.registration && s._d >= t && (!s.deadline || parseDate(s.deadline) >= t); }
+function regOpen(s) { const t = today0(); return s.track !== "break" && s._d >= t && (!s.deadline || parseDate(s.deadline) >= t); }
 function regHTML(s) {
-  const n = REG_COUNT[s.id] || 0, cap = s.capacity || 0, full = cap && n >= cap;
-  const places = cap ? L(full ? "ev.full" : "ev.places", { n, cap }) : (n ? L("ev.going", { n }) : "");
-  return `<p class="reg-row"><a class="btn btn-primary" href="${esc(eventHref(s))}#register">${esc(L(full ? "ev.waitlist.btn" : "rsvp.btn"))}</a>${places ? `<span class="reg-places${full ? " full" : ""}">${esc(places)}</span>` : ""}</p>`;
+  const n = REG_COUNT[regKey(s)] || 0, cap = s.capacity || 0, full = cap && n >= cap;
+  const places = !s.registration ? "" : cap ? L(full ? "ev.full" : "ev.places", { n, cap }) : (n ? L("ev.going", { n }) : "");
+  // sessions without registration: only people who aren't members yet see this (members have their own one-tap button)
+  return `<p class="reg-row${s.registration ? "" : " for-visitors"}"><a class="btn btn-primary" data-reg-open href="${esc(eventHref(s))}#register">${esc(L(full ? "ev.waitlist.btn" : "rsvp.btn"))}</a>${places ? `<span class="reg-places${full ? " full" : ""}">${esc(places)}</span>` : ""}</p>`;
 }
 function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
@@ -176,7 +183,7 @@ function sessionHTML(s, { next = false, past = false } = {}) {
   ].join("");
   const Wk = wk.charAt(0).toUpperCase() + wk.slice(1);
   return `
-    <article class="session track-${s.track}${next ? " is-next" : ""}${past ? " is-past" : ""}">
+    <article class="session track-${s.track}${next ? " is-next" : ""}${past ? " is-past" : ""}" data-key="${esc(sessionKey(s))}">
       <div class="session-date" aria-label="${esc(wk)} ${esc(day)} ${esc(mon)}">
         <span class="d">${esc(day)}</span><span class="m">${esc(mon)}</span>
       </div>
@@ -190,7 +197,7 @@ function sessionHTML(s, { next = false, past = false } = {}) {
         ${past && s.recap ? recapHTML(s) : ""}
         ${!past && regOpen(s) ? regHTML(s) : ""}
         ${!past && !s.registration ? `<div class="rsvp" data-rsvp="${esc(s.date)}" hidden></div>` : ""}
-        <p class="session-actions">${!past && s.link ? `<a class="btn btn-primary session-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${esc(F(s, "linkText") || L("sched.more"))} ↗</a>` : ""}<a class="cal-btn no-ico details-link" href="${esc(eventHref(s))}">${esc(L("ev.details"))} →</a>${!past ? `<button type="button" class="cal-btn" data-ics="${esc(sessionKey(s))}">${esc(L("sched.cal.one"))}</button>` : ""}</p>
+        ${!past || s.link ? `<p class="session-actions">` : ""}${!past && s.link ? `<a class="btn btn-primary session-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${esc(F(s, "linkText") || L("sched.more"))} ↗</a>` : ""}${!past ? `<button type="button" class="cal-btn" data-ics="${esc(sessionKey(s))}">${esc(L("sched.cal.one"))}</button>` : ""}${!past || s.link ? "</p>" : ""}
       </div>
     </article>`;
 }
@@ -479,3 +486,42 @@ async function loadSiteEvents() {
   dispatchEvent(new CustomEvent("club:events"));
 }
 loadSiteEvents();
+
+/* ---------- the details side panel (schedule and home page) ----------
+   Clicking a card opens it; "I'm going" opens it at the registration step. The panel's code loads on first use. */
+let panelLoading = null;
+function loadPanel() {
+  if (window.ClubEvent) return Promise.resolve();
+  if (!panelLoading) {
+    const js = (src) => new Promise((res, rej) => { const x = document.createElement("script"); x.src = src + (ASSET_V ? "?" + ASSET_V : ""); x.onload = res; x.onerror = rej; document.head.appendChild(x); });
+    if (!document.querySelector('link[href*="event.css"]')) { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "/assets/event.css" + (ASSET_V ? "?" + ASSET_V : ""); document.head.appendChild(l); }
+    panelLoading = (async () => {
+      if (!window.CLUB_PLATFORM) await js("/assets/platform/config.js");
+      if (!window.ClubSignIn) await js("/assets/platform/signin.js");
+      if (!window.ClubData) await js("/assets/platform/data.js");
+      await js("/assets/event.js");
+    })();
+  }
+  return panelLoading;
+}
+async function openSession(s, register) {
+  if (!s) return;
+  try { await loadPanel(); ClubEvent.open(s, { register }); } catch (e) { location.href = eventHref(s) + (register ? "#register" : ""); }
+}
+document.addEventListener("click", (e) => {
+  const card = e.target.closest("article.session[data-key]"); if (!card || !document.querySelector("#season, #upcoming-list")) return;
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const going = e.target.closest("[data-reg-open]"), title = e.target.closest("a.session-title");
+  if (!going && !title && e.target.closest("a, button, input, select, textarea, label, summary")) return;   // its own buttons keep working
+  if (!going && !title && getSelection && String(getSelection()).length) return;                         // selecting text isn't a click
+  e.preventDefault();
+  openSession(allSessions().find(x => sessionKey(x) === card.dataset.key), !!going);
+});
+// a shared /schedule?event=… or ?d=… link opens that session's panel
+(function deepLink() {
+  try {
+    const p = new URLSearchParams(location.search), id = p.get("event"), d = p.get("d");
+    if (!(id || d) || !document.querySelector("#season, #upcoming-list")) return;
+    openSession(id ? { id } : SESSIONS.find(x => x.date === d) || { date: d }, location.hash === "#register");
+  } catch (e) {}
+})();

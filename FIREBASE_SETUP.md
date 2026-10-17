@@ -152,7 +152,11 @@ everyone else shows as **To confirm**. On the event page (organizers see a **Reg
 (this also approves their account), **Move to waiting list** or **Remove**, or **Confirm all**. **Download CSV** gives the list.
 Data: `events/{id}` (organizers write, everyone reads published ones) and `registrations/{eventId}_{uid}`
 (status `pending`, `confirmed`, `waitlist` or `cancelled`; no names in it, so the site can show how many places are left).
-Sessions written in `assets/schedule.js` still work as before and also get a details page (`/event?d=YYYY-MM-DD`).
+Sessions written in `assets/schedule.js` also get a details page (`/event?d=YYYY-MM-DD`), and organizers can **edit** them
+from that page (**Edit**): the changes are saved as event `d-YYYY-MM-DD` and replace the file's version on the site.
+**Undo my changes** in the editor brings the original back.
+**I'm going** shows on every upcoming session. Members tap it once; people who aren't members yet create an account,
+join, and appear as **To confirm** in that session's registrations.
 
 ## 8. Every Thursday: the check-in code
 An organizer opens **/checkin** (also in their profile menu, and on /pulse) on the laptop connected to the projector:

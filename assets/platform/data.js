@@ -628,7 +628,8 @@ function firebaseBackend() {
     async saveEvent(ev) {
       const ref = ev.id ? db.collection('events').doc(ev.id) : db.collection('events').doc(), doc = cleanEvent(ev);
       try {
-        if (ev.id) await ref.update({ ...doc, updatedAt: FV().serverTimestamp() });
+        const cur = ev.id ? await ref.get() : null;
+        if (cur && cur.exists) await ref.update({ ...doc, updatedAt: FV().serverTimestamp() });
         else await ref.set({ ...doc, createdBy: auth.currentUser.uid, createdAt: FV().serverTimestamp(), updatedAt: FV().serverTimestamp() });
         return { ok: true, id: ref.id };
       } catch (e) { return fail(e); }

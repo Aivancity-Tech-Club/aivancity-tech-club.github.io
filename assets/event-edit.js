@@ -2,7 +2,10 @@
 (async () => {
   const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
   const show = (id) => ["eeLoading", "eeSignin", "eeNo", "eeForm"].forEach(g => $(g).hidden = g !== id);
-  const editId = new URLSearchParams(location.search).get("id");
+  const qs = new URLSearchParams(location.search), fileDate = /^\d{4}-\d{2}-\d{2}$/.test(qs.get("d") || "") ? qs.get("d") : null;
+  const editId = fileDate ? "d-" + fileDate : qs.get("id");
+  const fileSession = fileDate ? SESSIONS.find(s => s.date === fileDate && s.track !== "break") : null;
+  let hasSaved = false;
   $("yr").textContent = new Date().getFullYear();
 
   const data = ClubData.create();
@@ -62,8 +65,8 @@
       ${msg ? `<p class="notice ${msg.ok ? "ok" : "bad"} form-msg" role="${msg.ok ? "status" : "alert"}">${msg.html || esc(msg.text)}</p>` : ""}
       <div class="ee-actions">
         <button class="btn btn-primary" type="submit" ${busy ? "disabled" : ""}>${esc(T(editId ? "ee.save" : "ee.create"))}</button>
-        ${editId ? `<a class="btn btn-ghost" href="/event?id=${encodeURIComponent(editId)}">${esc(T("ee.view"))}</a>` : ""}
-        ${editId ? `<button type="button" class="link-btn danger" id="del" ${busy ? "disabled" : ""}>${esc(T(confirmDelete ? "ee.del.sure" : "ee.del"))}</button>` : ""}
+        ${editId ? `<a class="btn btn-ghost" href="${fileDate ? "/event?d=" + fileDate : "/event?id=" + encodeURIComponent(editId)}">${esc(T("ee.view"))}</a>` : ""}
+        ${editId && (!fileDate || hasSaved) ? `<button type="button" class="link-btn danger" id="del" ${busy ? "disabled" : ""}>${esc(T(confirmDelete ? "ee.del.sure" : fileDate ? "ee.reset" : "ee.del"))}</button>` : ""}
       </div>`;
   }
   const read = () => {
@@ -85,14 +88,14 @@
     const r = await data.saveEvent(f);
     busy = false;
     if (!r.ok) { msg = { text: T(r.code || "err.generic") + (r.detail ? ` (${r.detail})` : "") }; draw(); return; }
-    location.href = "/event?id=" + encodeURIComponent(r.id);
+    location.href = fileDate ? "/event?d=" + fileDate : "/event?id=" + encodeURIComponent(r.id);
   });
   $("eeForm").addEventListener("click", async (e) => {
     if (!e.target.closest("#del")) return;
     if (!confirmDelete) { ev = { ...ev, ...read() }; confirmDelete = true; draw(); $("del").focus(); return; }
     busy = true; draw();
     const r = await data.deleteEvent(editId);
-    if (r.ok) location.href = "/schedule"; else { busy = false; msg = { text: T(r.code || "err.generic") }; draw(); }
+    if (r.ok) location.href = fileDate ? "/event?d=" + fileDate : "/schedule"; else { busy = false; msg = { text: T(r.code || "err.generic") }; draw(); }
   });
   addEventListener("langchange", () => { if (!$("eeForm").hidden) { ev = { ...ev, ...read() }; draw(); } });
 
@@ -104,8 +107,13 @@
       const p = await data.getProfile(u.uid);
       const isOrg = p && (p.role === "organizer" || (data.mode === "demo" && new URLSearchParams(location.search).has("elder")) || data.mode === "demo");
       if (!isOrg) { show("eeNo"); return; }
-      if (editId) { const x = await data.getEvent(editId); if (!x) { show("eeNo"); $("eeNo").querySelector("p").textContent = T("ev.notfound"); return; } ev = { ...blank(), ...x }; }
-      else ev = blank();
+      if (editId) {
+        const x = await data.getEvent(editId); hasSaved = !!x;
+        // a session from schedule.js: start from the file's version (or the version saved earlier)
+        const base = fileSession ? { ...blank(), ...Object.fromEntries(Object.entries(fileSession).filter(([k]) => k in blank())), registration: !!fileSession.registration, published: true } : null;
+        if (!x && !base) { show("eeNo"); $("eeNo").querySelector("p").textContent = T("ev.notfound"); return; }
+        ev = { ...(base || blank()), ...(x || {}) };
+      } else ev = blank();
       draw(); show("eeForm");
     } catch (e) { console.error(e); show("eeLoading"); $("eeLoading").textContent = T("m.dberror", { e: e.code || e.message || "?" }); }
   });

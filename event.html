@@ -23,12 +23,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261018a">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261018a">
-  <link rel="stylesheet" href="assets/event.css?v=20261018a">
-  <script src="assets/i18n.js?v=20261018a"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261018b">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261018b">
+  <link rel="stylesheet" href="assets/event.css?v=20261018b">
+  <script src="assets/i18n.js?v=20261018b"></script>
 </head>
-<body data-i18n-title="ev.title">
+<body class="event-page" data-i18n-title="ev.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
   <header class="site-header">
     <div class="wrap">
@@ -49,27 +49,10 @@
   </header>
 
     <main id="main">
-    <section class="page-head ev-head">
+    <section class="page-head ev-page">
       <div class="wrap">
         <p class="eyebrow"><a href="/schedule" class="ev-back" data-i18n="ev.back">All sessions</a></p>
-        <h1 id="evTitle">…</h1>
-        <div class="session-meta" id="evChips"></div>
-        <p class="lede" id="evLede"></p>
-      </div>
-    </section>
-    <section class="ev-wrap" id="evBody" hidden>
-      <div class="wrap ev-grid">
-        <div class="ev-main">
-          <div class="ev-details" id="evDetails"></div>
-          <div id="evRecap"></div>
-        </div>
-        <aside class="ev-side">
-          <div class="ev-card" id="evFacts"></div>
-          <div class="ev-card ev-reg" id="register" tabindex="-1" hidden></div>
-        </aside>
-      </div>
-      <div class="wrap">
-        <section class="ev-card ev-org" id="evOrg" hidden aria-labelledby="orgH"></section>
+        <div id="evRoot"></div>
       </div>
     </section>
   </main>
@@ -82,10 +65,16 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261018a"></script>
-  <script src="assets/platform/config.js?v=20261018a"></script>
-  <script src="assets/platform/signin.js?v=20261018a"></script>
-  <script src="assets/platform/data.js?v=20261018a"></script>
-  <script src="assets/event.js?v=20261018a"></script>
+  <script src="assets/schedule.js?v=20261018b"></script>
+  <script src="assets/platform/config.js?v=20261018b"></script>
+  <script src="assets/platform/signin.js?v=20261018b"></script>
+  <script src="assets/platform/data.js?v=20261018b"></script>
+  <script src="assets/event.js?v=20261018b"></script>
+  <script>
+    document.getElementById("yr").textContent = new Date().getFullYear();
+    const q = new URLSearchParams(location.search);
+    ClubEvent.mount(document.getElementById("evRoot"), { id: q.get("id"), date: q.get("d"), heading: "h1",
+      focusRegister: location.hash === "#register", onTitle: (t) => { document.title = t + " · aivancity Tech Club"; } });
+  </script>
 </body>
 </html>

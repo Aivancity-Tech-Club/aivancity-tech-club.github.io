@@ -314,7 +314,9 @@ service cloud.firestore {
         && id == request.resource.data.event + '_' + request.auth.uid
         && request.resource.data.at == request.time
         && (request.resource.data.status in ['pending', 'waitlist', 'cancelled'] || (request.resource.data.status == 'confirmed' && isMember()))
-        && get(/databases/$(db)/documents/events/$(request.resource.data.event)).data.registration == true;
+        // an event made on the site with registration on, or a session from the schedule file ("d-YYYY-MM-DD")
+        && (request.resource.data.event.matches('^d-[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+            || get(/databases/$(db)/documents/events/$(request.resource.data.event)).data.published == true);
     }
     match /registrations/{id} {
       allow read: if true;

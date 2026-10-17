@@ -117,3 +117,11 @@
 .sk-tabs { height: 36px; width: 200px; border-radius: 10px; }
 .sk-sel { height: 40px; width: 320px; max-width: 45%; }
 @media (max-width: 820px) { .sk-session { grid-template-columns: 70px 1fr; gap: 14px; padding: 16px; } .sk-date { width: 56px; height: 56px; } }
+/* the whole card opens the session's details */
+article.session[data-key] { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+article.session[data-key]:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--line); }
+article.session[data-key]:has(.session-title:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
+.session-title:focus-visible { outline: none; }
+@media (prefers-reduced-motion: reduce) { article.session[data-key], article.session[data-key]:hover { transition: none; transform: none; } }
+/* "I'm going" for people who aren't members yet; members have their own one-tap button */
+html.is-member .reg-row.for-visitors { display: none; }
