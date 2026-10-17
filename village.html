@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Village board · aivancity Tech Club</title>
   <meta name="description" content="Members only: missions, events and open-source projects shared by aivancity Tech Club members.">
-  <meta name="theme-color" content="#f0f0f0">
+  <meta name="theme-color" content="#fbf6ee">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="aivancity Tech Club">
   <meta property="og:title" content="Village board · aivancity Tech Club">
@@ -22,11 +22,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261015b">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261015b">
-  <link rel="stylesheet" href="assets/village.css?v=20261015b">
-  <script src="assets/i18n.js?v=20261015b"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css?v=20261017f">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261017f">
+  <link rel="stylesheet" href="assets/village.css?v=20261017f">
+  <script src="assets/i18n.js?v=20261017f"></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -50,7 +50,7 @@
   <main id="main">
     <section class="page-head">
       <div class="wrap">
-        <p class="eyebrow">&lt;village /&gt;</p>
+        <p class="eyebrow" data-i18n="eb.village">The club's board</p>
         <h1 data-i18n="vb.h1">The village <b>board</b></h1>
         <p class="lede vb-lede" data-i18n="vb.lede"></p>
       </div>
@@ -192,12 +192,12 @@
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261015b"></script>
-  <script src="assets/schedule.js?v=20261015b"></script>
-  <script src="assets/platform/config.js?v=20261015b"></script>
-  <script src="assets/platform/engine.js?v=20261015b"></script>
-  <script src="assets/platform/signin.js?v=20261015b"></script>
-  <script src="assets/platform/data.js?v=20261015b"></script>
+  <script src="assets/js-yaml.min.js?v=20261017f"></script>
+  <script src="assets/schedule.js?v=20261017f"></script>
+  <script src="assets/platform/config.js?v=20261017f"></script>
+  <script src="assets/platform/engine.js?v=20261017f"></script>
+  <script src="assets/platform/signin.js?v=20261017f"></script>
+  <script src="assets/platform/data.js?v=20261017f"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -312,6 +312,7 @@
         if (p.status === "review" && takenByMe) a.push(`<span class="help">${esc(T("vb.wait.poster", { name: nameOf(p.by) }))}</span>`);
         if (p.status === "open" && mineP && !expired(p)) btn("close", T("vb.a.close"));
       }
+      if (mineP && !p.hidden && (p.kind !== "mission" || p.status === "open")) btn("edit", T("vb.a.edit"));
       if (mineP && (p.kind !== "mission" || ["open", "closed"].includes(p.status))) btn("delete", armedDelete === p.id ? T("vb.a.sure") : T("vb.a.delete"), armedDelete === p.id ? "btn-danger" : "btn-ghost");
       return a.join("");
     }
@@ -371,7 +372,7 @@
         ${facts(p)}${takenHint(p)}
         ${when}${p.body ? `<p class="vb-body">${esc(p.body).replace(/\n/g, "<br>")}</p>` : ""}${p.outcome ? `<p class="vb-outcome"><b>${esc(T("vb.done.when"))}</b> ${esc(p.outcome)}</p>` : ""}${p.kind === "week" ? weekHTML(p) : ""}${link}${autoHidden}
         <div class="post-foot">
-          <span class="by">${byHTML(p, true)} · ${esc(rel(p.at))}</span>
+          <span class="by">${byHTML(p, true)} · ${esc(rel(p.at))}${p.editedAt ? ` · <span class="help">${esc(T("vb.edited"))}</span>` : ""}</span>
           <span class="post-actions">${actions(p)}</span>
         </div>
         <div class="post-tools">
@@ -491,6 +492,7 @@
       if (e.target.closest("[data-close]") && $("detail").contains(e.target)) { closePost(); return; }
       const b = e.target.closest("[data-act]"); if (!b || !$("board").contains(b)) return;
       const p = posts.find(x => x.id === b.dataset.id); if (!p) return;
+      if (b.dataset.act === "edit") { startEdit(p); return; }
       if (b.dataset.act === "delete" && armedDelete !== p.id) { armedDelete = p.id; render(); setTimeout(() => { if (armedDelete === p.id) { armedDelete = null; render(); } }, 4000); return; }
       armedDelete = null;
       b.disabled = true; await act(b.dataset.act, p, b.dataset.c);
@@ -528,9 +530,33 @@
         $("weekInputs").innerHTML = [0, 1, 2, 3, 4, 5, 6].map(i => `<li class="week-input"><input class="input" data-wt="${i}" maxlength="90" aria-label="${esc(T("vb.week.day", { n: i + 1 }) + " · " + T("vb.week.task"))}" placeholder="${esc(T("vb.week.day", { n: i + 1 }))}"><input class="input" data-wl="${i}" type="url" maxlength="300" placeholder="https://" aria-label="${esc(T("vb.week.day", { n: i + 1 }) + " · " + T("vb.week.link"))}"></li>`).join("");
     }
     $("postForm").addEventListener("change", syncForm);
-    const toggleForm = (on) => { $("postForm").hidden = !on; $("newBtn").setAttribute("aria-expanded", String(on)); if (on) { renderFormChoices(); $("pTitle").focus(); } };
-    $("newBtn").addEventListener("click", () => toggleForm($("postForm").hidden));
+    let editingPost = null;   // the post being edited (same form as a new post)
+    const setEditing = (p) => {
+      editingPost = p;
+      document.querySelectorAll("[name=kind], [name=mtype], [name=as]").forEach(i => { i.disabled = !!p; });
+      $("pSend").textContent = T(p ? "vb.a.save" : "vb.publish");
+    };
+    const toggleForm = (on) => {
+      $("postForm").hidden = !on; $("newBtn").setAttribute("aria-expanded", String(on));
+      if (on) { renderFormChoices(); $("pTitle").focus(); } else if (editingPost) { $("postForm").reset(); setEditing(null); }
+    };
+    $("newBtn").addEventListener("click", () => { if (editingPost) { $("postForm").reset(); setEditing(null); } toggleForm($("postForm").hidden); });
     $("pCancel").addEventListener("click", () => toggleForm(false));
+    function startEdit(p) {
+      closePost(); $("postForm").reset(); $("weekInputs").innerHTML = "";
+      $("postForm").hidden = false; $("newBtn").setAttribute("aria-expanded", "true");
+      renderFormChoices();
+      const pick = (n, v) => { const i = document.querySelector(`[name=${n}][value="${v || ""}"]`); if (i) i.checked = true; };
+      pick("kind", p.kind); pick("mtype", p.mtype); pick("as", p.as || "");
+      $("pTime").value = p.time || "1to3"; $("pLevel").value = p.level || "all";
+      syncForm();
+      $("pTitle").value = p.title || ""; $("pBody").value = p.body || ""; $("pLink").value = p.link || "";
+      $("pOutcome").value = p.outcome || ""; $("pSkills").value = (p.skills || []).join(", ");
+      $("pDate").value = p.date || ""; $("pWhere").value = p.where || ""; $("pExpires").value = p.expires || "";
+      if (p.kind === "week") { $("wStart").value = p.start || ""; (p.days || []).forEach((d, i) => { const t = document.querySelector(`[data-wt="${i}"]`), l = document.querySelector(`[data-wl="${i}"]`); if (t) t.value = d.title || ""; if (l) l.value = d.link || ""; }); }
+      setEditing(p);
+      $("postForm").scrollIntoView({ block: "start", behavior: "smooth" }); $("pTitle").focus({ preventScroll: true });
+    }
     $("postForm").addEventListener("submit", async (e) => {
       e.preventDefault(); say($("formMsg"), "");
       const p = { kind: document.querySelector("[name=kind]:checked").value, mtype: (document.querySelector("[name=mtype]:checked") || {}).value,
@@ -544,13 +570,26 @@
         if (p.outcome.length < 3) { say($("formMsg"), T("vb.err.outcome")); $("pOutcome").focus(); return; }
       }
       if (p.kind === "week" || !/^\d{4}-\d{2}-\d{2}$/.test(p.expires)) p.expires = "";
-      if (p.expires && p.expires < today) { say($("formMsg"), T("vb.err.expires")); $("pExpires").focus(); return; }
+      if (p.expires && p.expires < today && !(editingPost && p.expires === editingPost.expires)) { say($("formMsg"), T("vb.err.expires")); $("pExpires").focus(); return; }
       if (p.link && !/^https:\/\/\S+$/.test(p.link)) { say($("formMsg"), T("vb.err.link")); $("pLink").focus(); return; }
       if (p.kind === "week") {
         p.start = $("wStart").value;
         p.days = [0, 1, 2, 3, 4, 5, 6].map(i => ({ title: document.querySelector(`[data-wt="${i}"]`).value.trim(), link: document.querySelector(`[data-wl="${i}"]`).value.trim() })).filter(d => d.title);
         if (!p.start || !p.days.length) { say($("formMsg"), T("vb.err.title")); return; }
         if (p.days.some(d => d.link && !/^https:\/\/\S+$/.test(d.link))) { say($("formMsg"), T("vb.err.link")); return; }
+      }
+      if (editingPost) {
+        // only what the author may change: never the kind, the mission type or who it's posted as
+        const patch = { title: p.title, body: p.body, link: p.link };
+        if (p.kind === "mission") Object.assign(patch, { outcome: p.outcome, time: p.time, level: p.level, skills: p.skills });
+        if (p.kind === "event") Object.assign(patch, { date: p.date, where: p.where });
+        if (p.kind === "week") Object.assign(patch, { start: p.start, days: p.days });
+        else patch.expires = p.expires;
+        const id = editingPost.id;
+        $("pSend").disabled = true; const r = await data.editPost(id, patch); $("pSend").disabled = false;
+        if (!r.ok) { say($("formMsg"), errText(r)); return; }
+        toggleForm(false); await refresh(); openPost(id);
+        return;
       }
       $("pSend").disabled = true; const r = await data.createPost(p); $("pSend").disabled = false;
       if (!r.ok) { say($("formMsg"), errText(r)); return; }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>aivancity Tech Club · GDG on Campus aivancity</title>
   <meta name="description" content="The aivancity Tech Club and GDG on Campus aivancity meet every Thursday, 1–2 PM, in AIClinic – Room 107.">
-  <meta name="theme-color" content="#f0f0f0">
+  <meta name="theme-color" content="#fbf6ee">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="aivancity Tech Club">
   <meta property="og:title" content="aivancity Tech Club · GDG on Campus aivancity">
@@ -22,10 +22,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261015b">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261015b">
-  <script src="assets/i18n.js?v=20261015b"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css?v=20261017f">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261017f">
+  <script src="assets/i18n.js?v=20261017f"></script>
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -49,9 +49,15 @@
 
   <main id="main">
     <section class="hero">
+      <svg class="doodles" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+        <g fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M650 96l8 19 21 2-16 13 5 20-18-11-18 11 5-20-16-13 21-2z" stroke="#f4b860"/>
+          <path d="M688 470q16-14 32 0t32 0 32 0" stroke="#55c9ea"/>
+        </g>
+      </svg>
       <div class="wrap hero-grid">
         <div>
-          <p class="eyebrow">&lt;/&gt; aivancity Tech Club · GDG on Campus aivancity</p>
+          <p class="eyebrow" data-i18n="eb.home">Hi! We're the Tech Club</p>
           <h1 data-i18n="home.h1">Build, learn &amp; <b>ship together.</b></h1>
           <p class="lede" data-i18n="home.lede">A student community for anyone curious about code, AI and Google developer technologies. Every level is welcome.</p>
           <div class="btns">
@@ -62,10 +68,14 @@
         </div>
 
         <aside class="meet-card" aria-label="Weekly meeting" data-i18n-attr="aria-label:meet.aria">
-          <p class="label" data-i18n="meet.label">// we meet every week</p>
+          <p class="label" data-i18n="meet.label">We meet every week</p>
           <p class="day" data-i18n="meet.day">Thursdays</p>
           <p class="time" data-i18n="meet.time">1:00 – 2:00 PM</p>
           <span class="room"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> <span data-i18n="meet.room">AIClinic – Room 107</span></span>
+          <a class="hosts" href="/about#team">
+            <span class="hosts-faces" aria-hidden="true"><img src="assets/team/victoria.webp" alt="" width="40" height="40"><img src="assets/team/chris.webp" alt="" width="40" height="40"></span>
+            <span data-i18n="meet.hosts">Say hi to Victoria &amp; Chris</span>
+          </a>
         </aside>
       </div>
     </section>
@@ -123,8 +133,8 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261015b"></script>
-  <script src="assets/platform/live.js?v=20261015b"></script>
+  <script src="assets/schedule.js?v=20261017f"></script>
+  <script src="assets/platform/live.js?v=20261017f"></script>
   <script>
     const draw = () => {
       renderSchedule(document.getElementById("upcoming-list"), { limit: 3 });

@@ -124,7 +124,7 @@ function demoBackend() {
       if (p.id) { if (B.posts.some(x => x.id === p.id)) return { ok: true, skipped: true }; post.id = p.id; }
       B.posts.push(post); saveBoard(B); return { ok: true };
     },
-    async editPost(id, p) { const B = board(); Object.assign(B.posts.find(x => x.id === id), p); saveBoard(B); return { ok: true }; },
+    async editPost(id, p) { const B = board(), post = B.posts.find(x => x.id === id); Object.assign(post, p, { editedAt: Date.now() }); if (!p.expires) delete post.expires; saveBoard(B); return { ok: true }; },
     async takeMission(post) {
       const B = board(), x = B.posts.find(q => q.id === post.id);
       if (B.active && B.posts.some(q => q.id === B.active && q.takenBy === 'you' && q.status === 'taken')) return { ok: false, code: 'vb.err.busy' };
@@ -183,7 +183,9 @@ function linkErrorText(e) {
   return tr('err.link.other', 'Sign-in did not finish (' + why + '). Request a new link and try again.', { e: why });
 }
 /* remembered per browser so static pages can hide "Join" for people already in the club */
-function markMember(on) { try { on ? localStorage.setItem('nw-member', '1') : (localStorage.removeItem('nw-member'), localStorage.removeItem('nw-me')); } catch (e) {} document.documentElement.classList.toggle('is-member', !!on); }
+// signed in (any school account, member or not): the top bar shows an account menu instead of "Sign in"
+function markSigned(email) { try { email ? localStorage.setItem('nw-signed', email) : localStorage.removeItem('nw-signed'); } catch (e) {} document.documentElement.classList.toggle('is-signed', !!email); if (window.ClubMe) ClubMe.refresh(); }
+function markMember(on) { try { on ? localStorage.setItem('nw-member', '1') : (localStorage.removeItem('nw-member'), localStorage.removeItem('nw-me')); } catch (e) {} document.documentElement.classList.toggle('is-member', !!on); if (window.ClubMe) ClubMe.refresh(); }
 /* Village Board helpers shared by both backends */
 const MISSION_RULE = { help: 'mentoring', build: 'collab', club: 'club_quest' };
 const tsMs = (v) => (v && typeof v.toMillis === 'function' ? v.toMillis() : typeof v === 'number' ? v : v ? Date.parse(v) : Date.now());
@@ -304,6 +306,7 @@ function firebaseBackend() {
     onAuth(cb) {
       auth.onAuthStateChanged(async u => {
         if (!u) markMember(false);
+        markSigned(u ? u.email : null);
         const ms = u && (u.providerData || []).some(p => p.providerId === 'microsoft.com');
         let verified = !!(u && (u.emailVerified || ms));
         if (u && !verified) verified = await manuallyConfirmed(u.uid);
@@ -315,7 +318,7 @@ function firebaseBackend() {
     async signInPassword(email, pw) {
       if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
       try { await auth.signInWithEmailAndPassword(email.trim(), pw); return { ok: true }; }
-      catch (e) { return { ok: false, message: pwErrorText(e) }; }
+      catch (e) { return { ok: false, message: pwErrorText(e), code: (e && e.code) || '' }; }
     },
     async signUp(email, pw, name) {
       if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
@@ -376,7 +379,7 @@ function firebaseBackend() {
       store.set('nw-email', email.trim());
       return { ok: true, message: tr('m.signin.sent', 'Check your inbox: we sent a sign-in link to ' + email.trim() + '.', { email: email.trim() }) };
     },
-    async signOut() { markMember(false); await auth.signOut(); },
+    async signOut() { markMember(false); markSigned(null); await auth.signOut(); },
     /* Member = on the roster (added by an organizer) OR sent the /apply form, unless an organizer set status "removed". */
     async onRoster() {
       const u = auth.currentUser, em = (u.email || '').toLowerCase();
@@ -460,7 +463,10 @@ function firebaseBackend() {
         return { ok: true };
       } catch (e) { return fail(e); }
     },
-    async editPost(id, p) { try { await db.collection('board').doc(id).update(p); return { ok: true }; } catch (e) { return fail(e); } },
+    async editPost(id, p) {
+      const doc = { ...p, editedAt: FV().serverTimestamp() }; if (doc.expires === '') doc.expires = FV().delete();
+      try { await db.collection('board').doc(id).update(doc); return { ok: true }; } catch (e) { return fail(e); }
+    },
     async takeMission(post) {
       const uid = auth.currentUser.uid, me = db.collection('members').doc(uid);
       try {

@@ -170,9 +170,18 @@ service cloud.firestore {
         && (request.resource.data.kind != 'mission'
             || (request.resource.data.mtype in ['help', 'build', 'club'] && request.resource.data.status == 'open' && request.resource.data.takenBy == null));
 
-      // the author edits the text, or closes their own open mission
+      // the author edits the text (a mission only while it's still open), or closes their own open mission
       allow update: if isMember() && resource.data.by == request.auth.uid && resource.data.hidden == false
-        && onlyKeys(['title', 'body', 'link', 'date', 'where', 'status', 'start', 'days', 'outcome', 'time', 'level', 'skills'])
+        && (resource.data.kind != 'mission' || resource.data.status == 'open')
+        && onlyKeys(['title', 'body', 'link', 'date', 'where', 'status', 'start', 'days', 'outcome', 'time', 'level', 'skills', 'expires', 'editedAt'])
+        && (request.resource.data.get('editedAt', null) == resource.data.get('editedAt', null) || request.resource.data.editedAt == request.time)
+        && request.resource.data.get('outcome', '') is string && request.resource.data.get('outcome', '').size() <= 300
+        && request.resource.data.get('time', 'lt1') in ['lt1', '1to3', 'sessions', 'ongoing']
+        && request.resource.data.get('level', 'all') in ['all', 'beginner', 'intermediate', 'advanced']
+        && request.resource.data.get('skills', []) is list && request.resource.data.get('skills', []).size() <= 5
+        && (!('expires' in request.resource.data) || (request.resource.data.kind != 'week' && request.resource.data.expires is string
+            && request.resource.data.expires.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && request.resource.data.link is string && request.resource.data.link.size() <= 300
         && request.resource.data.title.size() > 2 && request.resource.data.title.size() <= 90 && request.resource.data.body.size() <= 800
         && (request.resource.data.get('status', null) == resource.data.get('status', null)
             || (resource.data.status == 'open' && request.resource.data.status == 'closed'));

@@ -49,8 +49,13 @@ function mount(el, data) {
     const e = el.querySelector('#si-email'), p = el.querySelector('#si-pw');
     if (e) kept.email = e.value; if (p) kept.pw = p.value;
     const n = el.querySelector('#si-name'); if (n) kept.name = n.value;
+    const p2 = el.querySelector('#si-pw2'); if (p2) kept.pw2 = p2.value;
   }
-  function msgHTML() { return msg ? `<p class="si-msg ${msg.ok ? 'ok' : 'bad'}" role="${msg.ok ? 'status' : 'alert'}">${esc(msg.text)}</p>` : ''; }
+  function msgHTML() {
+    if (!msg) return '';
+    const act = msg.offerCreate ? ` <a href="#" data-si="create">${esc(T('pw.nouser.create'))}</a>` : '';
+    return `<p class="si-msg ${msg.ok ? 'ok' : 'bad'}" role="${msg.ok ? 'status' : 'alert'}">${esc(msg.text)}${act}</p>`;
+  }
 
   function render() {
     keep();
@@ -99,6 +104,8 @@ function mount(el, data) {
       ${forgot || link ? '' : `<div class="field"><label for="si-pw">${esc(T(create ? 'pw.password.new' : 'pw.password'))}</label>
         <div class="si-pw"><input class="input" id="si-pw" type="${showPw ? 'text' : 'password'}" autocomplete="${create ? 'new-password' : 'current-password'}" minlength="${create ? 8 : 1}" required value="${esc(kept.pw)}">
         <button type="button" class="si-eye" data-si="eye" aria-pressed="${showPw}" aria-controls="si-pw">${esc(T(showPw ? 'pw.hide' : 'pw.show'))}</button></div></div>`}
+      ${create ? `<div class="field"><label for="si-pw2">${esc(T('pw.password.again'))}</label>
+        <input class="input" id="si-pw2" type="${showPw ? 'text' : 'password'}" autocomplete="new-password" minlength="8" required value="${esc(kept.pw2 || '')}"></div>` : ''}
       ${msgHTML()}
       <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled' : ''}>${esc(T(create ? 'pw.create' : forgot ? 'pw.reset.btn' : link ? 'm.signin.confirm' : 'pw.signin'))}</button></div>
       <p class="si-links">
@@ -116,7 +123,11 @@ function mount(el, data) {
     const a = e.target.closest('[data-si]'); if (!a) return;
     const k = a.dataset.si; e.preventDefault();
     if (k === 'eye') { keep(); showPw = !showPw; render(); const p = el.querySelector('#si-pw'); if (p) p.focus(); return; }
-    if (['create', 'signin', 'forgot'].includes(k)) { keep(); mode = k; msg = null; render(); const i = el.querySelector('#si-email'); if (i) i.focus(); return; }
+    if (['create', 'signin', 'forgot'].includes(k)) {
+      keep(); const prefilled = k === 'create' && kept.email && kept.pw; mode = k;
+      msg = prefilled ? { ok: true, text: T('pw.nouser') } : null; render();
+      const i = el.querySelector(prefilled ? (el.querySelector('#si-name') ? '#si-name' : '#si-pw2') : '#si-email'); if (i) i.focus(); return;
+    }
     if (k === 'ms') { await run(async () => { const r = await data.signInMicrosoft(); msg = r.ok ? null : { text: r.message }; }); return; }
     if (k === 'fastmail') { openManual = true; await run(async () => { const r = await data.resendVerification(); msg = r.ok ? { ok: true, text: T('pw.fast.sent') } : { text: r.message }; }); return; }
     if (k === 'resend') { await run(async () => { const r = await data.resendVerification(); msg = r.ok ? { ok: true, text: T('pw.verify.resent') } : { text: r.message }; }); return; }
@@ -136,6 +147,7 @@ function mount(el, data) {
     e.preventDefault(); keep();
     const email = kept.email.trim(), pw = kept.pw;
     if (!email || (!['forgot', 'link'].includes(mode) && !pw)) { msg = { text: T('err.pw.empty') }; render(); return; }
+    if (mode === 'create' && pw !== (kept.pw2 || '')) { msg = { text: T('pw.mismatch') }; render(); const p2 = el.querySelector('#si-pw2'); if (p2) p2.focus(); return; }
     if (mode === 'create' && window.ClubData && ClubData.ORG_CONFIRM && !String(kept.name || '').trim()) { msg = { text: T('pw.manual.noname') }; render(); const n = el.querySelector('#si-name'); if (n) n.focus(); return; }
     await run(async () => {
       if (mode === 'forgot') {
@@ -144,9 +156,14 @@ function mount(el, data) {
       } else if (mode === 'link') {
         try { await data.completeLink(email); msg = null; } catch (x) { msg = { text: x.message || T('err.generic') }; }
       } else {
-        const r = mode === 'create' ? await data.signUp(email, pw, kept.name) : await data.signInPassword(email, pw);
+        const wasCreate = mode === 'create';
+        const r = wasCreate ? await data.signUp(email, pw, kept.name) : await data.signInPassword(email, pw);
         msg = r.ok ? null : { text: r.message };
-        if (r.ok) kept.pw = '';
+        if (r.ok) { kept.pw = ''; kept.pw2 = ''; }
+        // no account with this email: go to "create an account" with what they typed
+        else if (!wasCreate && /user-not-found/.test(r.code || '')) { mode = 'create'; kept.pw2 = ''; msg = { ok: true, text: T('pw.nouser') }; }
+        // the server can't tell "wrong password" from "no account": offer both ways out
+        else if (!wasCreate && /invalid-credential|invalid-login|wrong-password/.test(r.code || '')) msg = { text: T('pw.wrong.or.new'), offerCreate: true };
       }
     });
   });

@@ -371,7 +371,7 @@ html:not(.is-member) [data-member] { display: none !important; }
 /* About: where the rules live */
 .rules-card { display: flex; align-items: center; justify-content: space-between; gap: 18px 28px; flex-wrap: wrap;
   background: var(--surface); border: var(--stroke) solid var(--line); border-radius: var(--radius); padding: clamp(20px, 4vw, 32px); }
-.rules-card h2 { margin: 0 0 8px; font-size: clamp(1.3rem, 3vw, 1.7rem); }
+.rules-card h2 { font-weight: 700; margin: 0 0 8px; font-size: clamp(1.3rem, 3vw, 1.7rem); }
 .rules-card p { margin: 0; max-width: 60ch; color: var(--ink-soft); }
 
 /* schedule cards: one calm date tile (the type chip says what it is), and an add-to-calendar link */
@@ -400,3 +400,95 @@ h2.side-h { font-size: 1.17rem; margin: 0 0 6px; font-weight: 700; letter-spacin
 /* top bar: visitors see Sign in + Join, members see Village + Mountain */
 .nav a.nav-cta.nav-join { background: #1967d2; color: #fff; border-color: #1967d2; }
 .nav a.nav-cta.nav-join:hover { background: #1558b0; border-color: #1558b0; }
+
+/* signed in but not a member yet: no "Sign in" link (the account menu replaces it) */
+.is-signed:not(.is-member) .nav-signin { display: none !important; }
+@media (max-width: 600px) { .is-signed:not(.is-member) .site-header .nav-cta { right: 124px; } }
+
+/* ---------- a warmer, more human look ---------- */
+:root {
+  --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --hand: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+  --bg: #fbf6ee; --surface: #fffdf9; --line: #2a2420; --ink: #221d19; --ink-soft: #57504a;
+  --warm-accent: #1a5fc4; --hl: #ffe7a5;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1c1a18; --surface: #292623; --line: #f3ede4; --ink: #f3ede4; --ink-soft: #c4bcb2; --warm-accent: #8ab4f8; --hl: transparent; }
+}
+/* page titles: a strong sans with one soft italic-serif phrase. Section headings keep the club's light + bold mix. */
+.hero h1, .page-head h1 { font-weight: 800; }
+.hero h1 b, .page-head h1 b, .team h2 b { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: -0.01em; font-size: 1.1em; color: var(--warm-accent); }
+.team h2 { font-weight: 800; }
+.hero h1 b { background: linear-gradient(transparent 64%, var(--hl) 64% 90%, transparent 90%); padding: 0 .08em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+@media (max-width: 600px) { .hero .doodles { display: none; } }
+/* handwritten labels with a little arrow */
+.hero .eyebrow, .page-head .eyebrow { font-family: var(--hand); font-weight: 600; font-size: 1.55rem; line-height: 1.1; color: var(--warm-accent);
+  display: inline-flex; align-items: center; gap: 10px; transform: rotate(-2deg); transform-origin: left center; }
+.hero .eyebrow::after, .page-head .eyebrow::after { content: ""; width: 34px; height: 14px; flex: none; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 14' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2 8c4-5 7 3 11-1s7 2 11-1 5-1 8 0M27 3l5 3-5 4'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 14' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2 8c4-5 7 3 11-1s7 2 11-1 5-1 8 0M27 3l5 3-5 4'/></svg>") center/contain no-repeat; }
+/* hand-drawn doodles behind the hero */
+.hero { position: relative; overflow: hidden; }
+.hero .wrap { position: relative; z-index: 1; }
+.hero .doodles { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; opacity: .55; pointer-events: none; }
+@media (prefers-color-scheme: dark) { .hero .doodles { opacity: .4; } }
+/* the meeting card sits like a note pinned to the wall */
+.meet-card { transform: rotate(1deg); box-shadow: 6px 6px 0 var(--line); }
+.meet-card .label { font-family: var(--hand); font-weight: 600; font-size: 1.35rem; line-height: 1.1; margin-bottom: 8px; }
+.meet-card::before { content: ""; position: absolute; top: -6px; left: 50%; width: 90px; height: 26px; transform: translateX(-50%) rotate(-3deg);
+  background: rgba(255,255,255,.55); border: 1px solid rgba(0,0,0,.08); }
+.hosts { display: flex; align-items: center; gap: 12px; margin-top: 18px; text-decoration: none; font-weight: 700; color: #1e1e1e; }
+.hosts:hover span:last-child { text-decoration: underline; text-underline-offset: 3px; }
+.hosts-faces { display: inline-flex; flex: none; }
+.hosts-faces img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #1e1e1e; object-fit: cover; background: #fff; }
+.hosts-faces img + img { margin-left: -12px; }
+/* About: the team, as photos pinned on a board */
+.team { padding-top: 24px; }
+.team .wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 56px; align-items: center; }
+.team-lede { margin-top: 12px !important; }
+.team-grid { align-items: start; padding: 8px; }
+@media (max-width: 900px) { .team .wrap { display: block; } }
+.team-lede { margin: 0 0 28px; color: var(--ink-soft); max-width: 56ch; font-size: 1.1rem; }
+.team-grid { display: grid; grid-template-columns: repeat(2, minmax(200px, 250px)); gap: 28px; }
+.person { margin: 0; background: var(--surface); border: var(--stroke) solid var(--line); border-radius: 18px; padding: 12px 12px 18px;
+  box-shadow: 5px 5px 0 var(--line); transform: rotate(-1.5deg); transition: transform .2s ease; }
+.person:nth-child(even) { transform: rotate(1.4deg); }
+.person:hover { transform: rotate(0) translateY(-3px); }
+.person img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 10px; }
+.person figcaption { display: grid; gap: 2px; padding: 14px 6px 0; }
+.person figcaption b { font-size: 1.15rem; }
+.person figcaption span { color: var(--ink-soft); font-size: .95rem; }
+.person q { font-family: var(--hand); font-weight: 600; font-size: 1.4rem; line-height: 1.15; color: var(--warm-accent); margin-top: 6px; }
+@media (max-width: 600px) { .team-grid { grid-template-columns: 1fr 1fr; gap: 16px; } .person { padding: 8px 8px 12px; } .person q { font-size: 1.15rem; } }
+@media (prefers-reduced-motion: reduce) { .person, .person:hover { transform: none; } }
+
+/* ---------- Tech Club colours, taken from the logo ----------
+   Navy for anything you press, cyan for small sparks, apricot and marigold for warmth.
+   Google's four colours stay on GDG things only (the GDG card and its link). */
+:root {
+  --navy: #2b3767; --navy-deep: #1f2850; --cyan: #55c9ea; --teal-ink: #17708c;
+  --blue: var(--navy); --yellow: #f4b860; --red: #c94a3f; --green: #3c9a6b;
+  --p-blue: #d8f1f9; --p-yellow: #ffe2c4; --p-green: #dcefdc; --p-red: #f8ddd6;
+  --accent: var(--navy); --warm-accent: var(--teal-ink); --hl: rgba(85, 201, 234, .32);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --accent: var(--cyan); --warm-accent: var(--cyan); --hl: transparent; }
+}
+.btn-primary { background: var(--navy); color: #fff; }
+.btn-primary:hover { background: var(--navy-deep); }
+.nav a.nav-join { color: var(--navy); border-color: var(--navy); }
+.nav a.nav-cta.nav-join, .nav a.nav-cta { background: var(--navy); color: #fff; border-color: var(--navy); }
+.nav a.nav-cta:hover, .nav a.nav-cta.nav-join:hover { background: var(--navy-deep); border-color: var(--navy-deep); color: #fff; }
+.join { background: var(--navy); }
+.chip-next, .session.is-next .session-date { background: var(--cyan) !important; color: #10162e !important; }
+.group.gdg { background: #ccf6c5; }
+@media (prefers-color-scheme: dark) {
+  .btn-primary, .nav a.nav-cta, .nav a.nav-cta.nav-join { background: var(--cyan); color: #10162e; border-color: var(--cyan); }
+  .btn-primary:hover, .nav a.nav-cta:hover, .nav a.nav-cta.nav-join:hover { background: #8adcf3; border-color: #8adcf3; color: #10162e; }
+  .nav a.nav-join { color: var(--cyan); border-color: var(--cyan); }
+  .join { background: var(--navy); border-color: var(--line); }
+  .join .btn { border-color: #1e1e1e; }
+}
+/* audit: tighter gap under "Join in 2 minutes", readable point pills on the rules page at night */
+.join-steps { padding-bottom: 8px; }
+@media (prefers-color-scheme: dark) { html .quick-list b { background: var(--cyan); color: #10162e; } }

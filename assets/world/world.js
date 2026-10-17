@@ -308,18 +308,39 @@ async function create(opts) {
     for (const m of list) (byPeak[m.rank] = byPeak[m.rank] || []).push(m);
     for (const p of PEAKS) counts[p.id] = (byPeak[p.id] || []).length;
     redrawPlaques();
-    const placed = [];
-    for (const m of list) {
+    // you are full size; everyone else is a bit smaller, and nobody hides behind anyone:
+    // each ninja takes the first free spot near its place on the trail (you are placed first, so others avoid you)
+    const ME_S = 0.2, OTHER_S = 0.11;
+    const boxes = [];   // { peak, x, y (feet), w, h }
+    const free = (peak, x, y, w, h) => boxes.every(b => b.peak !== peak || Math.abs(b.x - x) > (b.w + w) / 2 * 0.8 || Math.abs((b.y - b.h / 2) - (y - h / 2)) > (b.h + h) / 2 * 0.8);
+    // the peak's name plate counts as taken too, so nobody stands behind it
+    for (const p of PEAKS) { const pl = plaques[p.id]; if (pl) boxes.push({ peak: p.id, x: pl.x, y: pl.y + pl.height / 2, w: pl.width, h: pl.height }); }
+    const ordered = list.slice().sort((a, b) => (b.isMe ? 1 : 0) - (a.isMe ? 1 : 0));
+    await Promise.all(ordered.map(m => ninjaTexture(m.rank, m.accessories)));   // draw all ninjas at once, not one by one
+    for (const m of ordered) {
       const p = PEAKS.find(x => x.id === m.rank) || PEAKS[0];
-      const t = clamp01(m.progress ?? 0) * 0.92 + 0.04;
-      const pos = trailPoint(p, t, hash(m.id) * 2 - 1);
+      const t0 = clamp01(m.progress ?? 0) * 0.92 + 0.04;
       const texr = await ninjaTexture(m.rank, m.accessories);
+      const sc = m.isMe ? ME_S : OTHER_S, w = texr.width / (texr.k || 1) * sc, h = texr.height / (texr.k || 1) * sc;
+      let pos = trailPoint(p, t0, hash(m.id) * 2 - 1), found = false;
+      // try sideways first (same height = same progress), then a little up or down the trail
+      for (const dt of [0, -0.05, 0.05, -0.1, 0.1, -0.16, 0.16]) {
+        const base = trailPoint(p, clamp01(t0 + dt), hash(m.id) * 2 - 1);
+        const half = p.hw * (1 - clamp01(t0 + dt) * 0.7);   // the mountain narrows towards the top
+        for (const k of [0, 1, -1, 2, -2, 3, -3]) {
+          const x = Math.max(p.x - half, Math.min(p.x + half, base.x + k * w * 0.95));
+          if (free(p.id, x, base.y, w, h)) { pos = { x, y: base.y }; found = true; break; }
+        }
+        if (found) break;
+      }
+      boxes.push({ peak: p.id, x: pos.x, y: pos.y, w, h });
+      if (m.isMe) boxes.push({ peak: p.id, x: pos.x, y: pos.y - h, w: w * 0.9, h: 26 });
       const parent = p.back ? backMembers : frontMembers;
-      const s = sprite(texr, parent, pos.x, pos.y, 0.5, 1, m.isMe ? 0.2 : 0.14);
+      const s = sprite(texr, parent, pos.x, pos.y, 0.5, 1, sc);
       s.by = pos.y; s.ph = hash(m.id + 'b') * 6.28; s.member = m;
       s.eventMode = 'static'; s.cursor = 'pointer';
       s.on('pointertap', (e) => { if (!dragMoved && opts.onNinjaClick) opts.onNinjaClick(m, e.global); });
-      memberSprites.push(s); placed.push(s);
+      memberSprites.push(s);
       if (m.isMe) meSprite = s;
     }
     for (const c of [frontMembers, backMembers]) c.children.sort((a, b) => a.by - b.by);
@@ -520,6 +541,7 @@ async function create(opts) {
 
   return {
     setMembers,
+    memberSpots: () => memberSprites.map(s => ({ id: s.member.id, rank: s.member.rank, x: Math.round(s.x), y: Math.round(s.by), w: Math.round(s.width), h: Math.round(s.height) })),
     panTo,
     // after a language change: repaint plaque text, the You tag and the keyboard buttons
     refreshText() {

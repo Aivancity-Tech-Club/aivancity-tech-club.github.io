@@ -144,6 +144,26 @@ en: {
   'pw.fast.2': 'The school\'s email holds it in quarantine: open <a href="https://security.microsoft.com/quarantine" target="_blank" rel="noopener">security.microsoft.com/quarantine</a>, sign in with your school account, select the email from aivancitytechclub@gmail.com and tap <b>Release</b>.',
   'pw.fast.3': 'Open the email that arrives in your Inbox, click the link, then come back here and tap "Check again".',
   'pw.fast.sent': 'Sent. Now release it from quarantine (step 2).',
+  'pw.password.again': 'Type the password again', 'pw.mismatch': 'The two passwords are different.',
+  'pw.nouser': 'Create your account: we kept your email and password, just confirm the password below.',
+  'pw.wrong.or.new': 'Wrong password, or no account yet with this email.', 'pw.nouser.create': 'Create an account with this email →',
+  'me.account': 'Account', 'me.notyet': 'Not a member yet', 'me.finish': 'Finish joining the club', 'nav.join.finish': 'Finish joining',
+  'vb.a.edit': 'Edit', 'vb.a.save': 'Save changes', 'vb.edited': 'edited',
+  'eb.home': "Hi! We're the Tech Club",
+  'eb.about': 'Who we are',
+  'eb.apply': 'Come build with us',
+  'eb.checkin': 'Organizers only',
+  'eb.feedback': "We're listening",
+  'eb.pulse': 'How the club is doing',
+  'eb.rules': 'The rules, made simple',
+  'eb.schedule': "What's coming up",
+  'eb.village': "The club's board",
+  'eb.404': 'Oops',
+  'meet.hosts': 'Say hi to Victoria &amp; Chris',
+  'team.h': 'The <b>people</b> behind the club',
+  'team.lede': 'Students, like you. Come say hi on Thursday, or message us on the WhatsApp group.',
+  'team.org': 'Organizer',
+  'team.victoria.q': 'Love all things tech',
   'vb.loading': 'Loading the board…',
   'vb.form.as': 'Post as',
   'vb.form.as.help': 'Elders only. A team or council post shows the club as the author; the details panel still says who posted it, so people know who to message.',
@@ -269,7 +289,7 @@ en: {
   'nav.about': 'About', 'nav.schedule': 'Schedule', 'nav.rules': 'Rules', 'nav.join': 'Join', 'nav.mountain': 'Mountain',
   'lang.switch': 'FR', 'lang.switch.label': 'FR: afficher le site en français',
   'footer.gdg': 'GDG on Campus chapter ↗', 'footer.feedback': 'Give feedback', 'footer.love': 'Built with love by the Tech Club',
-  'meet.label': '// we meet every week', 'meet.day': 'Thursdays', 'meet.time': '1:00 – 2:00 PM', 'meet.room': 'AIClinic – Room 107', 'meet.aria': 'Weekly meeting',
+  'meet.label': 'We meet every week', 'meet.day': 'Thursdays', 'meet.time': '1:00 – 2:00 PM', 'meet.room': 'AIClinic – Room 107', 'meet.aria': 'Weekly meeting',
 
   'home.h1': 'Build, learn &amp; <b>ship together.</b>',
   'home.lede': 'A student community for anyone curious about code, AI and Google developer technologies. Every level is welcome.',
@@ -570,6 +590,26 @@ fr: {
   'pw.fast.2': 'La messagerie de l\'école le met en quarantaine : ouvrez <a href="https://security.microsoft.com/quarantine" target="_blank" rel="noopener">security.microsoft.com/quarantine</a>, connectez-vous avec votre compte de l\'école, sélectionnez l\'e-mail de aivancitytechclub@gmail.com et touchez <b>Libérer</b>.',
   'pw.fast.3': 'Ouvrez l\'e-mail qui arrive dans votre boîte de réception, cliquez sur le lien, puis revenez ici et touchez « Vérifier à nouveau ».',
   'pw.fast.sent': 'Envoyé. Libérez-le maintenant de la quarantaine (étape 2).',
+  'pw.password.again': 'Retapez le mot de passe', 'pw.mismatch': 'Les deux mots de passe sont différents.',
+  'pw.nouser': 'Créez votre compte : nous avons gardé votre e-mail et votre mot de passe, confirmez simplement le mot de passe ci-dessous.',
+  'pw.wrong.or.new': 'Mot de passe incorrect, ou pas encore de compte avec cet e-mail.', 'pw.nouser.create': 'Créer un compte avec cet e-mail →',
+  'me.account': 'Compte', 'me.notyet': 'Pas encore membre', 'me.finish': 'Terminer mon inscription au club', 'nav.join.finish': 'Terminer l\'inscription',
+  'vb.a.edit': 'Modifier', 'vb.a.save': 'Enregistrer', 'vb.edited': 'modifié',
+  'eb.home': 'Salut ! Ici le Tech Club',
+  'eb.about': 'Qui on est',
+  'eb.apply': 'Venez coder avec nous',
+  'eb.checkin': "Réservé à l'orga",
+  'eb.feedback': 'On vous écoute',
+  'eb.pulse': 'La santé du club',
+  'eb.rules': 'Les règles, en simple',
+  'eb.schedule': 'Ce qui arrive',
+  'eb.village': 'Le tableau du club',
+  'eb.404': 'Oups',
+  'meet.hosts': 'Venez dire bonjour à Victoria et Chris',
+  'team.h': 'Les <b>personnes</b> derrière le club',
+  'team.lede': 'Des étudiants, comme vous. Venez nous dire bonjour un jeudi, ou écrivez-nous sur le groupe WhatsApp.',
+  'team.org': 'Organisation',
+  'team.victoria.q': "J'adore tout ce qui touche à la tech",
   'vb.loading': 'Chargement du tableau…',
   'vb.form.as': 'Publier en tant que',
   'vb.form.as.help': 'Réservé aux anciens. Une publication de l\'équipe ou du conseil affiche le club comme auteur ; le détail indique toujours qui l\'a publiée, pour savoir à qui écrire.',
@@ -695,7 +735,7 @@ fr: {
   'nav.about': 'À propos', 'nav.schedule': 'Programme', 'nav.rules': 'Règles', 'nav.join': 'Rejoindre', 'nav.mountain': 'Montagne',
   'lang.switch': 'EN', 'lang.switch.label': 'EN: show the site in English',
   'footer.gdg': 'Chapitre GDG on Campus ↗', 'footer.feedback': 'Donner un avis', 'footer.love': 'Fait avec amour par le Tech Club',
-  'meet.label': '// on se retrouve chaque semaine', 'meet.day': 'Le jeudi', 'meet.time': '13 h – 14 h', 'meet.room': 'AIClinic – Salle 107', 'meet.aria': 'Rendez-vous hebdomadaire',
+  'meet.label': 'On se retrouve chaque semaine', 'meet.day': 'Le jeudi', 'meet.time': '13 h – 14 h', 'meet.room': 'AIClinic – Salle 107', 'meet.aria': 'Rendez-vous hebdomadaire',
 
   'home.h1': 'Apprendre, créer &amp; <b>livrer ensemble.</b>',
   'home.lede': 'Une communauté étudiante pour toutes celles et ceux que le code, l\'IA et les technologies Google intriguent. Tous les niveaux sont les bienvenus.',
@@ -895,6 +935,7 @@ const locale = () => (lang === 'fr' ? 'fr-FR' : 'en-GB');
 document.addEventListener('click', (e) => { const b = e.target.closest('.lang-toggle'); if (b) { e.preventDefault(); set(lang === 'en' ? 'fr' : 'en'); } });
 document.documentElement.lang = lang;
 try { if (localStorage.getItem('nw-member') === '1') document.documentElement.classList.add('is-member'); } catch (e) {}
+try { if (localStorage.getItem('nw-signed')) document.documentElement.classList.add('is-signed'); } catch (e) {}
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => apply()); else apply();
 
 window.I18N = { t, apply, set, pick, locale, get lang() { return lang; } };
@@ -905,7 +946,8 @@ window.I18N = { t, apply, set, pick, locale, get lang() { return lang; } };
 function myCard() { try { return JSON.parse(localStorage.getItem('nw-me') || 'null'); } catch (e) { return null; } }
 const RANK_KEYS = ['white', 'yellow', 'green', 'blue', 'red', 'black'];
 function addProfile() {
-  if (!document.documentElement.classList.contains('is-member')) return;
+  const H = document.documentElement;
+  if (!H.classList.contains('is-member')) { if (H.classList.contains('is-signed')) addAccount(); return; }
   const nav = document.querySelector('.site-header .nav'); if (!nav || nav.querySelector('.me-wrap')) return;
   const me = myCard() || {}, rank = RANK_KEYS.includes(me.rank) ? me.rank : 'white';
   const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -933,9 +975,37 @@ function addProfile() {
   nav.insertBefore(w, nav.querySelector('.lang-toggle'));
   apply();
 }
+/* signed in with a school account but not a club member yet: a small account menu, and "Join" becomes "Finish joining" */
+function addAccount() {
+  const nav = document.querySelector('.site-header .nav'); if (!nav || nav.querySelector('.me-wrap')) return;
+  let email = ''; try { email = localStorage.getItem('nw-signed') || ''; } catch (e) {}
+  const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const w = document.createElement('div'); w.className = 'me-wrap';
+  w.innerHTML = `<button type="button" class="me-pill" aria-haspopup="true" aria-expanded="false" aria-controls="meMenu">
+      <img src="/assets/ninjas/ninja-white.svg" alt=""><span class="me-name" data-i18n="me.account">Account</span></button>
+    <div class="me-menu" id="meMenu" hidden>
+      <div class="me-head"><img src="/assets/ninjas/ninja-white.svg" alt=""><div><b data-i18n="me.notyet">Not a member yet</b><span>${esc(email)}</span></div></div>
+      <a href="/apply" data-i18n="me.finish">Finish joining the club</a>
+      <a href="/mountain#signout" data-i18n="m.signout">Sign out</a>
+    </div>`;
+  const btn = w.querySelector('.me-pill'), menu = w.querySelector('.me-menu');
+  const open = (on) => { menu.hidden = !on; btn.setAttribute('aria-expanded', String(on)); };
+  btn.addEventListener('click', () => { open(menu.hidden); if (!menu.hidden) menu.querySelector('a').focus(); });
+  document.addEventListener('click', (e) => { if (!w.contains(e.target)) open(false); });
+  w.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { open(false); btn.focus(); } });
+  w.addEventListener('focusout', (e) => { if (!w.contains(e.relatedTarget)) open(false); });
+  nav.insertBefore(w, nav.querySelector('.lang-toggle'));
+  nav.querySelectorAll('.nav-join').forEach(a => a.setAttribute('data-i18n', 'nav.join.finish'));
+  apply();
+}
 function saveMe(name, rank, role) { try { localStorage.setItem('nw-me', JSON.stringify({ name, rank, org: role === 'organizer' })); } catch (e) {}
   document.querySelectorAll('.me-wrap').forEach(x => x.remove()); addProfile(); }
-window.ClubMe = { save: saveMe };
+function refreshMe() {
+  document.querySelectorAll('.me-wrap').forEach(x => x.remove());
+  document.querySelectorAll('.site-header .nav-join').forEach(a => a.setAttribute('data-i18n', 'nav.join'));
+  addProfile(); apply();
+}
+window.ClubMe = { save: saveMe, refresh: refreshMe };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addProfile); else addProfile();
 
 /* ---------- installable app (PWA) ---------- */
