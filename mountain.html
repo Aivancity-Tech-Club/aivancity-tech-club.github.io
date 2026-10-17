@@ -20,10 +20,12 @@
 <style>
 /* Layout: the world fills the screen; a glass bar on top; "My climb" slides in from the right; sign-in and setup are centered cards. */
 :root {
-  --ink: #1e1e1e; --ink-soft: #4a4a4a; --paper: #ffffff; --ground: #f0f0f0;
-  --glass: rgba(255, 255, 255, 0.9); --glass-dark: rgba(42, 45, 79, 0.92); --on-dark: #ffffff;
+  --ink: #221d19; --ink-soft: #57504a; --paper: #fffdf9; --ground: #fbf6ee;
+  --glass: rgba(255, 253, 249, 0.92); --glass-dark: rgba(42, 45, 79, 0.92); --on-dark: #ffffff;
   --blue: #2b3767; --green: #3c9a6b; --yellow: #f4b860; --red: #c94a3f;
-  --p-blue: #c3ecf6; --p-green: #ccf6c5; --p-yellow: #ffe7a5; --p-red: #f8d8d8;
+  --p-blue: #d8f1f9; --p-green: #dcefdc; --p-yellow: #ffe2c4; --p-red: #f8ddd6;
+  --navy: #2b3767; --navy-deep: #1f2850; --cyan: #55c9ea; --teal-ink: #17708c;
+  --serif: "Instrument Serif", Georgia, serif; --hand: "Caveat", "Segoe Print", cursive;
   --display: "Google Sans", Figtree, system-ui, sans-serif; --mono: "Google Sans Code", ui-monospace, Menlo, monospace;
   color-scheme: light;
 }
@@ -49,9 +51,9 @@ button, input, select { font: inherit; color: inherit; }
 .brand img { width: 32px; height: 32px; border-radius: 50%; }
 .brand b { font-size: 15px; }
 .pill button { border: 0; background: transparent; border-radius: 999px; padding: 7px 11px; min-height: 34px; font-size: 13px; font-weight: 700; cursor: pointer; }
-.pill button[aria-pressed="true"] { background: var(--ink); color: var(--on-dark); }
+.pill button[aria-pressed="true"] { background: var(--navy); color: var(--on-dark); }
 .lang-btn { min-height: 44px; padding: 0 14px; font-weight: 800; font-size: 13px; cursor: pointer; }
-.me-btn { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: var(--ink); color: var(--on-dark); border: 2px solid var(--ink);
+.me-btn { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: var(--navy); color: var(--on-dark); border: 2px solid var(--ink);
   border-radius: 999px; padding: 3px 14px 3px 3px; font-weight: 800; font-size: 14px; cursor: pointer; min-height: 44px; }
 .me-btn img { width: 38px; height: 36px; background: var(--p-green); border-radius: 50%; object-fit: contain; }
 
@@ -68,19 +70,19 @@ button, input, select { font: inherit; color: inherit; }
 .peak-sr:focus { clip-path: none; width: auto; height: auto; padding: 8px 14px; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper); font-weight: 700; }
 .back { font-size: 14px; color: var(--ink-soft); text-align: center; }
 .back a { color: var(--ink); font-weight: 700; }
-.you-tag { position: fixed; left: 0; top: 0; background: var(--yellow); border: 2px solid var(--ink); border-radius: 999px; padding: 0 9px; font-size: 12px; font-weight: 800; will-change: transform; }
+.you-tag { position: fixed; left: 0; top: 0; background: var(--cyan); border: 2px solid var(--ink); border-radius: 999px; padding: 0 9px; font-size: 12px; font-weight: 800; will-change: transform; }
 
 /* cards: sign-in, setup, peak list, ninja popover */
 .veil { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; padding: 16px; background: rgba(30, 30, 60, 0.25); }
 .card { width: min(440px, 100%); background: var(--paper); border: 2px solid var(--ink); border-radius: 28px; padding: 26px; display: flex; flex-direction: column; gap: 14px;
   max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: auto; }
 .card h1, .card h2 { margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
-.card h1 { font-size: 30px; font-weight: 400; } .card h1 b { font-weight: 800; }
+.card h1 { font-size: 30px; font-weight: 800; } .card h1 b { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.1em; color: var(--teal-ink); }
 .card p { margin: 0; color: var(--ink-soft); }
 label { font-weight: 700; font-size: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .input { height: 48px; border: 2px solid var(--ink); border-radius: 14px; padding: 0 14px; background: var(--paper); width: 100%; }
-.btn { min-height: 48px; border: 2px solid var(--ink); border-radius: 999px; background: var(--blue); color: var(--on-dark); font-weight: 800; padding: 0 18px; cursor: pointer; }
+.btn { min-height: 48px; border: 2px solid var(--ink); border-radius: 999px; background: var(--navy); transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease; color: var(--on-dark); font-weight: 800; padding: 0 18px; cursor: pointer; }
 .btn.ghost { background: var(--paper); color: var(--ink); }
 .ms-block { display: flex; flex-direction: column; gap: 12px; }
 .ms-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--paper); color: var(--ink); width: 100%; }
@@ -141,7 +143,7 @@ label { font-weight: 700; font-size: 14px; }
 .pop { position: fixed; z-index: 7; background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 10px 14px; font-size: 13px; pointer-events: auto; transform: translate(-50%, -110%); white-space: nowrap; }
 .pop a { display: inline-block; margin-top: 6px; font-weight: 700; color: var(--blue); }
 .wins-btn { margin-left: auto; padding: 0 14px; min-height: 44px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--ink); }
-.wins-btn[aria-expanded="true"] { background: var(--ink); color: var(--on-dark); }
+.wins-btn[aria-expanded="true"] { background: var(--navy); color: var(--on-dark); }
 .climber .grow a { color: inherit; font-weight: 700; }
 .win { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid #e3e3e3; }
 .win:first-of-type { border-top: 0; }
@@ -195,6 +197,15 @@ label { font-weight: 700; font-size: 14px; }
   /* phone held sideways: keep the strip, drop the demo pill out of the way */
   .demo { display: none; }
 }
+/* same touches as the rest of the site: buttons lift on hover, cards cast a soft offset shadow */
+.btn:not(:disabled):hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--ink); }
+.btn:not(.ghost):not(:disabled):hover { background: var(--navy-deep); }
+.btn:active { transform: none; box-shadow: none; }
+.card { box-shadow: 6px 6px 0 var(--ink); }
+.box { box-shadow: 4px 4px 0 rgba(34, 29, 25, .9); }
+.drawer-head h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.pop a, .hero .camp-link, .steps li a { color: var(--navy); }
+@media (prefers-reduced-motion: reduce) { .btn:hover { transform: none; box-shadow: none; } }
 </style>
 </head>
 <body data-i18n-title="m.title">
@@ -402,9 +413,9 @@ label { font-weight: 700; font-size: 14px; }
     result = PointsEngine.compute(rulebook, facts, members, regular, today);
     profile = members.find(m => m.uid === me.uid) || profile;
     worn = (profile && profile.accessories) || [];
-    const onMountain = members.filter(m => result.byUid[m.uid].isMember || m.uid === me.uid).map(m => {
+    const onMountain = members.map(m => {   // everyone who joined is on the Mountain; before their first check-in they wait at the foot of White
       const s = result.byUid[m.uid];
-      return { id: m.uid, name: m.uid === me.uid ? (m.name || T('peak.you')) : m.name, rank: s.rank, progress: s.waiting ? 1 : s.progress, accessories: m.accessories || [], isMe: m.uid === me.uid };
+      return { id: m.uid, name: m.uid === me.uid ? (m.name || T('peak.you')) : m.name, rank: s.rank, progress: !s.isMember ? 0 : s.waiting ? 1 : s.progress, accessories: m.accessories || [], isMe: m.uid === me.uid };
     });
     world && world.setMembers(onMountain);
     $('winsBtn').hidden = false;
@@ -480,7 +491,7 @@ label { font-weight: 700; font-size: 14px; }
 
   const BAND = { white: '#f4f4f4', yellow: '#f9ab00', green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#2d2d2f' };
   function renderStrip() {
-    const count = (id) => members.filter(m => result.byUid[m.uid].isMember && result.byUid[m.uid].rank === id).length;
+    const count = (id) => members.filter(m => result.byUid[m.uid].rank === id).length;
     const open = !$('peakPanel').hidden && $('peakPanel').dataset.peak;
     $('peaksStrip').innerHTML = NW_DATA.peaks.slice().sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id)).map(p =>
       `<button type="button" data-peak="${p.id}" aria-pressed="${open === p.id}"><i style="background:${BAND[p.id]}"></i>${esc(RANK(p.id))}<small>${count(p.id)}</small></button>`).join('');
@@ -494,7 +505,7 @@ label { font-weight: 700; font-size: 14px; }
   function showPeak(id) {
     if (!result) return;
     const peak = NW_DATA.peaks.find(p => p.id === id);
-    const list = members.filter(m => result.byUid[m.uid].isMember && result.byUid[m.uid].rank === id)
+    const list = members.filter(m => result.byUid[m.uid].rank === id)
       .map(m => ({ m, s: result.byUid[m.uid] })).sort((a, b) => b.s.lifetime - a.s.lifetime);
     $('peakPanel').innerHTML = `<div class="drawer-head"><h3>${esc(T('m.peak.h', { rank: RANK(id), name: rankName(id) || peak.name }))}</h3><button type="button" class="x" id="closePeak" aria-label="${T('m.close')}">×</button></div>
       ${list.length ? list.map(({ m, s }) => `<div class="climber"><img src="${ninjaURI(s.rank, m.accessories)}" alt=""><div class="grow"><a href="/camp?u=${encodeURIComponent(m.uid)}">${esc(m.name)}</a>${m.uid === me.uid ? T('m.peak.you') : ''}${s.champion ? T('m.peak.champion') : ''}
