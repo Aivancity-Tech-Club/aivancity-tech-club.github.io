@@ -276,11 +276,29 @@ async function create(opts) {
   }
   function youTexture() {
     const S = 3, c = document.createElement('canvas'), g = c.getContext('2d'); c.width = 52 * S; c.height = 26 * S;
-    g.fillStyle = '#f9ab00'; rr(g, 2 * S, 2 * S, 48 * S, 22 * S, 11 * S); g.fill(); g.lineWidth = 2 * S; g.strokeStyle = '#1e1e1e'; g.stroke();
+    g.fillStyle = '#55c9ea'; rr(g, 2 * S, 2 * S, 48 * S, 22 * S, 11 * S); g.fill(); g.lineWidth = 2 * S; g.strokeStyle = '#1e1e1e'; g.stroke();
     g.fillStyle = '#1e1e1e'; g.font = `800 ${13 * S}px "Google Sans", Figtree, system-ui, sans-serif`; g.textAlign = 'center'; g.fillText(opts.youText ? opts.youText() : 'You', 26 * S, 18 * S);
     const t = PIXI.Texture.from(c); t.k = S; return t;
   }
   const youSprite = sprite(youTexture(), plaqueFront, 0, 0, 0.5, 1); youSprite.visible = false;
+  // hovering someone else's ninja shows their name in a small white tag above their head
+  function nameTexture(text) {
+    const S = 3, c = document.createElement('canvas'), g = c.getContext('2d'), font = `700 ${13 * S}px Figtree, "Google Sans", system-ui, sans-serif`;
+    g.font = font; const tw = Math.ceil(g.measureText(text).width / S);
+    c.width = (tw + 24) * S; c.height = 26 * S; g.font = font;
+    g.fillStyle = '#fffdf9'; rr(g, 2 * S, 2 * S, (tw + 20) * S, 22 * S, 11 * S); g.fill(); g.lineWidth = 2 * S; g.strokeStyle = '#221d19'; g.stroke();
+    g.fillStyle = '#221d19'; g.textAlign = 'center'; g.fillText(text, (tw + 24) / 2 * S, 18 * S);
+    const t = PIXI.Texture.from(c); t.k = S; return t;
+  }
+  const nameTag = sprite(PIXI.Texture.EMPTY, plaqueFront, 0, 0, 0.5, 1); nameTag.visible = false;
+  let hovered = null;
+  function showName(s) {
+    const old = nameTag.texture; nameTag.texture = nameTexture(s.member.name || '?'); nameTag.scale.set(1 / nameTag.texture.k);
+    if (old && old !== PIXI.Texture.EMPTY) old.destroy(true);
+    const pk = PEAKS.find(x => x.id === s.member.rank); nameTag.parent && nameTag.parent.removeChild(nameTag); ((pk && pk.back) ? plaqueBack : plaqueFront).addChild(nameTag);
+    hovered = s; nameTag.visible = true;
+  }
+  function hideName(s) { if (!s || hovered === s) { hovered = null; nameTag.visible = false; } }
 
   /* ---------- members on their peaks ---------- */
   const texCache = new Map();
@@ -303,7 +321,7 @@ async function create(opts) {
   }
   let memberSprites = [], meSprite = null;
   async function setMembers(list) {
-    for (const s of memberSprites) s.destroy(); memberSprites = []; meSprite = null;
+    hideName(); for (const s of memberSprites) s.destroy(); memberSprites = []; meSprite = null;
     const byPeak = {};
     for (const m of list) (byPeak[m.rank] = byPeak[m.rank] || []).push(m);
     for (const p of PEAKS) counts[p.id] = (byPeak[p.id] || []).length;
@@ -340,6 +358,7 @@ async function create(opts) {
       s.by = pos.y; s.ph = hash(m.id + 'b') * 6.28; s.member = m;
       s.eventMode = 'static'; s.cursor = 'pointer';
       s.on('pointertap', (e) => { if (!dragMoved && opts.onNinjaClick) opts.onNinjaClick(m, e.global); });
+      if (!m.isMe) { s.on('pointerover', () => showName(s)); s.on('pointerout', () => hideName(s)); }
       memberSprites.push(s);
       if (m.isMe) meSprite = s;
     }
@@ -537,11 +556,12 @@ async function create(opts) {
     }
     if (frame % 2 === 0 || !motion) app.renderer.render(scene, { renderTexture: rt, clear: true });
     if (meSprite) { youSprite.x = meSprite.x; youSprite.y = meSprite.y - meSprite.height - 4; }
+    if (hovered) { nameTag.x = hovered.x; nameTag.y = hovered.y - hovered.height - 3; }
   });
 
   return {
     setMembers,
-    memberSpots: () => memberSprites.map(s => ({ id: s.member.id, rank: s.member.rank, x: Math.round(s.x), y: Math.round(s.by), w: Math.round(s.width), h: Math.round(s.height) })),
+    memberSpots: () => memberSprites.map(s => ({ id: s.member.id, rank: s.member.rank, x: Math.round(s.x), y: Math.round(s.by), w: Math.round(s.width), h: Math.round(s.height), screen: (({ x, y, width, height }) => ({ x: Math.round(x + width / 2), y: Math.round(y + height / 2) }))(s.getBounds()) })),
     panTo,
     // after a language change: repaint plaque text, the You tag and the keyboard buttons
     refreshText() {

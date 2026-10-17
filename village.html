@@ -23,10 +23,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261017f">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261017f">
-  <link rel="stylesheet" href="assets/village.css?v=20261017f">
-  <script src="assets/i18n.js?v=20261017f"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261018a">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261018a">
+  <link rel="stylesheet" href="assets/village.css?v=20261018a">
+  <script src="assets/i18n.js?v=20261018a"></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -168,6 +168,7 @@
 
           <p class="notice bad form-msg" id="msg" role="alert"></p>
           <h2 class="sr-only" data-i18n="vb.posts.h">Posts</h2>
+          <button type="button" class="new-pill" id="newPill" hidden></button>
           <p class="vb-count help" id="count" aria-live="polite"></p>
           <div class="cards" id="posts"></div>
 
@@ -192,12 +193,12 @@
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261017f"></script>
-  <script src="assets/schedule.js?v=20261017f"></script>
-  <script src="assets/platform/config.js?v=20261017f"></script>
-  <script src="assets/platform/engine.js?v=20261017f"></script>
-  <script src="assets/platform/signin.js?v=20261017f"></script>
-  <script src="assets/platform/data.js?v=20261017f"></script>
+  <script src="assets/js-yaml.min.js?v=20261018a"></script>
+  <script src="assets/schedule.js?v=20261018a"></script>
+  <script src="assets/platform/config.js?v=20261018a"></script>
+  <script src="assets/platform/engine.js?v=20261018a"></script>
+  <script src="assets/platform/signin.js?v=20261018a"></script>
+  <script src="assets/platform/data.js?v=20261018a"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -219,14 +220,11 @@
     const MT_LABEL = { help: "vb.mt.help", build: "vb.mt.build", club: "vb.mt.club" };
     const addDays = (d, n) => { const x = new Date(d + "T12:00"); x.setDate(x.getDate() + n); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
 
-    const err = await ready;
-    if (err) { gate("vLoading"); $("vLoading").textContent = T("m.dberror", { e: err.code || err.message || "?" }); return; }
-    if (data.mode === "demo") $("demoNote").hidden = false;
-
-    const siBox = ClubSignIn.mount($("siBox"), data);
 
     // ---------- state ----------
     let me = null, isOrg = false, names = {}, ranks = {}, posts = [], active = null;
+    // posts that arrived in the background: kept behind the "new posts" button until it's tapped
+    const held = new Set(); let flash = new Set();
     const comments = {};
     const F = { kind: "", openOnly: false, mtype: "", q: "" };
     let openId = null;   // the post shown in the details panel
@@ -257,8 +255,12 @@
       const mine = res.byUid[me.uid];
       if (window.ClubMe && names[me.uid]) ClubMe.save(names[me.uid], mine && mine.isMember ? mine.rank : null, isOrg ? 'organizer' : 'member');
     }
-    async function refresh() {
-      [posts, active] = await Promise.all([data.loadBoard(isOrg), data.myMission()]);
+    async function refresh(background = false) {
+      const shown = new Set(posts.map(p => p.id));
+      let fresh; [fresh, active] = await Promise.all([data.loadBoard(isOrg), data.myMission()]);
+      if (background && shown.size) fresh.forEach(p => { if (!shown.has(p.id) && p.by !== me.uid) held.add(p.id); });
+      posts = fresh;
+      saveCache();
       // a pointer to a mission that isn't ours any more doesn't count
       const mine = posts.find(p => p.id === active);
       if (!mine || mine.takenBy !== me.uid || mine.status !== "taken") active = null;
@@ -424,7 +426,7 @@
       const pin = pinnedWeek(); // always on top while there is a current or upcoming theme
       $("weekPin").innerHTML = pin ? cardHTML(pin, "is-pin") : "";
       const q = F.q.toLowerCase();
-      const list = posts.filter(p => p.id !== active && (!pin || p.id !== pin.id))
+      const list = posts.filter(p => p.id !== active && (!pin || p.id !== pin.id) && !held.has(p.id))
         .filter(visible)
         .filter(p => !F.kind || p.kind === F.kind)
         .filter(p => (F.kind === "week") === pastWeek(p) || (p.kind !== "week"))
@@ -432,7 +434,10 @@
         .filter(p => !F.mtype || (p.kind === "mission" && p.mtype === F.mtype))
         .filter(p => !q || [p.title, p.body, p.outcome, (p.skills || []).join(" ")].join(" ").toLowerCase().includes(q));
       $("count").textContent = F.q || F.kind || F.openOnly || F.mtype ? T("vb.count", { n: list.length }) : "";
-      $("posts").innerHTML = list.map(p => cardHTML(p)).join("") || `<p class="vb-empty">${esc(T(F.q ? "vb.noresults" : "vb.empty"))}</p>`;
+      list.sort((a, b) => b.at - a.at);   // newest first
+      $("posts").innerHTML = list.map(p => cardHTML(p, flash.has(p.id) ? "is-new" : "")).join("") || `<p class="vb-empty">${esc(T(F.q ? "vb.noresults" : "vb.empty"))}</p>`;
+      const n = [...held].filter(id => posts.some(p => p.id === id && visible(p))).length;
+      $("newPill").hidden = !n; if (n) $("newPill").textContent = "↑ " + T(n === 1 ? "vb.new.one" : "vb.new.many", { n });
       renderDetail();
     }
 
@@ -447,6 +452,7 @@
       openId = id; comments[id] = comments[id] || [];
       if (push) history.pushState({ post: id }, "", "?post=" + encodeURIComponent(id));
       renderDetail(); $("dTitle") && $("dTitle").focus();
+      if (await ready) return;
       comments[id] = await data.loadComments(id, isOrg);
       if (openId === id) {
         const keepFocus = !document.activeElement || document.activeElement === document.body || document.activeElement.id === "dTitle";
@@ -465,6 +471,7 @@
 
     // ---------- actions ----------
     async function act(kind, p, c) {
+      if (await ready) return;
       say($("msg"), "");
       const r = await ({
         take: () => data.takeMission(p), release: () => data.releaseMission(p), finish: () => data.finishMission(p),
@@ -613,6 +620,32 @@
 
     addEventListener("langchange", () => { if (me && !$("board").hidden) { render(); if (!$("postForm").hidden) renderFormChoices(); } });
 
+    // ---------- the board from your last visit, shown at once; fresh data replaces it in the background ----------
+    const CACHE_KEY = "nw-vb-cache-v1";
+    function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: me.uid, isOrg, names, ranks, posts, active, at: Date.now() })); } catch (e) {} }
+    let fromCache = false;
+    try {
+      const c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (c && c.uid && Array.isArray(c.posts) && document.documentElement.classList.contains("is-member") && Date.now() - c.at < 14 * DAY) {
+        ({ isOrg, names, ranks, posts, active } = c); me = { uid: c.uid }; fromCache = true;
+        render(); gate("board");
+      }
+    } catch (e) { fromCache = false; }
+    $("newPill").addEventListener("click", () => {
+      flash = new Set(held); held.clear(); render();
+      $("posts").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+      const first = document.querySelector("#posts .is-new [data-open-post]"); if (first) first.focus({ preventScroll: true });
+      setTimeout(() => { flash = new Set(); document.querySelectorAll("#posts .is-new").forEach(x => x.classList.remove("is-new")); }, 2500);
+    });
+    // check for new posts every minute while the page is open, and when you come back to the tab
+    const poll = async () => { if (!me || !me.email || $("board").hidden || document.visibilityState !== "visible" || openId) return; try { await refresh(true); } catch (e) {} };
+    setInterval(poll, 60e3); document.addEventListener("visibilitychange", poll);
+
+    const err = await ready;
+    if (err) { if (!fromCache) { gate("vLoading"); $("vLoading").textContent = T("m.dberror", { e: err.code || err.message || "?" }); } return; }
+    if (data.mode === "demo") $("demoNote").hidden = false;
+    const siBox = ClubSignIn.mount($("siBox"), data);
+
     // ---------- who is here ----------
     data.onAuth(async (u) => {
       try {
@@ -621,9 +654,11 @@
         if (!(await data.onRoster())) { gate("gMember"); return; }
         const profile = await data.getProfile(u.uid);
         if (!profile) { gate("gProfile"); return; }
+        const sameUser = fromCache && me && me.uid === u.uid;
         me = u;
         isOrg = profile.role === "organizer" || (data.mode === "demo" && new URLSearchParams(location.search).has("elder"));
-        await loadPeople(); await refresh(); gate("board");
+        if (!sameUser) { posts = []; held.clear(); }
+        await loadPeople(); await refresh(sameUser); gate("board");
         const deep = new URLSearchParams(location.search).get("post"); if (deep) openPost(deep, false);
       } catch (e) { console.error(e); gate("vLoading"); $("vLoading").textContent = T("m.dberror", { e: e.code || e.message || "?" }); }
     });

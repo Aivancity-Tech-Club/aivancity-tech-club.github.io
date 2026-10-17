@@ -18,6 +18,7 @@ service cloud.firestore {
             || exists(/databases/$(db)/documents/confirmed/$(request.auth.uid)));
     }
     function email() { return request.auth.token.email.lower(); }
+    function notBlocked() { return !exists(/databases/$(db)/documents/blocked/$(request.auth.uid)); }
     // Who is in the club: a verified school account that either
     //  - sent the /apply form (requests/{uid}), unless an organizer set its status to 'removed', or
     //  - is on the roster (roster/{email}), added by an organizer.
@@ -80,10 +81,12 @@ service cloud.firestore {
         && d.at == request.time;
     }
     match /requests/{uid} {
-      allow create: if school() && request.auth.uid == uid && validRequest(request.resource.data)
+      // a new account can send it before an organizer has reviewed it (when registering for an event);
+      // it only counts as membership once the account is confirmed (see school() / onRoster())
+      allow create: if schoolEmail() && notBlocked() && request.auth.uid == uid && validRequest(request.resource.data)
         && !('status' in request.resource.data) && !('note' in request.resource.data);
       // The person can edit their answers; only organizers set status ('invited', 'added') and notes.
-      allow update: if school() && request.auth.uid == uid && validRequest(request.resource.data)
+      allow update: if schoolEmail() && notBlocked() && request.auth.uid == uid && validRequest(request.resource.data)
         && request.resource.data.get('status', null) == resource.data.get('status', null)
         && request.resource.data.get('note', null) == resource.data.get('note', null);
       allow update: if isOrganizer();
@@ -282,6 +285,46 @@ service cloud.firestore {
 
     // One document per session code: { date: "YYYY-MM-DD", validFrom: timestamp, validUntil: timestamp, double: bool }.
     // Members can't read or list codes; the rules below only check that a typed code exists.
+    // ---------- Events made on the site by organizers (events/{id}) ----------
+    // Anyone can see published events (the schedule is public); only organizers create, edit or delete them.
+    function eventOk(d) {
+      return d.keys().hasOnly(['title', 'title_fr', 'date', 'time', 'time_fr', 'room', 'type', 'type_fr', 'format', 'level', 'lang', 'track',
+          'description', 'description_fr', 'details', 'details_fr', 'speaker', 'link', 'linkText', 'registration', 'capacity', 'deadline', 'published',
+          'createdBy', 'createdAt', 'updatedAt'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 120
+        && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.description is string && d.description.size() <= 300
+        && d.details is string && d.details.size() <= 5000 && d.details_fr is string && d.details_fr.size() <= 5000
+        && d.registration is bool && d.published is bool
+        && d.capacity is int && d.capacity >= 0 && d.capacity <= 1000;
+    }
+    match /events/{id} {
+      allow read: if resource.data.published == true || isOrganizer();
+      allow create, update: if isOrganizer() && eventOk(request.resource.data);
+      allow delete: if isOrganizer();
+    }
+
+    // Registrations (registrations/{eventId}_{uid}): any school account can ask for a spot, even before an organizer has
+    // reviewed the account. Members are confirmed straight away; everyone else waits ('pending') until an organizer confirms.
+    // Readable by anyone so the site can show how many places are left (documents hold no names, only account ids).
+    function regOk(id) {
+      return schoolEmail() && notBlocked()
+        && request.resource.data.keys().hasOnly(['event', 'uid', 'status', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && id == request.resource.data.event + '_' + request.auth.uid
+        && request.resource.data.at == request.time
+        && (request.resource.data.status in ['pending', 'waitlist', 'cancelled'] || (request.resource.data.status == 'confirmed' && isMember()))
+        && get(/databases/$(db)/documents/events/$(request.resource.data.event)).data.registration == true;
+    }
+    match /registrations/{id} {
+      allow read: if true;
+      allow create: if regOk(id) && request.resource.data.status != 'cancelled';
+      allow update: if regOk(id) && resource.data.uid == request.auth.uid && resource.data.event == request.resource.data.event;
+      allow update: if isOrganizer() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['pending', 'confirmed', 'waitlist', 'cancelled'];
+      allow delete: if isOrganizer();
+    }
+
     match /checkinCodes/{c} {
       allow read, write: if isOrganizer();
     }

@@ -138,6 +138,22 @@ The school's Microsoft email blocks our confirmation emails, so for now (`CONFIR
 are aivancity students (writes `confirmed/{uid}`); **Refuse** blocks the account (`blocked/{uid}`).
 To go back to confirmation emails once the school allows aivancitytechclub@gmail.com, set `CONFIRM: "email"`.
 
+## 7e. Events made on the site (no Google Forms)
+Organizers create events on the site: **profile menu → Create an event** (or **/pulse → Events → New event**).
+Fill in the title, date, time, place, a short description and the full details (English, and French if you like), then choose:
+- **People must register to attend** (on or off), the **number of places** (empty = no limit; when full, people join a waiting list)
+  and an optional **registration deadline**.
+- **Show this event on the site** (untick to keep it as a draft only organizers see).
+Each event gets its own page (`/event?id=…`) with all the details; share that link in the WhatsApp group.
+
+**Registering:** anyone with an aivancity account can tap **I'm going**. Students who aren't members yet create an account
+and fill in the short join form (WhatsApp number, level) on the event page itself. Members are confirmed straight away;
+everyone else shows as **To confirm**. On the event page (organizers see a **Registrations** list) tap **Confirm**
+(this also approves their account), **Move to waiting list** or **Remove**, or **Confirm all**. **Download CSV** gives the list.
+Data: `events/{id}` (organizers write, everyone reads published ones) and `registrations/{eventId}_{uid}`
+(status `pending`, `confirmed`, `waitlist` or `cancelled`; no names in it, so the site can show how many places are left).
+Sessions written in `assets/schedule.js` still work as before and also get a details page (`/event?d=YYYY-MM-DD`).
+
 ## 8. Every Thursday: the check-in code
 An organizer opens **/checkin** (also in their profile menu, and on /pulse) on the laptop connected to the projector:
 1. Pick how long the code works (1 hour by default) and tap **Show a check-in code**. A new random code appears in big letters,

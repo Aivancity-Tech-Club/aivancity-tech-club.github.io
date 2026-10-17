@@ -18,6 +18,20 @@ const SUBMIT_TYPES = ['ship_project', 'open_source', 'skill_badge', 'certificati
 /* Messages go through I18N when the page loaded it (English otherwise). */
 const tr = (k, en, v) => { if (window.I18N) { const x = I18N.t(k, v); if (x !== k) return x; } return en; };
 const PHONE_RE = /^\+?[0-9 ().-]{6,20}$/;
+/* Events made on the site by organizers (events/{id}). Only these fields are saved. */
+const EVENT_FORMATS = ['workshop', 'hackathon', 'competition', 'talk', 'trip', 'career', 'build', 'social', 'other'];
+function cleanEvent(e) {
+  const t = (v, n) => String(v == null ? '' : v).trim().slice(0, n), day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : '');
+  return {
+    title: t(e.title, 120), title_fr: t(e.title_fr, 120), date: day(e.date), time: t(e.time, 60), time_fr: t(e.time_fr, 60), room: t(e.room, 100),
+    type: t(e.type, 60), type_fr: t(e.type_fr, 60), format: EVENT_FORMATS.includes(e.format) ? e.format : 'other',
+    level: ['all', 'beginner', 'intermediate', 'advanced'].includes(e.level) ? e.level : 'all',
+    lang: ['en', 'fr', 'both'].includes(e.lang) ? e.lang : 'en', track: ['tech', 'gdg', 'event'].includes(e.track) ? e.track : 'event',
+    description: t(e.description, 300), description_fr: t(e.description_fr, 300), details: t(e.details, 5000), details_fr: t(e.details_fr, 5000),
+    speaker: t(e.speaker, 120), link: /^https:\/\/\S+$/.test(t(e.link, 500)) ? t(e.link, 500) : '', linkText: t(e.linkText, 40),
+    registration: !!e.registration, capacity: Math.max(0, Math.min(1000, parseInt(e.capacity, 10) || 0)), deadline: day(e.deadline), published: !!e.published,
+  };
+}
 const validEmail = (e) => new RegExp('^[^@\\s]+@' + DOMAIN.replace(/\./g, '\\.') + '$', 'i').test(String(e || '').trim());
 
 /* ================= demo backend ================= */
@@ -80,6 +94,14 @@ function demoBackend() {
   };
   const extra = () => store.get('nw-demo-extra-v1') || extraSeed();
   const saveExtra = (X) => store.set('nw-demo-extra-v1', X);
+  const inDays = (n) => { const d = new Date(Date.now() + n * day); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const demoEvents = () => [{ id: 'demo-build-night', ...cleanEvent({ title: 'Build night: ship a tiny app', title_fr: 'Soirée build : publiez une mini-app', date: inDays(9),
+    time: '6:00 – 9:00 PM', time_fr: '18 h – 21 h', room: 'AIClinic – Room 107', type: 'Build night', type_fr: 'Soirée build', format: 'build', level: 'all', lang: 'en',
+    description: 'Three hours to build and ship something small with friends. Pizza included.', description_fr: 'Trois heures pour construire et publier un petit projet entre amis. Pizza offerte.',
+    details: 'Bring a laptop and an idea, or pick one from our list.\n\nWe start with a 10-minute demo of how to put a site online, then everyone builds. Organizers walk around to help.\n\nAt 8:30 PM, anyone who wants can show what they made in 1 minute.',
+    details_fr: 'Venez avec un ordinateur et une idée, ou choisissez-en une dans notre liste.\n\nOn commence par 10 minutes de démo pour mettre un site en ligne, puis tout le monde construit. Les organisateurs passent aider.\n\nÀ 20 h 30, celles et ceux qui le souhaitent montrent leur projet en 1 minute.',
+    registration: true, capacity: 20, deadline: inDays(8), published: true }) }];
+  const demoRegs = () => ['lucas', 'sofia', 'noah'].map((uid, i) => ({ id: 'demo-build-night_' + uid, event: 'demo-build-night', uid, status: i === 2 ? 'pending' : 'confirmed', at: now - i * day }));
   const demoTarget = (B, postId, commentId) => (commentId ? (B.comments[postId] || []).find(c => c.id === commentId) : B.posts.find(p => p.id === postId));
   const user = { uid: 'you', email: 'you@' + DOMAIN, demo: true };
   return {
@@ -166,6 +188,21 @@ function demoBackend() {
     async requestManualConfirm() { return { ok: true }; }, async manualConfirmPending() { return false; },
     async loadPendingConfirms() { const X = extra(); return X.pending || [{ uid: 'newbie', email: 'jane.doe@' + DOMAIN, name: 'Jane D.', at: now - 3600e3 }]; },
     async confirmByHand(uid) { const X = extra(); X.pending = (X.pending || [{ uid: 'newbie' }]).filter(p => p.uid !== uid); saveExtra(X); return { ok: true }; },
+    // ---------- events made on the site, and registrations ----------
+    async loadEvents(all) { return (extra().events || demoEvents()).filter(e => all || e.published); },
+    async getEvent(id) { return (extra().events || demoEvents()).find(e => e.id === id) || null; },
+    async saveEvent(ev) {
+      const X = extra(); X.events = X.events || demoEvents(); const id = ev.id || 'e' + Date.now(), doc = { id, ...cleanEvent(ev) };
+      const i = X.events.findIndex(e => e.id === id); if (i >= 0) X.events[i] = doc; else X.events.push(doc); saveExtra(X); return { ok: true, id };
+    },
+    async deleteEvent(id) { const X = extra(); X.events = (X.events || demoEvents()).filter(e => e.id !== id); saveExtra(X); return { ok: true }; },
+    async loadRegistrations(eventId) { return (extra().regs || demoRegs()).filter(r => r.event === eventId); },
+    async register(eventId, status) {
+      const X = extra(); X.regs = X.regs || demoRegs(); const id = eventId + '_you';
+      X.regs = X.regs.filter(r => r.id !== id).concat({ id, event: eventId, uid: 'you', status, at: Date.now() }); saveExtra(X); return { ok: true };
+    },
+    async setRegistration(reg, status) { const X = extra(); X.regs = (X.regs || demoRegs()).map(r => (r.id === reg.id ? { ...r, status } : r)); saveExtra(X); return { ok: true }; },
+    async whoAre(uids) { const out = {}; for (const u of uids) { const m = state.members.find(x => x.uid === u); out[u] = { name: m ? m.name : 'Jane D.', email: (m ? u : 'jane.doe') + '@' + DOMAIN, phone: '+33 6 00 00 00 00', member: !!m }; } return out; },
     currentUid() { return 'you'; },
     reset() { store.del('nw-demo-v1'); store.del('nw-demo-board-v1'); store.del('nw-demo-extra-v1'); state = demoSeed(); },
   };
@@ -246,6 +283,7 @@ function firebaseBackend() {
       await ref.set({ email: (u.email || '').toLowerCase(), name: String(name || (cur.exists && cur.data().name) || u.email.split('@')[0]).trim().slice(0, 60), at: FV().serverTimestamp() });
     } catch (e) {}
   };
+  let lastVerified = false;
   const isBlocked = async (uid) => { try { const d = await db.collection('blocked').doc(uid).get(); return d.exists; } catch (e) { return false; } };
   const manuallyConfirmed = async (uid) => { try { const d = await db.collection('confirmed').doc(uid).get(); return d.exists; } catch (e) { return false; } };
   const V = '10.12.2', base = 'https://www.gstatic.com/firebasejs/' + V + '/';
@@ -311,6 +349,7 @@ function firebaseBackend() {
         let verified = !!(u && (u.emailVerified || ms));
         if (u && !verified) verified = await manuallyConfirmed(u.uid);
         if (u && !verified && ORG_CONFIRM && validEmail(u.email)) reviewQueue(u);   // waits for an organizer
+        lastVerified = verified;
         cb(u ? { uid: u.uid, email: u.email, verified } : null);
       });
     },
@@ -395,7 +434,7 @@ function firebaseBackend() {
       const u = auth.currentUser;
       const doc = { email: u.email.toLowerCase(), name: d.name, program: d.program || '', phone: d.phone, interests: d.interests || [],
         level: d.level, heard: d.heard || '', consent: true, lang: d.lang === 'fr' ? 'fr' : 'en', at: firebase.firestore.FieldValue.serverTimestamp() };
-      try { await db.collection('requests').doc(u.uid).set(doc, { merge: true }); markMember(true); return { ok: true }; }
+      try { await db.collection('requests').doc(u.uid).set(doc, { merge: true }); if (lastVerified) markMember(true); return { ok: true }; }
       catch (e) { return { ok: false, message: tr('err.generic', 'Something went wrong. Try again in a moment.') + ' (' + (e.code || e.message) + ')' }; }
     },
     /* The WhatsApp invite link lives in Firestore (invites/whatsapp), not in this public repository.
@@ -580,6 +619,48 @@ function firebaseBackend() {
       const s = await db.collection('facts').where('type', '==', 'attend').where('date', '==', date).get();
       return s.size;
     },
+    // ---------- events made on the site (events/{id}) and registrations (registrations/{eventId}_{uid}) ----------
+    async loadEvents(all) {
+      const q = all ? db.collection('events') : db.collection('events').where('published', '==', true);
+      const s = await q.get(); return s.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+    async getEvent(id) { try { const d = await db.collection('events').doc(id).get(); return d.exists ? { id, ...d.data() } : null; } catch (e) { return null; } },
+    async saveEvent(ev) {
+      const ref = ev.id ? db.collection('events').doc(ev.id) : db.collection('events').doc(), doc = cleanEvent(ev);
+      try {
+        if (ev.id) await ref.update({ ...doc, updatedAt: FV().serverTimestamp() });
+        else await ref.set({ ...doc, createdBy: auth.currentUser.uid, createdAt: FV().serverTimestamp(), updatedAt: FV().serverTimestamp() });
+        return { ok: true, id: ref.id };
+      } catch (e) { return fail(e); }
+    },
+    async deleteEvent(id) { try { await db.collection('events').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    async loadRegistrations(eventId) {
+      const s = await db.collection('registrations').where('event', '==', eventId).get();
+      return s.docs.map(d => { const x = d.data(); return { id: d.id, event: x.event, uid: x.uid, status: x.status, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; });
+    },
+    async register(eventId, status) {
+      const uid = auth.currentUser.uid;
+      try { await db.collection('registrations').doc(eventId + '_' + uid).set({ event: eventId, uid, status, at: FV().serverTimestamp() }); return { ok: true }; }
+      catch (e) { return fail(e); }
+    },
+    // organizers: confirming someone's spot also confirms their account (they were reviewed)
+    async setRegistration(reg, status) {
+      const b = db.batch(); b.update(db.collection('registrations').doc(reg.id), { status });
+      if (status === 'confirmed') {
+        b.set(db.collection('confirmed').doc(reg.uid), { by: auth.currentUser.uid, at: FV().serverTimestamp() });
+        b.delete(db.collection('confirmPending').doc(reg.uid));
+      }
+      try { await b.commit(); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    // organizers: names and contact details for a list of accounts (join form first, then profile, then the approval list)
+    async whoAre(uids) {
+      const out = {}, get = (c, id) => db.collection(c).doc(id).get().then(d => (d.exists ? d.data() : {})).catch(() => ({}));
+      await Promise.all(uids.map(async uid => {
+        const [R, M, P, C] = await Promise.all([get('requests', uid), get('members', uid), get('private', uid), get('confirmPending', uid)]);
+        out[uid] = { name: M.name || R.name || C.name || '', email: R.email || P.email || C.email || '', phone: R.phone || '', member: !!M.name };
+      }));
+      return out;
+    },
     currentUid() { return auth.currentUser ? auth.currentUser.uid : null; },
     async submit(s) {
       if (!SUBMIT_TYPES.includes(s.type)) return { ok: false, message: tr('m.proof.badtype', 'That kind of proof is not on the list.') };
@@ -590,5 +671,5 @@ function firebaseBackend() {
   };
 }
 
-window.ClubData = { ORG_CONFIRM, CAMP_COLORS, cleanCamp, create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
+window.ClubData = { EVENT_FORMATS, cleanEvent, ORG_CONFIRM, CAMP_COLORS, cleanCamp, create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
 })();

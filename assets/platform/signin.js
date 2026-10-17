@@ -31,6 +31,12 @@ const CSS = `
 .si .si-steps { margin: 0; padding-left: 20px; display: grid; gap: 10px; font-size: .95rem; }
 .si .si-steps a { color: inherit; font-weight: 700; }
 .si .si-steps .btn { margin-top: 8px; }
+.si .si-i { display: inline-grid; place-items: center; width: 24px; height: 24px; margin-left: 6px; vertical-align: -5px; border-radius: 50%; border: 2px solid currentColor;
+  background: transparent; color: inherit; font: italic 700 14px/1 Georgia, serif; cursor: pointer; padding: 0; }
+.si .si-i[aria-expanded="true"] { background: #2b3767; border-color: #2b3767; color: #fff; }
+.si .si-why { margin: 10px 0 0; padding: 12px 14px; border-radius: 14px; border: 2px solid currentColor; font-size: .88rem; line-height: 1.5; font-style: normal; }
+.si .si-why b { display: block; margin-bottom: 4px; }
+.si .si-why code { font-family: ui-monospace, Menlo, monospace; font-size: .85em; }
 .si .ms-btn { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .si .or { display: flex; align-items: center; gap: 10px; font-size: .85rem; opacity: .8; margin: 0; }
 .si .or::before, .si .or::after { content: ""; flex: 1; border-top: 1px solid currentColor; opacity: .3; }
@@ -42,7 +48,7 @@ function injectCss() {
 
 function mount(el, data) {
   injectCss();
-  let mode = 'signin', verifyEmail = '', msg = null, busy = false, showPw = false, asked = false, openManual = false, refused = false;
+  let mode = 'signin', verifyEmail = '', msg = null, busy = false, showPw = false, asked = false, openManual = false, refused = false, whyOpen = false, resetSentTo = '';
   const kept = { email: '', pw: '', name: '' };
 
   function keep() {
@@ -57,6 +63,10 @@ function mount(el, data) {
     return `<p class="si-msg ${msg.ok ? 'ok' : 'bad'}" role="${msg.ok ? 'status' : 'alert'}">${esc(msg.text)}${act}</p>`;
   }
 
+  // the "i" next to the quarantine step: a short, technical answer to "why do I have to do this?"
+  function whyBtn() { return `<button type="button" class="si-i" data-si="why" aria-expanded="${whyOpen}" aria-controls="si-why" aria-label="${esc(T('q.why.aria'))}" title="${esc(T('q.why.aria'))}">i</button>`; }
+  function whyBox() { return whyOpen ? `<div class="si-why" id="si-why" role="note"><b>${esc(T('q.why.h'))}</b>${T('q.why.p')}</div>` : `<div id="si-why" hidden></div>`; }
+
   function render() {
     keep();
     // the page's own heading/intro make no sense on the "confirm your email" step
@@ -70,7 +80,7 @@ function mount(el, data) {
         <details class="si-manual"${openManual ? ' open' : ''}><summary>${esc(T('pw.fast.q'))}</summary>
           <ol class="si-steps">
             <li>${esc(T('pw.fast.1'))}<div><button type="button" class="btn btn-ghost ghost" data-si="fastmail" ${busy ? 'disabled' : ''}>${esc(T('pw.fast.btn'))}</button></div></li>
-            <li>${T('pw.fast.2')}</li>
+            <li>${T('pw.fast.2')}${whyBtn()}${whyBox()}</li>
             <li>${esc(T('pw.fast.3'))}</li>
           </ol></details>`}
         <p class="si-links"><a href="#" data-si="other">${esc(T('pw.other'))}</a></p></div></div>`;
@@ -90,6 +100,20 @@ function mount(el, data) {
               <div class="field"><label for="si-name">${esc(T('pw.manual.name'))}</label><input class="input" id="si-name" maxlength="60" autocomplete="name" value="${esc(kept.name || '')}"></div>
               <div><button type="button" class="btn btn-ghost ghost" data-si="manual" ${busy ? 'disabled' : ''}>${esc(T('pw.manual.btn'))}</button></div></details>`) : ''}
         <p class="si-links"><a href="#" data-si="other">${esc(T('pw.other'))}</a></p></div></div>`;
+      return;
+    }
+    if (mode === 'forgot' && resetSentTo) {
+      el.innerHTML = `<div class="si"><div class="si-verify">
+        <h2 style="margin:0;font-weight:400">${T('pw.reset.h')}</h2>
+        <p style="margin:0">${T('pw.reset.sent2', { email: esc(resetSentTo) })}</p>
+        <ol class="si-steps">
+          <li>${T('pw.reset.1')}${whyBtn()}${whyBox()}</li>
+          <li>${esc(T('pw.reset.2'))}</li>
+          <li>${esc(T('pw.reset.3'))}</li>
+        </ol>
+        ${msgHTML()}
+        <div class="si-row"><button type="button" class="btn btn-primary" data-si="signin">${esc(T('pw.reset.back'))}</button>
+        <button type="button" class="btn btn-ghost ghost" data-si="resendreset" ${busy ? 'disabled' : ''}>${esc(T('pw.reset.again'))}</button></div></div></div>`;
       return;
     }
     const create = mode === 'create', forgot = mode === 'forgot', link = mode === 'link';
@@ -122,9 +146,11 @@ function mount(el, data) {
   el.addEventListener('click', async (e) => {
     const a = e.target.closest('[data-si]'); if (!a) return;
     const k = a.dataset.si; e.preventDefault();
+    if (k === 'why') { whyOpen = !whyOpen; render(); const b = el.querySelector('[data-si="why"]'); if (b) b.focus(); return; }
+    if (k === 'resendreset') { await run(async () => { const r = await data.resetPassword(resetSentTo); msg = r.ok ? { ok: true, text: T('pw.reset.resent') } : { text: r.message }; }); return; }
     if (k === 'eye') { keep(); showPw = !showPw; render(); const p = el.querySelector('#si-pw'); if (p) p.focus(); return; }
     if (['create', 'signin', 'forgot'].includes(k)) {
-      keep(); const prefilled = k === 'create' && kept.email && kept.pw; mode = k;
+      keep(); resetSentTo = ''; whyOpen = false; const prefilled = k === 'create' && kept.email && kept.pw; mode = k;
       msg = prefilled ? { ok: true, text: T('pw.nouser') } : null; render();
       const i = el.querySelector(prefilled ? (el.querySelector('#si-name') ? '#si-name' : '#si-pw2') : '#si-email'); if (i) i.focus(); return;
     }
@@ -152,7 +178,7 @@ function mount(el, data) {
     await run(async () => {
       if (mode === 'forgot') {
         const r = await data.resetPassword(email);
-        msg = r.ok ? { ok: true, text: T('pw.reset.sent', { email }) } : { text: r.message };
+        if (r.ok) { resetSentTo = email; msg = null; } else msg = { text: r.message };
       } else if (mode === 'link') {
         try { await data.completeLink(email); msg = null; } catch (x) { msg = { text: x.message || T('err.generic') }; }
       } else {
@@ -171,6 +197,8 @@ function mount(el, data) {
 
   return {
     signin(error) { mode = data.pendingLink ? 'link' : 'signin'; msg = error ? { text: error } : null; render(); },
+    create() { mode = 'create'; msg = null; render(); },
+    get name() { return kept.name || ''; },
     verify(email) { mode = 'verify'; verifyEmail = email || ''; msg = null; render();
       if (data.accountRefused) data.accountRefused().then(r => { if (r) { refused = true; render(); } });
       if (data.manualConfirmPending) data.manualConfirmPending().then(p => { if (p && !asked) { asked = true; render(); } }); },

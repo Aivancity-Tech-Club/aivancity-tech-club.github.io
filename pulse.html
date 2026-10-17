@@ -14,10 +14,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261017f">
-  <link rel="stylesheet" href="assets/village.css?v=20261017f">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261017f">
-  <script src="assets/i18n.js?v=20261017f"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261018a">
+  <link rel="stylesheet" href="assets/village.css?v=20261018a">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261018a">
+  <script src="assets/i18n.js?v=20261018a"></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -66,10 +66,10 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261017f"></script>
-  <script src="assets/platform/config.js?v=20261017f"></script>
-  <script src="assets/platform/signin.js?v=20261017f"></script>
-  <script src="assets/platform/data.js?v=20261017f"></script>
+  <script src="assets/schedule.js?v=20261018a"></script>
+  <script src="assets/platform/config.js?v=20261018a"></script>
+  <script src="assets/platform/signin.js?v=20261018a"></script>
+  <script src="assets/platform/data.js?v=20261018a"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -116,7 +116,7 @@
     }
 
     function render() {
-      const { members, facts, requests, pulse, rsvps, votes, board, pending } = S;
+      const { members, facts, requests, pulse, rsvps, votes, board, pending, events } = S;
       const name = (uid) => (members.find(m => m.uid === uid) || requests.find(r => r.uid === uid) || {}).name || "—";
       const attends = {}; facts.filter(f => f.type === "attend" && f.status === "approved").forEach(f => (attends[f.uid] = attends[f.uid] || []).push(f.date));
       Object.values(attends).forEach(a => a.sort());
@@ -158,7 +158,14 @@
           <p class="help">${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.p" : "pulse.conf.p"))}</p>
           <ul class="p-list">${pending.sort((a, b) => a.at - b.at).map(p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.conf.row", { email: p.email, d: p.at ? fmt(new Date(p.at).toISOString().slice(0, 10)) : "—" }))}</small></div>
             <div class="row-actions"><button type="button" class="btn btn-primary" data-confirm="${esc(p.uid)}">${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.yes" : "pulse.conf.yes"))}</button><button type="button" class="btn btn-ghost" data-reject="${esc(p.uid)}">${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.no" : "pulse.conf.no"))}</button></div></li>`).join("")}</ul></section>` : "";
-      $("pulse").innerHTML = confirmHTML + `
+      // events made on the site: upcoming first, with how many people registered and how many still need confirming
+      const byDate = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+      const evRows = events.filter(e => e.date >= today).sort(byDate).concat(events.filter(e => e.date < today).sort(byDate).reverse());
+      const eventsHTML = `<section class="p-card"><div class="p-head"><h2>${esc(T("pv.h"))} <small>${events.length}</small></h2><a class="btn btn-primary" href="/event-edit">${esc(T("pv.new"))}</a></div>
+          ${list(evRows, T("pv.none"), e => `<li><div><b><a href="/event?id=${encodeURIComponent(e.id)}">${esc(I18N.pick(e, "title"))}</a></b>${e.published ? "" : ` <span class="chip chip-planned">${esc(T("pv.draft"))}</span>`}
+              <small>${esc(fmt(e.date))}${e.registration ? " · " + esc(T("pv.row", { n: e.regs.filter(r => r.status === "pending" || r.status === "confirmed").length, p: e.regs.filter(r => r.status === "pending").length })) : ""}</small></div>
+            <div class="row-actions"><a class="btn btn-ghost" href="/event-edit?id=${encodeURIComponent(e.id)}">${esc(T("ev.edit"))}</a></div></li>`)}</section>`;
+      $("pulse").innerHTML = confirmHTML + eventsHTML + `
         <div class="kpis">
           <div><b>${members.length}</b><span>${esc(T("pulse.k.members"))}</span></div>
           <div><b>${active}</b><span>${esc(T("pulse.k.active"))}</span></div>
@@ -201,7 +208,9 @@
 
     async function load() {
       const [members, facts, requests, pulse, rsvps, votes, board, pending] = await Promise.all([data.loadMembers(), data.loadFacts(), data.loadRequests(), data.loadPulse(), data.loadRsvps(today), data.loadVotes(today), data.loadBoard(true), data.loadPendingConfirms().catch(() => [])]);
-      S = { members, facts, requests, pulse, rsvps, votes, board, pending }; render();
+      const events = await data.loadEvents(true).catch(() => []);
+      await Promise.all(events.map(async e => { e.regs = e.registration ? await data.loadRegistrations(e.id).catch(() => []) : []; }));
+      S = { members, facts, requests, pulse, rsvps, votes, board, pending, events }; render();
     }
 
     $("pulse").addEventListener("click", async (e) => {

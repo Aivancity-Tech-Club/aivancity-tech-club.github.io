@@ -134,7 +134,26 @@ const LOC = () => (window.I18N ? I18N.locale() : "en-GB");
 
 function parseDate(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
 function today0() { const t = new Date(); t.setHours(0, 0, 0, 0); return t; }
-function sorted() { return SESSIONS.map(s => ({ ...s, _d: parseDate(s.date) })).sort((a, b) => a._d - b._d); }
+/* Events organizers create on the site (Firestore "events") are added to SESSIONS once loaded (see loadSiteEvents). */
+let SITE_EVENTS = [], REG_COUNT = {}, EVENTS_READY = false;
+// what we saw last time shows straight away; the fresh list replaces it a moment later
+try { const c = JSON.parse(localStorage.getItem("tc-events-v1") || "null"); if (c && Array.isArray(c.events)) { SITE_EVENTS = c.events; REG_COUNT = c.counts || {}; EVENTS_READY = true; } } catch (e) {}
+/* loading placeholder (first visit only): the same shapes as the session cards, with a soft shimmer */
+function skeletonHTML(n) {
+  const card = `<div class="sk-session" aria-hidden="true"><span class="skx sk-date"></span><div><span class="skx sk-chips"></span><span class="skx sk-h"></span><span class="skx sk-l"></span><span class="skx sk-l short"></span></div></div>`;
+  return `<div class="sched-skel" role="status" aria-busy="true"><span class="sr-only">${esc(L("ev.loading"))}</span>${card.repeat(n)}</div>`;
+}
+const allSessions = () => SESSIONS.concat(SITE_EVENTS);
+const sessionKey = (s) => (s.id ? "ev:" + s.id : s.date);
+const eventHref = (s) => (s.id ? "/event?id=" + encodeURIComponent(s.id) : "/event?d=" + s.date);
+function sorted() { return allSessions().filter(s => s.date).map(s => ({ ...s, _d: parseDate(s.date) })).sort((a, b) => a._d - b._d); }
+/* places: "12 / 30", or "Full" when every place is taken (pending + confirmed both hold a place) */
+function regOpen(s) { const t = today0(); return !!s.registration && s._d >= t && (!s.deadline || parseDate(s.deadline) >= t); }
+function regHTML(s) {
+  const n = REG_COUNT[s.id] || 0, cap = s.capacity || 0, full = cap && n >= cap;
+  const places = cap ? L(full ? "ev.full" : "ev.places", { n, cap }) : (n ? L("ev.going", { n }) : "");
+  return `<p class="reg-row"><a class="btn btn-primary" href="${esc(eventHref(s))}#register">${esc(L(full ? "ev.waitlist.btn" : "rsvp.btn"))}</a>${places ? `<span class="reg-places${full ? " full" : ""}">${esc(places)}</span>` : ""}</p>`;
+}
 function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
 function sessionHTML(s, { next = false, past = false } = {}) {
@@ -163,14 +182,15 @@ function sessionHTML(s, { next = false, past = false } = {}) {
       </div>
       <div class="session-body">
         <div class="session-meta">${chips}</div>
-        <h3>${esc(title)}</h3>
+        <h3><a class="session-title" href="${esc(eventHref(s))}">${esc(title)}</a></h3>
         ${desc ? `<p>${esc(desc)}</p>` : ""}
         ${s.speaker ? `<p class="speaker">${esc(s.speaker)}</p>` : ""}
         <p class="where">${esc(Wk)} · ${esc(F(s, "time") || L("sched.time"))} · ${esc(F(s, "room") || L("sched.room"))}</p>
         ${!past && s.vote && s.vote.options ? `<div class="poll" data-poll="${esc(s.date)}" hidden></div>` : ""}
         ${past && s.recap ? recapHTML(s) : ""}
-        ${!past ? `<div class="rsvp" data-rsvp="${esc(s.date)}" hidden></div>` : ""}
-        ${!past ? `<p class="session-actions">${s.link ? `<a class="btn btn-primary session-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${esc(F(s, "linkText") || L("sched.more"))} ↗</a>` : ""}<button type="button" class="cal-btn" data-ics="${esc(s.date)}">${esc(L("sched.cal.one"))}</button></p>` : ""}
+        ${!past && regOpen(s) ? regHTML(s) : ""}
+        ${!past && !s.registration ? `<div class="rsvp" data-rsvp="${esc(s.date)}" hidden></div>` : ""}
+        <p class="session-actions">${!past && s.link ? `<a class="btn btn-primary session-cta" href="${esc(s.link)}" target="_blank" rel="noopener">${esc(F(s, "linkText") || L("sched.more"))} ↗</a>` : ""}<a class="cal-btn no-ico details-link" href="${esc(eventHref(s))}">${esc(L("ev.details"))} →</a>${!past ? `<button type="button" class="cal-btn" data-ics="${esc(sessionKey(s))}">${esc(L("sched.cal.one"))}</button>` : ""}</p>
       </div>
     </article>`;
 }
@@ -241,6 +261,7 @@ document.addEventListener("click", async (e) => {
 /* Home page: the next few sessions (breaks included so nobody turns up to an empty room). */
 function renderSchedule(el, { limit = 3 } = {}) {
   if (!el) return;
+  if (!EVENTS_READY) { el.innerHTML = skeletonHTML(limit); return; }
   const t = today0();
   const up = sorted().filter(s => s._d >= t).slice(0, limit);
   const firstReal = up.find(s => s.track !== "break");
@@ -253,6 +274,7 @@ function renderSchedule(el, { limit = 3 } = {}) {
 /* Home page: what we did recently, so visitors can see the club is active. */
 function renderRecent(el, { limit = 3 } = {}) {
   if (!el) return;
+  if (!EVENTS_READY) { const w = el.closest("[data-hide-empty]"); if (w) w.hidden = true; return; }
   const t = today0();
   const past = sorted().filter(s => s._d < t && s.track !== "break").reverse().slice(0, limit);
   el.innerHTML = past.map(s => sessionHTML(s, { past: true })).join("");
@@ -278,18 +300,18 @@ function icsFold(line) {                                 // lines longer than 75
 }
 function icsEvent(s, stamp) {
   const t = icsTimes(s), title = F(s, "title"), room = F(s, "room") || L("sched.room");
-  const desc = [F(s, "description"), s.lang ? langLabel(s) : "", s.planned ? L("sched.cal.planned") : "", s.link ? s.link : "", SITE + "/schedule"].filter(Boolean).join("\n\n");
+  const desc = [F(s, "description"), s.lang ? langLabel(s) : "", s.planned ? L("sched.cal.planned") : "", s.link ? s.link : "", SITE + eventHref(s)].filter(Boolean).join("\n\n");
   const next = (d) => { const x = parseDate(d); x.setDate(x.getDate() + 1); return x.getFullYear() + String(x.getMonth() + 1).padStart(2, "0") + String(x.getDate()).padStart(2, "0"); };
   return [
     "BEGIN:VEVENT",
-    `UID:${s.date}-${(s.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}@aivancity-tech-club.github.io`,
+    `UID:${s.id ? "ev-" + s.id : s.date + "-" + (s.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}@aivancity-tech-club.github.io`,
     `DTSTAMP:${stamp}`,
     t ? `DTSTART;TZID=Europe/Paris:${t.start}` : `DTSTART;VALUE=DATE:${s.date.replace(/-/g, "")}`,
     t ? `DTEND;TZID=Europe/Paris:${t.end}` : `DTEND;VALUE=DATE:${next(s.date)}`,
     `SUMMARY:${icsEscape(title)}`,
     `LOCATION:${icsEscape(room)}`,
     `DESCRIPTION:${icsEscape(desc)}`,
-    `URL:${SITE}/schedule`,
+    `URL:${SITE}${eventHref(s)}`,
     `STATUS:${s.planned ? "TENTATIVE" : "CONFIRMED"}`,
     ...(t ? ["BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${icsEscape(title)}`, "TRIGGER:-PT1H", "END:VALARM"] : []),
     "END:VEVENT",
@@ -317,13 +339,13 @@ const upcomingReal = () => { const t = today0(); return sorted().filter(s => s._
 // any "Add to calendar" button on any page (home or schedule)
 document.addEventListener("click", (e) => {
   const one = e.target.closest("[data-ics]"), all = e.target.closest("[data-ics-all]");
-  if (one) { const s = SESSIONS.find(x => x.date === one.dataset.ics && x.track !== "break"); if (s) downloadICS([s], `tech-club-${s.date}.ics`); }
+  if (one) { const s = allSessions().find(x => sessionKey(x) === one.dataset.ics && x.track !== "break"); if (s) downloadICS([s], `tech-club-${s.date}.ics`); }
   if (all) downloadICS(upcomingReal(), "aivancity-tech-club.ics");
 });
 
 /* Schedule page: Upcoming / Past, plus two small dropdowns (level, type).
    The choice is kept in the address (?when=past&level=beginner&type=workshop), so a filtered view can be shared. */
-const FORMATS = ["workshop", "hackathon", "competition", "talk", "trip", "career", "build"];
+const FORMATS = ["workshop", "hackathon", "competition", "talk", "trip", "career", "build", "social", "other"];
 const LEVELS = ["beginner", "intermediate", "advanced"];
 const LANGS = ["en", "fr"];
 const FILTER = { when: "upcoming", level: "", type: "", lang: "" };
@@ -351,6 +373,7 @@ const matches = (s) => (!FILTER.level || s.level === FILTER.level || s.level ===
 
 function renderSeason(el) {
   if (!el) return;
+  if (!EVENTS_READY) { el.innerHTML = `<div class="s-bar sk-bar" aria-hidden="true"><span class="skx sk-tabs"></span><span class="skx sk-sel"></span></div>` + skeletonHTML(4); return; }
   const t = today0(), all = sorted(), loc = LOC();
   const firstReal = all.find(s => s._d >= t && s.track !== "break");
   const real = all.filter(s => s.track !== "break");
@@ -414,3 +437,45 @@ function renderSeason(el) {
     });
   }
 }
+
+/* ---------- events made on the site ----------
+   Read straight from Firestore's public REST endpoint, so visitors don't load the Firebase SDK.
+   Pages listen for "club:events" and draw again once they arrive. */
+function restValue(v) {
+  if (!v) return null;
+  if ("stringValue" in v) return v.stringValue;
+  if ("integerValue" in v) return Number(v.integerValue);
+  if ("doubleValue" in v) return v.doubleValue;
+  if ("booleanValue" in v) return v.booleanValue;
+  if ("timestampValue" in v) return v.timestampValue;
+  return null;
+}
+const restDoc = (d) => { const o = {}; for (const [k, v] of Object.entries(d.fields || {})) o[k] = restValue(v); return o; };
+function countRegs(regs) {
+  REG_COUNT = {};
+  for (const r of regs) if (r.status === "pending" || r.status === "confirmed") REG_COUNT[r.event] = (REG_COUNT[r.event] || 0) + 1;
+}
+async function loadSiteEvents() {
+  const giveUp = setTimeout(() => { if (!EVENTS_READY) { EVENTS_READY = true; dispatchEvent(new CustomEvent("club:events")); } }, 3000);
+  try {
+    if (!window.CLUB_PLATFORM) await new Promise((res, rej) => { const x = document.createElement("script"); x.src = "/assets/platform/config.js"; x.onload = res; x.onerror = rej; document.head.appendChild(x); });
+    const C = window.CLUB_PLATFORM || {};
+    if (!C.FIREBASE) {                     // demo mode: events created in this browser
+      let X = null; try { X = JSON.parse(localStorage.getItem("nw-demo-extra-v1")); } catch (e) {}
+      SITE_EVENTS = X && X.events ? X.events.filter(e => e.published && e.date) : []; countRegs((X && X.regs) || []);
+    } else {
+      const base = `https://firestore.googleapis.com/v1/projects/${C.FIREBASE.projectId}/databases/(default)/documents`, key = "key=" + C.FIREBASE.apiKey;
+      const [ev, rg] = await Promise.all([
+        fetch(`${base}:runQuery?${key}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ structuredQuery: {
+          from: [{ collectionId: "events" }], where: { fieldFilter: { field: { fieldPath: "published" }, op: "EQUAL", value: { booleanValue: true } } } } }) }).then(r => r.json()),
+        fetch(`${base}/registrations?pageSize=1000&${key}`).then(r => r.json()).catch(() => ({})),
+      ]);
+      SITE_EVENTS = (Array.isArray(ev) ? ev : []).filter(x => x.document).map(x => ({ id: x.document.name.split("/").pop(), ...restDoc(x.document) })).filter(e => e.date);
+      countRegs((rg.documents || []).map(restDoc));
+    }
+    try { localStorage.setItem("tc-events-v1", JSON.stringify({ events: SITE_EVENTS, counts: REG_COUNT, at: Date.now() })); } catch (e) {}
+  } catch (e) { /* offline or blocked: the schedule from this file (and the last saved events) still shows */ }
+  clearTimeout(giveUp); EVENTS_READY = true;
+  dispatchEvent(new CustomEvent("club:events"));
+}
+loadSiteEvents();
