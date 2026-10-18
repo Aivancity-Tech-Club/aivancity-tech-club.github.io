@@ -492,3 +492,6 @@ h2.side-h { font-size: 1.17rem; margin: 0 0 6px; font-weight: 700; letter-spacin
 /* audit: tighter gap under "Join in 2 minutes", readable point pills on the rules page at night */
 .join-steps { padding-bottom: 8px; }
 @media (prefers-color-scheme: dark) { html .quick-list b { background: var(--cyan); color: #10162e; } }
+
+/* status chip used on the schedule, event pages and the organizers' lists */
+.chip.chip-cancelled { background: #f8ddd6; color: #8c1d18; border-color: #8c1d18; font-weight: 700; }

@@ -121,7 +121,9 @@ Nothing to set up: it uses the `board` collection (comments live under each post
   other organizers so nobody gets two messages. Organizers find the page in their profile menu.
 - **Buddies:** "Post a buddy mission" puts a Help mission on the Village board in the name of the organizing team. The
   first member to take it is the newcomer's buddy; confirm it like any mission once they've met.
-- **"I'm going" (collection `rsvps`) and votes (collection `votes`):** members only, one per person and session.
+- **"I'm going"** is one system for every session: collection `registrations` (see 7e). The old `rsvps` collection is no
+  longer written; each member's old entries move into `registrations` on their next visit and are removed.
+- **Votes (collection `votes`):** members only, one per person and session.
 - **Votes on a planned session:** add a `vote` to the session in `assets/schedule.js`, for example
   `vote: { question: "What should this session be?", options: [{ id: "trivia", title: "Trivia Night" }, { id: "algo", title: "Algorithms" }] }`.
   Results show on `/pulse`; then replace the session's title with the winner.
@@ -147,14 +149,20 @@ Fill in the title, date, time, place, a short description and the full details (
 Each event gets its own page (`/event?id=…`) with all the details; share that link in the WhatsApp group.
 
 **Registering:** anyone with an aivancity account can tap **I'm going**. Students who aren't members yet create an account
-and fill in the short join form (WhatsApp number, level) on the event page itself. Members are confirmed straight away;
-everyone else shows as **To confirm**. On the event page (organizers see a **Registrations** list) tap **Confirm**
+and fill in the short join form (WhatsApp number, level) on the event page itself. Members are confirmed straight away (unless the event has a
+limited number of places: then you confirm each spot or move it to the waiting list); everyone else shows as **To confirm**. On the event page (organizers see a **Registrations** list) tap **Confirm**
 (this also approves their account), **Move to waiting list** or **Remove**, or **Confirm all**. **Download CSV** gives the list.
 Data: `events/{id}` (organizers write, everyone reads published ones) and `registrations/{eventId}_{uid}`
-(status `pending`, `confirmed`, `waitlist` or `cancelled`; no names in it, so the site can show how many places are left).
+(status `pending`, `confirmed`, `waitlist` or `cancelled`). **Registrations are private:** each person can only read their
+own spot; only organizers see who registered and how many places are taken.
 Sessions written in `assets/schedule.js` also get a details page (`/event?d=YYYY-MM-DD`), and organizers can **edit** them
 from that page (**Edit**): the changes are saved as event `d-YYYY-MM-DD` and replace the file's version on the site.
 **Undo my changes** in the editor brings the original back.
+
+**Manage menu** (organizers, on every session's panel or page): **Edit details**, **Cancel this session** (stays on the
+schedule marked "Cancelled", no more sign-ups), **Hide from the public** (only organizers see it), and **Delete…**
+(removed from the site; events made on the site are deleted for good, sessions from the schedule file can be restored
+from the Events list on `/pulse`). Each change asks for confirmation first, and can be undone except deleting a site event.
 **I'm going** shows on every upcoming session. Members tap it once; people who aren't members yet create an account,
 join, and appear as **To confirm** in that session's registrations.
 
@@ -170,6 +178,37 @@ If the page is reloaded, the code that is still open today comes back.
 - Only verified `@aivancity.education` accounts **on the club roster** can read anything.
 - Members can only add their own check-in (with a valid code, during the session) and their own proof submissions, which start as **pending**.
 - Organizers can record results and approve or reject submissions, but never for themselves.
-- Nothing is ever deleted. Corrections are new records, so the history stays complete.
+- Registrations are private: each person sees only their own spot; organizers see the lists and counts.
+- Nothing is deleted to correct something: corrections are new records, so the history stays complete. The one exception is
+  **Delete someone's data** on `/pulse` (below).
 - Email addresses live in a separate `private` collection that only the person and organizers can read.
 - Points are never stored. Every page recalculates them from the facts and `rules/rules.yaml`.
+
+## Deleting someone's data (when they ask)
+Anyone can ask the club to delete their data (GDPR). On **/pulse → Delete someone's data**: pick the person, tap **See what we
+have** (profile, join form, points history, sign-ups, posts, comments, email…), then **Delete** and **Yes, delete for good**.
+Organizers' own data can't be deleted there. Kept on purpose: `blocked/{uid}` (a refused account stays refused) and missions
+they took on other people's posts. **Last step, by hand:** Firebase console → **Authentication → Users** → search their email →
+**⋮ → Delete account**, so they can't sign in any more.
+
+## 9. App Check (only the real site can use the database)
+The web config in `config.js` is public, so in theory anyone could write a script that sends junk to the forms
+(feedback, join requests). **App Check** makes Firebase accept only requests coming from the real site. Free on the Spark plan.
+Do it in this order (turning on enforcement first would block everyone):
+
+1. **Get a reCAPTCHA v3 key.** Go to https://www.google.com/recaptcha/admin/create (signed in with the club Google account):
+   - Label: `aivancity Tech Club`. Type: **Score based (v3)**.
+   - Domains: `aivancity-tech-club.github.io` (add `localhost` too if you test on your computer).
+   - **Submit**, then copy the **Site key** and the **Secret key**.
+2. **Register the site in Firebase.** Firebase console → **Build → App Check → Apps** → the web app → **reCAPTCHA** →
+   paste the **Secret key** → **Save**.
+3. **Turn it on in the site.** In `assets/platform/config.js` set `APP_CHECK: "the Site key",` (the site key is public; never
+   put the secret key in the repository). Bump `?v=`, commit, push.
+4. **Watch for a few days.** Firebase console → **App Check → APIs → Cloud Firestore**: the chart should show almost all requests
+   as **Verified**. (Old tabs and people who haven't reloaded show as unverified for a while.)
+5. **Enforce.** Same page → **Cloud Firestore → Enforce → Confirm**. From now on, requests without a valid token are refused.
+   If something breaks, **Unenforce** puts it back straight away.
+
+Testing on your own computer (`localhost`) with App Check on: the browser console prints a **debug token** the first time;
+add it in **App Check → Apps → ⋮ → Manage debug tokens**. Never share or commit a debug token.
+

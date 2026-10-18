@@ -133,10 +133,10 @@ The website and member platform of the **aivancity Tech Club** and its Google De
 | `/feedback` | everyone | Anonymous feedback form |
 | `/mountain` | members | The game world (PixiJS): every member is a ninja on the peak of their bandana; "My climb" drawer with check-in, proofs, outfits |
 | `/village` | members | The club board: missions (Help, Build together, Club work), events, open-source projects, theme of the week, comments |
-| `/event?id=…` / `/event?d=…` | everyone | One session's full details, places left, and registration (newcomers create an account and join the club right there) |
+| `/event?id=…` / `/event?d=…` | everyone | One session's full details and "I'm going" (newcomers create an account and join the club right there); organizers also see the registrations and places taken |
 | `/event-edit` | organizers | Create or edit an event (saved in Firestore, shown on the schedule) |
 | `/camp?u=…` | members | Each member's own page |
-| `/pulse` | organizers | Attendance, drifting members, approving new accounts, votes |
+| `/pulse` | organizers | Attendance, drifting members, approving new accounts, votes, data check, deleting someone's data on request |
 | `/checkin` | organizers | Projector screen with the Thursday check-in code |
 | `/join` | — | Old link, redirects to `/apply` |
 
@@ -168,12 +168,15 @@ index.html about.html schedule.html rules.html apply.html feedback.html
 mountain.html village.html camp.html pulse.html checkin.html 404.html join.html
 assets/
   styles.css          shared styles + design tokens (colours, fonts) – the last blocks override earlier ones
-  schedule.js         THE SCHEDULE DATA (SESSIONS list) + schedule rendering
-  schedule.css        schedule page styles
+  schedule.js         THE SCHEDULE DATA: only the SESSIONS list (edit this to add Thursday sessions)
+  sessions.js         everything else about sessions: cards, filters, calendar files, events made on the site, the details side panel
+  event.js            one session's details, registration and the organizers' Manage menu (side panel + /event page)
+  event-edit.js       the organizers' event editor (/event-edit)
+  schedule.css  event.css   styles for the schedule cards and for event panels/pages/editor
   village.css  pulse.css  camp.css
   i18n.js             ALL TEXT, English + French, and the language switcher
   platform/
-    config.js         Firebase web config, school email domain, CONFIRM mode, Microsoft sign-in switch
+    config.js         Firebase web config, school email domain, CONFIRM mode, Microsoft sign-in switch, App Check site key
     data.js           the data layer: same functions for the demo backend and the Firebase backend
     engine.js         PointsEngine: computes points, bandanas, badges from facts + rules.yaml (points are never stored)
     signin.js         sign-in / create account / reset password / waiting-for-approval UI
@@ -248,7 +251,7 @@ Points are **never stored**. The database stores *facts* (attendance, proofs, mi
   - Fast track: a student can send themselves the confirmation email and release it at https://security.microsoft.com/quarantine.
   - **Password changes only work through "Forgot your password?"** + releasing the reset email from quarantine. This is intentional; don't add a "change password while signed in" feature.
 - **Security rules (`firestore.rules`) are NOT deployed by pushing.** After changing the file, an organizer must copy it into **Firebase console → Firestore Database → Rules → Publish**. Always tell the person this.
-- Who can do what (enforced by the rules): only signed-in, confirmed `@aivancity.education` accounts on the roster (or who sent `/apply`) can read; members can only write their own things; organizers (`members/{uid}.role == "organizer"`) moderate and record results, never for themselves; nothing is deleted, corrections are new records.
+- Who can do what (enforced by the rules): only signed-in, confirmed `@aivancity.education` accounts on the roster (or who sent `/apply`) can read; members can only write their own things; organizers (`members/{uid}.role == "organizer"`) moderate and record results, never for themselves; nothing is deleted to correct something (corrections are new records); the only deletion is "Delete someone's data" on `/pulse`, at the person's request. App Check (`APP_CHECK` in config, FIREBASE_SETUP §9) limits the database to the real site.
 
 ### Collections
 | Collection | What's in it |
@@ -260,10 +263,10 @@ Points are **never stored**. The database stores *facts* (attendance, proofs, mi
 | `invites/whatsapp` | `link` = the WhatsApp group invite (**never put it in the repo**) |
 | `facts/{id}` | attendance, proofs, results: the source of points (status `pending` / `approved` / `rejected`) |
 | `checkinCodes/{code}` | Thursday check-in codes created on `/checkin` |
-| `events/{id}` | events created on the site by organizers (`/event-edit`); public when `published` |
-| `registrations/{eventId}_{uid}` | who registered for an event: `status` pending / confirmed / waitlist / cancelled (no names) |
+| `events/{id}` | events created on the site by organizers (`/event-edit`); public when `published`. `cancelled` / `hidden` / `deleted` set from the Manage menu. Id `d-YYYY-MM-DD` = an organizer's edited version of that session from `schedule.js` |
+| `registrations/{eventId}_{uid}` | the one "I'm going" for every session: `status` pending / confirmed / waitlist / cancelled. Private: each person reads only their own; organizers read all (and the counts) |
 | `board/{id}` (+ `comments`) | Village posts and comments |
-| `rsvps`, `votes` | "I'm going" and session votes |
+| `votes` | session votes (`rsvps` is the old "I'm going": no longer written, moved into `registrations`) |
 | `camps/{uid}` | members' camp pages |
 | `pulse/{uid}` | "contacted" marks on `/pulse` |
 | `feedback/{id}` | feedback form entries; organizers read only |
@@ -277,7 +280,9 @@ Organizer how-tos (make someone an organizer, remove a member, set the WhatsApp 
 
 **Add an event (preferred)** – organizers use **Create an event** on the site (`/event-edit`); no code change needed. Use `assets/schedule.js` for the regular Thursday sessions.
 
-**Add or change a session in code** – edit the `SESSIONS` list in `assets/schedule.js`. Fields are documented at the top of that file: `date`, `title`, `type`, `track` (`tech|gdg|event|break`), `description`, `format`, `level`, `lang` (`en|fr|both`), optional `subs`, `planned`, `time`, `room`, `link`/`linkText`, `recap`, `vote`, and the `*_fr` versions. Add the French text too. Bump `?v=`.
+**Cancel, hide or delete a session** – organizers open it and use **Manage** (Edit details, Cancel, Hide from the public, Delete…). Each asks for confirmation. Cancelled sessions stay on the schedule marked "Cancelled"; hidden ones only organizers see; deleted events made on the site are gone for good, while deleted sessions from `schedule.js` can be restored from `/pulse`.
+
+**Add or change a session in code** – edit the `SESSIONS` list in `assets/schedule.js`. Sessions there are identified by their `date`; if two share a date, give the second one a unique `key` (e.g. `"2026-11-05-evening"`), or sign-ups and edits would mix. Fields are documented at the top of that file: `date`, `title`, `type`, `track` (`tech|gdg|event|break`), `description`, `format`, `level`, `lang` (`en|fr|both`), optional `subs`, `planned`, `time`, `room`, `link`/`linkText`, `recap`, `vote`, and the `*_fr` versions. Add the French text too. Bump `?v=`.
 
 **After a session** – add `recap: { link: "…", task: "…", task_fr: "…" }` to it.
 

@@ -17,7 +17,6 @@
 /* organizers: who registered */
 .ev-org { margin-top: 28px; display: grid; gap: 14px; }
 .ev-org-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.ev-org-head h2 { margin: 0; font-size: 1.4rem; font-weight: 700; }
 .ev-org-tools { display: flex; gap: 8px; flex-wrap: wrap; }
 .ev-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
 .ev-people li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--line) 18%, transparent); }
@@ -41,8 +40,6 @@
 .ee-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .ee-actions { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
 @media (max-width: 860px) {
-  .ev-grid { grid-template-columns: 1fr; }
-  .ev-side { position: static; }
   .ee-two, .ee-three { grid-template-columns: 1fr; }
 }
 .ee-sec .field, .ev-join .field { align-content: start; }
@@ -63,7 +60,7 @@
 .ev-facts small { font-family: var(--mono); font-weight: 400; font-size: .75rem; color: var(--ink-soft); }
 .ev-actions { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
 .ev-actions:empty { display: none; }
-.reg-h, .ev-details h3, .ev-org h3 { margin: 0 0 8px; font-size: 1.15rem; font-weight: 800; }
+.reg-h, .ev-details h2, .ev-details h3, .ev-org-head h2, .ev-org-head h3 { margin: 0 0 8px; font-size: 1.15rem; font-weight: 800; }
 .ev-details { font-size: 1.02rem; line-height: 1.65; }
 .ev-details:empty, .ev-recap:empty { display: none; }
 .ev-page .ev, .ev-page .eyebrow { max-width: 760px; }
@@ -91,3 +88,23 @@ html.ev-locked, html.ev-locked body { overflow: hidden; }
 .ev-reg .help { margin: 0 0 12px; font-size: .92rem; }
 .ev-details p, .ev-details ul { margin: 0 0 12px; }
 .ev-details a { color: var(--accent); font-weight: 700; word-break: break-word; }
+
+/* ---------- organizers: the Manage menu ---------- */
+.ev-manage { position: relative; display: grid; gap: 10px; justify-items: start; }
+.ev-manage-btn { min-height: 40px; padding: 8px 16px; font-size: .92rem; }
+.ev-menu { position: absolute; top: 46px; left: 0; z-index: 3; list-style: none; margin: 0; padding: 6px; min-width: 240px;
+  background: var(--surface); color: var(--ink); border: var(--stroke) solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgba(0, 0, 0, .18); }
+.ev-mi { display: block; width: 100%; text-align: left; font: inherit; font-size: .95rem; padding: 10px 12px; border: 0; border-radius: 10px;
+  background: none; color: inherit; text-decoration: none; cursor: pointer; }
+.ev-mi:hover, .ev-mi:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.ev-mi.danger { color: #b3261e; }
+.ev-menu li + li:last-child { border-top: 1px solid color-mix(in srgb, var(--line) 15%, transparent); margin-top: 4px; padding-top: 4px; }
+.ev-confirm { width: 100%; padding: 16px; border-radius: 16px; border: var(--stroke) solid var(--line); background: var(--surface); }
+.ev-confirm.danger { border-color: #b3261e; }
+.ev-confirm p { margin: 0 0 12px; font-size: .95rem; }
+.ev-confirm .ev-confirm-h { font-weight: 800; font-size: 1.05rem; margin-bottom: 6px; }
+.ev-confirm-act { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-danger { background: #b3261e; color: #fff; border-color: #1e1e1e; }
+.btn-danger:hover { background: #8c1d18; }
+.ev-banner { margin: 0; font-weight: 700; }
+@media (prefers-color-scheme: dark) { .ev-mi.danger { color: #f2b8b5; } .ev-confirm.danger { border-color: #f2b8b5; } }

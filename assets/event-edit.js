@@ -2,9 +2,10 @@
 (async () => {
   const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
   const show = (id) => ["eeLoading", "eeSignin", "eeNo", "eeForm"].forEach(g => $(g).hidden = g !== id);
-  const qs = new URLSearchParams(location.search), fileDate = /^\d{4}-\d{2}-\d{2}$/.test(qs.get("d") || "") ? qs.get("d") : null;
+  // ?d=… edits a session from schedule.js (its key: the date, or its own key when two share a day); ?id=… an event made on the site
+  const qs = new URLSearchParams(location.search), fileSession = qs.get("d") ? findFileSession(qs.get("d")) : null;
+  const fileDate = fileSession ? fileKey(fileSession) : null;
   const editId = fileDate ? "d-" + fileDate : qs.get("id");
-  const fileSession = fileDate ? SESSIONS.find(s => s.date === fileDate && s.track !== "break") : null;
   let hasSaved = false;
   $("yr").textContent = new Date().getFullYear();
 
@@ -59,14 +60,14 @@
         </div>
         <p class="help">${esc(T("ee.reg.help"))}</p>
       </fieldset>
-      <fieldset class="ee-sec"><legend>${esc(T("ee.sec.pub"))}</legend>
+      <fieldset class="ee-sec"${editId ? " hidden" : ""}><legend>${esc(T("ee.sec.pub"))}</legend>
         <label class="check"><input type="checkbox" id="published"${e.published ? " checked" : ""}><span>${esc(T("ee.published"))}</span></label>
       </fieldset>
       ${msg ? `<p class="notice ${msg.ok ? "ok" : "bad"} form-msg" role="${msg.ok ? "status" : "alert"}">${msg.html || esc(msg.text)}</p>` : ""}
       <div class="ee-actions">
         <button class="btn btn-primary" type="submit" ${busy ? "disabled" : ""}>${esc(T(editId ? "ee.save" : "ee.create"))}</button>
-        ${editId ? `<a class="btn btn-ghost" href="${fileDate ? "/event?d=" + fileDate : "/event?id=" + encodeURIComponent(editId)}">${esc(T("ee.view"))}</a>` : ""}
-        ${editId && (!fileDate || hasSaved) ? `<button type="button" class="link-btn danger" id="del" ${busy ? "disabled" : ""}>${esc(T(confirmDelete ? "ee.del.sure" : fileDate ? "ee.reset" : "ee.del"))}</button>` : ""}
+        ${editId ? `<a class="btn btn-ghost" href="${fileDate ? "/event?d=" + encodeURIComponent(fileDate) : "/event?id=" + encodeURIComponent(editId)}">${esc(T("ee.view"))}</a>` : ""}
+        ${fileDate && hasSaved ? `<button type="button" class="link-btn danger" id="del" ${busy ? "disabled" : ""}>${esc(T(confirmDelete ? "ee.del.sure" : "ee.reset"))}</button>` : ""}
       </div>`;
   }
   const read = () => {
@@ -74,7 +75,9 @@
     return { id: editId || undefined, title: v("title"), title_fr: v("title_fr"), type: v("type"), type_fr: v("type_fr"), format: v("format"), level: v("level"), lang: v("lang"), track: v("track"),
       date: v("date"), time: v("time"), time_fr: v("time_fr"), room: v("room"), description: v("description"), description_fr: v("description_fr"),
       details: v("details"), details_fr: v("details_fr"), speaker: v("speaker"), link: v("link"), linkText: v("linkText"),
-      registration: $("registration").checked, capacity: v("capacity"), deadline: v("deadline"), published: $("published").checked };
+      registration: $("registration").checked, capacity: v("capacity"), deadline: v("deadline"),
+      // visibility and status are managed from the event's Manage menu; editing details keeps them as they are
+      published: editId ? (fileDate ? true : !!ev.published) : $("published").checked, cancelled: !!ev.cancelled, hidden: !!ev.hidden, deleted: !!ev.deleted };
   };
 
   $("eeForm").addEventListener("change", (e) => { if (e.target.id === "registration") $("regOpts").hidden = !e.target.checked; });
@@ -88,14 +91,14 @@
     const r = await data.saveEvent(f);
     busy = false;
     if (!r.ok) { msg = { text: T(r.code || "err.generic") + (r.detail ? ` (${r.detail})` : "") }; draw(); return; }
-    location.href = fileDate ? "/event?d=" + fileDate : "/event?id=" + encodeURIComponent(r.id);
+    location.href = fileDate ? "/event?d=" + encodeURIComponent(fileDate) : "/event?id=" + encodeURIComponent(r.id);
   });
   $("eeForm").addEventListener("click", async (e) => {
     if (!e.target.closest("#del")) return;
     if (!confirmDelete) { ev = { ...ev, ...read() }; confirmDelete = true; draw(); $("del").focus(); return; }
     busy = true; draw();
     const r = await data.deleteEvent(editId);
-    if (r.ok) location.href = fileDate ? "/event?d=" + fileDate : "/schedule"; else { busy = false; msg = { text: T(r.code || "err.generic") }; draw(); }
+    if (r.ok) location.href = fileDate ? "/event?d=" + encodeURIComponent(fileDate) : "/schedule"; else { busy = false; msg = { text: T(r.code || "err.generic") }; draw(); }
   });
   addEventListener("langchange", () => { if (!$("eeForm").hidden) { ev = { ...ev, ...read() }; draw(); } });
 
