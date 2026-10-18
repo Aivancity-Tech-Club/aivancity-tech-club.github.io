@@ -90,7 +90,7 @@ async function mount(root, opts) {
   const regOn = () => !past && !ev.cancelled;
   // hidden: a site event that isn't published, or a file session an organizer hid
   const isHidden = () => (isSite ? ev.published === false || !!ev.hidden : !!ev.hidden);
-  let regs = [], busy = false, msg = null, siBox = null, people = {}, orgFilter = 'all';
+  let joining = false, regs = [], busy = false, msg = null, siBox = null, people = {}, orgFilter = 'all';
   const W = () => who || { me: null, member: false, hasReq: false, refused: false, isOrg: false };
   // registrations are private: organizers load everyone's (and see the count); anyone else only their own spot
   const taken = () => regs.filter(r => r.status === 'pending' || r.status === 'confirmed').length;
@@ -218,10 +218,17 @@ async function mount(root, opts) {
     if (deadlinePassed() && !(r && r.status !== 'cancelled')) { box.innerHTML = `${intro()}<p class="help">${esc(T('ev.reg.closed', { d: fmtDay(ev.deadline) }))}</p>`; return; }
     if (err) { box.innerHTML = `${intro()}<p class="notice bad">${esc(T('m.dberror', { e: err.code || err.message || '?' }))}</p>`; return; }
     if (user === undefined) { box.innerHTML = `${intro()}<p class="help">${esc(T('ev.loading'))}</p>`; return; }
+    // the Join form was just sent: the new account signs in before its answers are saved, so wait instead of flashing another form
+    if (joining && w.me) { box.innerHTML = `${intro()}<p class="help">${esc(T('join.saving'))}</p>`; return; }
     if (!w.me) {
       if (!q('.reg-auth')) {   // keep what the person is typing when the page redraws
         box.innerHTML = `${intro()}<p class="help">${esc(T('ev.reg.account'))}</p><div class="reg-auth"></div>`;
-        siBox = ClubSignIn.mount(q('.reg-auth'), data); siBox.create();
+        // the one Join form; once it's sent, save the spot straight away (no second tap)
+        siBox = ClubSignIn.mount(q('.reg-auth'), data, { onStart: () => { joining = true; }, onFail: () => { joining = false; drawReg(); }, onJoined: () => {
+          joining = false; if (who) who.hasReq = true;
+          act(async () => { const r = await signUpForSpot(); if (!r.ok) msg = { text: T(r.code || 'err.generic') }; });
+        } });
+        siBox.join();
       }
       return;
     }

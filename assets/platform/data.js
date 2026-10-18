@@ -123,7 +123,9 @@ function demoBackend() {
     async init() {}, onAuth(cb) { cb({ ...user, verified: true }); },
     async sendLink() { return { ok: true }; }, async signOut() { store.del('nw-demo-v1'); state = demoSeed(); },
     async onRoster() { return true; }, async requestStatus() { return store.get('nw-demo-req'); },
-    async apply(d) { store.set('nw-demo-req', { ...d, email: user.email }); return { ok: true }; },
+    async apply(d) { store.set('nw-demo-req', { ...d, consent: true, email: user.email }); return { ok: true }; },
+    async joinClub(f) { return this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program, interests: f.interests, lang: f.lang }); },
+    async ensureMember() { return this.getProfile('you'); },
     async inviteLink() { return null; },
     async sendFeedback() { return { ok: true, demo: true }; },
     async loadMembers() { return state.members; }, async loadFacts() { return state.facts; },
@@ -410,7 +412,24 @@ function firebaseBackend() {
         if (ORG_CONFIRM) await reviewQueue(cred.user, name);
         else await cred.user.sendEmailVerification({ url: location.origin + location.pathname });
         return { ok: true };
-      } catch (e) { return { ok: false, message: pwErrorText(e) }; }
+      } catch (e) { return { ok: false, message: pwErrorText(e), code: (e && e.code) || '' }; }
+    },
+    /* Joining the club is one form: the account, then the answers (the request), in one go.
+       An organizer then approves the account; after that, the first sign-in creates the Mountain profile by itself (ensureMember). */
+    async joinClub(f) {
+      const r = await this.signUp(f.email, f.pw, f.name);
+      if (!r.ok) return r;
+      return this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program || '', interests: f.interests || [], heard: '', lang: f.lang });
+    },
+    // approved and in the club, but no Mountain profile yet: make it from the join answers (no second form)
+    async ensureMember() {
+      const uid = auth.currentUser.uid, mine = await this.getProfile(uid);
+      if (mine) return mine;
+      const req = await this.requestStatus();
+      if (!req || !req.consent || !String(req.name || '').trim()) return null;
+      try { await this.saveProfile({ name: String(req.name).trim().slice(0, 40), github: req.github || '' }); } catch (e) { return null; }
+      const made = await this.getProfile(uid);
+      return made && { ...made, fresh: true };   // fresh: first visit, the page can open "My climb" to say hello
     },
     async resendVerification() {
       try { await auth.currentUser.sendEmailVerification({ url: location.origin + location.pathname }); return { ok: true }; }
@@ -490,6 +509,7 @@ function firebaseBackend() {
       const u = auth.currentUser;
       const doc = { email: u.email.toLowerCase(), name: d.name, program: d.program || '', phone: d.phone, interests: d.interests || [],
         level: d.level, heard: d.heard || '', consent: true, lang: d.lang === 'fr' ? 'fr' : 'en', at: firebase.firestore.FieldValue.serverTimestamp() };
+      if (d.github) doc.github = String(d.github).slice(0, 39);
       try { await db.collection('requests').doc(u.uid).set(doc, { merge: true }); if (lastVerified) markMember(true); return { ok: true }; }
       catch (e) { return { ok: false, message: tr('err.generic', 'Something went wrong. Try again in a moment.') + ' (' + (e.code || e.message) + ')' }; }
     },

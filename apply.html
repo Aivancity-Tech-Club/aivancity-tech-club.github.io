@@ -23,9 +23,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261018i">
-  <script src="assets/i18n.js?v=20261018i"></script>
-  <script src="assets/halloween.js?v=20261018i"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261018j">
+  <script src="assets/i18n.js?v=20261018j"></script>
+  <script src="assets/halloween.js?v=20261018j"></script>
 </head>
 <body data-i18n-title="apply.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -54,9 +54,9 @@
         <h1 data-i18n="apply.h1">Join <b>the club</b></h1>
         <p class="lede" data-i18n="apply.lede"></p>
         <ol class="steps" id="steps">
-          <li data-i18n="apply.step1">Sign in with your school email</li>
-          <li data-i18n="apply.step2">Tell us about you</li>
-          <li data-i18n="apply.step3">Get the invite</li>
+          <li data-i18n="apply.step1">Fill in one short form</li>
+          <li data-i18n="apply.step2">An organizer approves you</li>
+          <li data-i18n="apply.step3">WhatsApp invite and your ninja</li>
         </ol>
       </div>
     </section>
@@ -68,13 +68,13 @@
 
           <div id="vLoading"><p class="help">…</p></div>
 
-          <!-- 1. sign in -->
+          <!-- 1. join (account + answers in one form), or sign in; then waiting for approval -->
           <div id="vSignin" class="form-grid" hidden>
             <p style="margin:0" data-si-intro data-i18n="apply.signin.p"></p>
             <div id="siBox"></div>
           </div>
 
-          <!-- 2. details -->
+          <!-- older accounts made before the one-form join: finish joining here -->
           <form id="vForm" class="form-grid" hidden novalidate>
             <p class="help" style="font-size:.95rem"><span id="who"></span> · <a href="#" class="js-other" data-i18n="apply.other">Use another email</a></p>
             <p class="notice info" id="alreadyNote" hidden data-i18n="apply.already"></p>
@@ -83,13 +83,18 @@
               <input class="input" id="name" autocomplete="name" maxlength="60" required>
             </div>
             <div class="field">
-              <label for="program" data-i18n="apply.program">Program and year</label>
-              <input class="input" id="program" maxlength="60" data-i18n-attr="placeholder:apply.program.ph">
+              <label for="program" data-i18n="join.program">Your program</label>
+              <input class="input" id="program" maxlength="60" autocomplete="off" required data-i18n-attr="placeholder:join.program.ph" aria-describedby="programHelp">
+              <p class="help" id="programHelp" data-i18n="join.program.help"></p>
             </div>
             <div class="field">
               <label for="phone" data-i18n="apply.phone">WhatsApp number</label>
               <input class="input" id="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="+33 6 12 34 56 78" required aria-describedby="phoneHelp">
               <p class="help" id="phoneHelp" data-i18n="apply.phone.help"></p>
+            </div>
+            <div class="field">
+              <label for="github"><span data-i18n="join.github">GitHub username</span> <span class="help" style="font-weight:400" data-i18n="join.optional">(optional)</span></label>
+              <input class="input" id="github" maxlength="39" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="amina-k">
             </div>
             <fieldset>
               <legend data-i18n="apply.interests">What are you interested in?</legend>
@@ -103,10 +108,6 @@
                 <label class="choice"><input type="radio" name="level" value="solid"><span data-i18n="apply.level.solid"></span></label>
               </div>
             </fieldset>
-            <div class="field">
-              <label for="heard" data-i18n="apply.heard">How did you hear about us? (optional)</label>
-              <input class="input" id="heard" maxlength="200">
-            </div>
             <label class="check"><input type="checkbox" id="consent"><span data-i18n="apply.consent"></span></label>
             <p class="notice bad form-msg" id="formMsg" role="alert"></p>
             <div><button class="btn btn-primary" type="submit" id="sendBtn" data-i18n="apply.send">Send my request</button></div>
@@ -149,19 +150,19 @@
     </div>
   </footer>
 
-  <script src="assets/platform/config.js?v=20261018i"></script>
-  <script src="assets/platform/signin.js?v=20261018i"></script>
-  <script src="assets/platform/data.js?v=20261018i"></script>
+  <script src="assets/platform/config.js?v=20261018j"></script>
+  <script src="assets/platform/signin.js?v=20261018j"></script>
+  <script src="assets/platform/data.js?v=20261018j"></script>
   <script>
   (async () => {
     const $ = id => document.getElementById(id), T = (k, v) => I18N.t(k, v);
-    const INTERESTS = ["ai", "web", "data", "cloud", "games", "competitive", "startup", "career"];
+    const { INTERESTS } = window.CLUB_JOIN;   // the same choices as the Join form (signin.js)
     $("interests").innerHTML = INTERESTS.map(k => `<label class="choice"><input type="checkbox" name="interest" value="${k}"><span data-i18n="int.${k}"></span></label>`).join("");
     I18N.apply($("interests"));
     const views = ["vLoading", "vSignin", "vForm", "vDone"];
-    function show(v) {
+    function show(v, waiting) {
       views.forEach(x => $(x).hidden = x !== v);
-      const step = { vLoading: 0, vSignin: 0, vForm: 1, vDone: 2 }[v];
+      const step = waiting ? 1 : { vLoading: 0, vSignin: 0, vForm: 0, vDone: 2 }[v];
       [...$("steps").children].forEach((li, i) => { li.className = i < step ? "done" : i === step ? "on" : ""; });
     }
     const msg = (el, text, kind) => { el.className = "notice form-msg " + (kind || ""); el.innerHTML = text || ""; };
@@ -190,7 +191,7 @@
     }
     function fill(r) {
       if (!r) return;
-      $("name").value = r.name || ""; $("program").value = r.program || ""; $("phone").value = r.phone || ""; $("heard").value = r.heard || "";
+      $("name").value = r.name || ""; $("program").value = r.program || ""; $("phone").value = r.phone || ""; $("github").value = r.github || "";
       document.querySelectorAll('[name=interest]').forEach(c => c.checked = (r.interests || []).includes(c.value));
       document.querySelectorAll('[name=level]').forEach(c => c.checked = c.value === r.level);
       $("consent").checked = !!r.consent;
@@ -203,8 +204,9 @@
 
     data.onAuth(async u => {
       user = u;
-      if (!u) { show("vSignin"); siBox.signin(data.linkError); return; }
-      if (!u.verified) { show("vSignin"); siBox.verify(u.email); return; }
+      // signed out: the Join form first (people who tap Join are almost always new); "Already have an account? Sign in" is right below it
+      if (!u) { show("vSignin"); if (data.linkError) siBox.signin(data.linkError); else siBox.join(); return; }
+      if (!u.verified) { show("vSignin", true); siBox.verify(u.email); return; }
       renderWho();
       const [r, onRoster] = await Promise.all([data.requestStatus(), data.onRoster()]);
       req = r; fill(r);
@@ -218,15 +220,19 @@
     $("vForm").addEventListener("submit", async e => {
       e.preventDefault();
       const f = {
-        name: $("name").value.trim(), program: $("program").value.trim(), phone: $("phone").value.trim(), heard: $("heard").value.trim(),
+        name: $("name").value.trim(), program: $("program").value.trim(), phone: $("phone").value.trim(), heard: (req && req.heard) || "",
         interests: [...document.querySelectorAll('[name=interest]:checked')].map(c => c.value),
         level: (document.querySelector('[name=level]:checked') || {}).value, lang: I18N.lang,
+        github: $("github").value.trim().replace(/^@/, "").replace(/^https?:\/\/github\.com\//i, "").replace(/\/.*$/, ""),
       };
       ["name", "phone"].forEach(id => $(id).removeAttribute("aria-invalid"));
       let err = null, focus = null;
       if (!f.name) { err = "err.name"; focus = "name"; }
       else if (!ClubData.validPhone(f.phone)) { err = "err.phone"; focus = "phone"; }
+      else if (!f.program) { err = "join.err.program"; focus = "program"; }
+      else if (!f.interests.length) err = "join.err.interests";
       else if (!f.level) err = "err.level";
+      else if (f.github && !/^[A-Za-z0-9-]{1,39}$/.test(f.github)) { err = "join.err.github"; focus = "github"; }
       else if (!$("consent").checked) err = "err.consent";
       if (err) { msg($("formMsg"), T(err), "bad"); if (focus) { $(focus).setAttribute("aria-invalid", "true"); $(focus).focus(); } return; }
       msg($("formMsg"), "");

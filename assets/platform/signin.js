@@ -1,16 +1,22 @@
-/* Shared sign-in box for /mountain, /apply and /village.
-   School email + password. Creating an account sends ONE confirmation email; signing in sends none,
-   which keeps the club inside Firebase's free plan limits.
+/* The one sign-in / join box, used on every page (Mountain, Join, Village, events…).
+   School email + password. Joining is ONE form: account + display name + WhatsApp number + level (+ GitHub),
+   so nobody fills in a second form later. Signing in sends no email, which keeps the club inside Firebase's free plan.
 
-   const box = ClubSignIn.mount(element, data);
-   box.signin()          show the sign-in form
-   box.verify(email)     signed in but email not confirmed yet
+   const box = ClubSignIn.mount(element, data, { onJoined });
+   box.signin()          show the sign-in form ("New here? Join the club" switches to the join form in place)
+   box.join()            show the join form (box.create() does the same)
+   box.verify(email)     signed in but not approved / not confirmed yet
+   onJoined()            called once the account and the join answers are saved
    Clicking "I've confirmed it" reloads the page once the email is confirmed, so each page's normal flow runs. */
 (function () {
 'use strict';
 const T = (k, v) => (window.I18N ? I18N.t(k, v) : k);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const MS = '<svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>';
+
+// what the club asks new members, to plan sessions around them (the program is typed: DM 1–3, PGE 1–5 EN/FR…)
+const INTERESTS = ['ai', 'web', 'data', 'cloud', 'games', 'competitive', 'startup', 'career'];
+window.CLUB_JOIN = { INTERESTS };
 
 const CSS = `
 .si { display: grid; gap: 14px; }
@@ -37,6 +43,15 @@ const CSS = `
 .si .si-why { margin: 10px 0 0; padding: 12px 14px; border-radius: 14px; border: 2px solid currentColor; font-size: .88rem; line-height: 1.5; font-style: normal; }
 .si .si-why b { display: block; margin-bottom: 4px; }
 .si .si-why code { font-family: ui-monospace, Menlo, monospace; font-size: .85em; }
+.si .si-levels { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+.si .si-levels legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+.si .si-levels label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 2px solid currentColor; border-radius: 999px; cursor: pointer; font-weight: 600; }
+.si .si-levels.si-many label { min-height: 40px; padding: 0 12px; font-size: .92rem; }
+.si .si-levels label:has(input:checked) { background: #2b3767; border-color: #2b3767; color: #fff; }
+.si .si-levels input { accent-color: #2b3767; }
+.si .si-check { display: flex; gap: 10px; align-items: flex-start; font-size: .95rem; font-weight: 400; }
+.si .si-check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: #2b3767; }
+.si .si-opt { font-weight: 400; opacity: .8; }
 .si .ms-btn { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .si .or { display: flex; align-items: center; gap: 10px; font-size: .85rem; opacity: .8; margin: 0; }
 .si .or::before, .si .or::after { content: ""; flex: 1; border-top: 1px solid currentColor; opacity: .3; }
@@ -46,20 +61,26 @@ function injectCss() {
   const st = document.createElement('style'); st.id = 'si-css'; st.textContent = CSS; document.head.appendChild(st);
 }
 
-function mount(el, data) {
+function mount(el, data, opts = {}) {
   injectCss();
   let mode = 'signin', verifyEmail = '', msg = null, busy = false, showPw = false, asked = false, openManual = false, refused = false, whyOpen = false, resetSentTo = '';
-  const kept = { email: '', pw: '', name: '' };
+  const kept = { email: '', pw: '', name: '', phone: '', level: '', github: '', consent: false, program: '', interests: [] };
 
   function keep() {
     const e = el.querySelector('#si-email'), p = el.querySelector('#si-pw');
     if (e) kept.email = e.value; if (p) kept.pw = p.value;
     const n = el.querySelector('#si-name'); if (n) kept.name = n.value;
     const p2 = el.querySelector('#si-pw2'); if (p2) kept.pw2 = p2.value;
+    const ph = el.querySelector('#si-phone'); if (ph) kept.phone = ph.value;
+    const gh = el.querySelector('#si-gh'); if (gh) kept.github = gh.value;
+    const lv = el.querySelector('[name=si-level]:checked'); if (lv) kept.level = lv.value;
+    const c = el.querySelector('#si-consent'); if (c) kept.consent = c.checked;
+    const pr = el.querySelector('#si-program'); if (pr) kept.program = pr.value;
+    if (el.querySelector('[name=si-int]')) kept.interests = [...el.querySelectorAll('[name=si-int]:checked')].map(x => x.value);
   }
   function msgHTML() {
     if (!msg) return '';
-    const act = msg.offerCreate ? ` <a href="#" data-si="create">${esc(T('pw.nouser.create'))}</a>` : '';
+    const act = msg.offerCreate ? ` <a href="#" data-si="join">${esc(T('join.withthis'))}</a>` : msg.offerSignin ? ` <a href="#" data-si="signin">${esc(T('join.signin.instead'))}</a>` : '';
     return `<p class="si-msg ${msg.ok ? 'ok' : 'bad'}" role="${msg.ok ? 'status' : 'alert'}">${esc(msg.text)}${act}</p>`;
   }
 
@@ -116,6 +137,40 @@ function mount(el, data) {
         <button type="button" class="btn btn-ghost ghost" data-si="resendreset" ${busy ? 'disabled' : ''}>${esc(T('pw.reset.again'))}</button></div></div></div>`;
       return;
     }
+    if (mode === 'join') {
+      const ORG = window.ClubData && ClubData.ORG_CONFIRM;
+      el.innerHTML = `<div class="si"><form novalidate data-si-form="join">
+        <div class="field"><label for="si-name">${esc(T('join.name'))}</label>
+          <input class="input" id="si-name" maxlength="40" autocomplete="name" required value="${esc(kept.name)}" aria-describedby="si-name-h">
+          <p class="si-hint" id="si-name-h">${esc(T('join.name.help'))}</p></div>
+        <div class="field"><label for="si-email">${esc(T('m.signin.email'))}</label>
+          <input class="input" id="si-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" required value="${esc(kept.email)}"></div>
+        <div class="field"><label for="si-pw">${esc(T('pw.password.new'))}</label>
+          <div class="si-pw"><input class="input" id="si-pw" type="${showPw ? 'text' : 'password'}" autocomplete="new-password" minlength="8" required value="${esc(kept.pw)}">
+          <button type="button" class="si-eye" data-si="eye" aria-pressed="${showPw}" aria-controls="si-pw">${esc(T(showPw ? 'pw.hide' : 'pw.show'))}</button></div></div>
+        <div class="field"><label for="si-pw2">${esc(T('pw.password.again'))}</label>
+          <input class="input" id="si-pw2" type="${showPw ? 'text' : 'password'}" autocomplete="new-password" minlength="8" required value="${esc(kept.pw2 || '')}"></div>
+        <div class="field"><label for="si-phone">${esc(T('ev.join.phone'))}</label>
+          <input class="input" id="si-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+33 6 12 34 56 78" required value="${esc(kept.phone)}" aria-describedby="si-phone-h">
+          <p class="si-hint" id="si-phone-h">${esc(T('ev.join.phone.help'))}</p></div>
+        <div class="field"><label for="si-program">${esc(T('join.program'))}</label>
+          <input class="input" id="si-program" maxlength="60" autocomplete="off" required placeholder="${esc(T('join.program.ph'))}" value="${esc(kept.program)}" aria-describedby="si-program-h">
+          <p class="si-hint" id="si-program-h">${esc(T('join.program.help'))}</p></div>
+        <fieldset class="si-levels si-many"><legend>${esc(T('join.interests'))}</legend>
+          ${INTERESTS.map(k => `<label><input type="checkbox" name="si-int" value="${k}"${kept.interests.includes(k) ? ' checked' : ''}><span>${T('int.' + k)}</span></label>`).join('')}</fieldset>
+        <fieldset class="si-levels si-many"><legend>${esc(T('apply.level.legend'))}</legend>
+          ${['new', 'some', 'solid'].map(l => `<label><input type="radio" name="si-level" value="${l}"${kept.level === l ? ' checked' : ''}><span>${esc(T('apply.level.' + l))}</span></label>`).join('')}</fieldset>
+        <div class="field"><label for="si-gh">${esc(T('join.github'))} <span class="si-opt">${esc(T('join.optional'))}</span></label>
+          <input class="input" id="si-gh" maxlength="39" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="amina-k" value="${esc(kept.github)}" aria-describedby="si-gh-h">
+          <p class="si-hint" id="si-gh-h">${esc(T('m.setup.github.help'))}</p></div>
+        <label class="si-check"><input type="checkbox" id="si-consent"${kept.consent ? ' checked' : ''}><span>${esc(T('join.consent'))}</span></label>
+        ${msgHTML()}
+        <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled' : ''}>${esc(T('join.btn'))}</button></div>
+        <p class="si-hint">${esc(T(ORG ? 'join.hint.org' : 'join.hint.email'))}</p>
+        <p class="si-links"><a href="#" data-si="signin">${esc(T('join.have'))}</a></p>
+      </form></div>`;
+      return;
+    }
     const create = mode === 'create', forgot = mode === 'forgot', link = mode === 'link';
     el.innerHTML = `<div class="si"><form novalidate>
       ${data.microsoft && !forgot && !link ? `<div class="ms-block" style="display:grid;gap:10px"><button class="btn ghost btn-ghost ms-btn" type="button" data-si="ms">${MS}<span>${esc(T('ms.btn'))}</span></button><p class="or"><span>${esc(T('ms.or.pw'))}</span></p></div>` : ''}
@@ -133,7 +188,7 @@ function mount(el, data) {
       ${msgHTML()}
       <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled' : ''}>${esc(T(create ? 'pw.create' : forgot ? 'pw.reset.btn' : link ? 'm.signin.confirm' : 'pw.signin'))}</button></div>
       <p class="si-links">
-        ${mode === 'signin' ? `<a href="#" data-si="create">${esc(T('pw.toCreate'))}</a><a href="#" data-si="forgot">${esc(T('pw.forgot'))}</a>` : ''}
+        ${mode === 'signin' ? `<a href="#" data-si="join">${esc(T('join.new'))}</a><a href="#" data-si="forgot">${esc(T('pw.forgot'))}</a>` : ''}
         ${create || forgot ? `<a href="#" data-si="signin">${esc(T('pw.toSignin'))}</a>` : ''}
       </p>
       ${mode === 'signin' && !(window.ClubData && ClubData.ORG_CONFIRM) ? `<p class="si-hint">${esc(T('pw.legacy'))}</p>` : ''}
@@ -149,10 +204,10 @@ function mount(el, data) {
     if (k === 'why') { whyOpen = !whyOpen; render(); const b = el.querySelector('[data-si="why"]'); if (b) b.focus(); return; }
     if (k === 'resendreset') { await run(async () => { const r = await data.resetPassword(resetSentTo); msg = r.ok ? { ok: true, text: T('pw.reset.resent') } : { text: r.message }; }); return; }
     if (k === 'eye') { keep(); showPw = !showPw; render(); const p = el.querySelector('#si-pw'); if (p) p.focus(); return; }
-    if (['create', 'signin', 'forgot'].includes(k)) {
-      keep(); resetSentTo = ''; whyOpen = false; const prefilled = k === 'create' && kept.email && kept.pw; mode = k;
-      msg = prefilled ? { ok: true, text: T('pw.nouser') } : null; render();
-      const i = el.querySelector(prefilled ? (el.querySelector('#si-name') ? '#si-name' : '#si-pw2') : '#si-email'); if (i) i.focus(); return;
+    if (['create', 'join', 'signin', 'forgot'].includes(k)) {
+      keep(); resetSentTo = ''; whyOpen = false; mode = k === 'create' ? 'join' : k;
+      msg = mode === 'join' && kept.email && kept.pw ? { ok: true, text: T('join.kept') } : null; render();
+      const i = el.querySelector(mode === 'join' ? '#si-name' : '#si-email'); if (i) i.focus(); return;
     }
     if (k === 'ms') { await run(async () => { const r = await data.signInMicrosoft(); msg = r.ok ? null : { text: r.message }; }); return; }
     if (k === 'fastmail') { openManual = true; await run(async () => { const r = await data.resendVerification(); msg = r.ok ? { ok: true, text: T('pw.fast.sent') } : { text: r.message }; }); return; }
@@ -169,8 +224,33 @@ function mount(el, data) {
     }
     if (k === 'other') { await data.signOut(); mode = 'signin'; msg = null; render(); }
   });
+  // the join form: account + answers in one go
+  async function submitJoin() {
+    const bad = (text, sel) => { msg = { text }; render(); const f = sel && el.querySelector(sel); if (f) f.focus(); };
+    const email = kept.email.trim(), name = kept.name.trim(), phone = kept.phone.trim(), github = kept.github.trim().replace(/^@/, '').replace(/^https?:\/\/github\.com\//i, '').replace(/\/.*$/, '');
+    if (!name) return bad(T('err.name'), '#si-name');
+    if (!email) return bad(T('err.pw.empty'), '#si-email');
+    if (String(kept.pw).length < 8) return bad(T('err.pw.weak'), '#si-pw');
+    if (kept.pw !== (kept.pw2 || '')) return bad(T('pw.mismatch'), '#si-pw2');
+    if (!ClubData.validPhone(phone)) return bad(T('err.phone'), '#si-phone');
+    kept.program = kept.program.trim();
+    if (!kept.program) return bad(T('join.err.program'), '#si-program');
+    if (!kept.interests.length) return bad(T('join.err.interests'), '[name=si-int]');
+    if (!kept.level) return bad(T('err.level'), '[name=si-level]');
+    if (github && !/^[A-Za-z0-9-]{1,39}$/.test(github)) return bad(T('join.err.github'), '#si-gh');
+    if (!kept.consent) return bad(T('join.err.consent'), '#si-consent');
+    if (opts.onStart) opts.onStart();
+    await run(async () => {
+      const r = await data.joinClub({ email, pw: kept.pw, name, phone, level: kept.level, github, program: kept.program, interests: kept.interests, lang: window.I18N ? I18N.lang : 'en' });
+      if (r.ok) { kept.pw = ''; kept.pw2 = ''; msg = null; if (opts.onJoined) opts.onJoined(); return; }
+      if (opts.onFail) opts.onFail();
+      if (/email-already-in-use/.test(r.code || '')) { mode = 'signin'; msg = { text: T('join.exists') }; return; }
+      msg = { text: r.message || T('err.generic') };
+    });
+  }
   el.addEventListener('submit', async (e) => {
     e.preventDefault(); keep();
+    if (mode === 'join') return submitJoin();
     const email = kept.email.trim(), pw = kept.pw;
     if (!email || (!['forgot', 'link'].includes(mode) && !pw)) { msg = { text: T('err.pw.empty') }; render(); return; }
     if (mode === 'create' && pw !== (kept.pw2 || '')) { msg = { text: T('pw.mismatch') }; render(); const p2 = el.querySelector('#si-pw2'); if (p2) p2.focus(); return; }
@@ -186,8 +266,8 @@ function mount(el, data) {
         const r = wasCreate ? await data.signUp(email, pw, kept.name) : await data.signInPassword(email, pw);
         msg = r.ok ? null : { text: r.message };
         if (r.ok) { kept.pw = ''; kept.pw2 = ''; }
-        // no account with this email: go to "create an account" with what they typed
-        else if (!wasCreate && /user-not-found/.test(r.code || '')) { mode = 'create'; kept.pw2 = ''; msg = { ok: true, text: T('pw.nouser') }; }
+        // no account with this email: go to the join form with what they typed
+        else if (!wasCreate && /user-not-found/.test(r.code || '')) { mode = 'join'; kept.pw2 = ''; msg = { ok: true, text: T('join.kept') }; }
         // the server can't tell "wrong password" from "no account": offer both ways out
         else if (!wasCreate && /invalid-credential|invalid-login|wrong-password/.test(r.code || '')) msg = { text: T('pw.wrong.or.new'), offerCreate: true };
       }
@@ -197,7 +277,8 @@ function mount(el, data) {
 
   return {
     signin(error) { mode = data.pendingLink ? 'link' : 'signin'; msg = error ? { text: error } : null; render(); },
-    create() { mode = 'create'; msg = null; render(); },
+    join() { mode = 'join'; msg = null; render(); },
+    create() { mode = 'join'; msg = null; render(); },
     get name() { return kept.name || ''; },
     verify(email) { mode = 'verify'; verifyEmail = email || ''; msg = null; render();
       if (data.accountRefused) data.accountRefused().then(r => { if (r) { refused = true; render(); } });

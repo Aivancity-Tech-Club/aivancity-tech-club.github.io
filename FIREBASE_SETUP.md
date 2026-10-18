@@ -60,8 +60,12 @@ the school's IT has to allow it once (they approve the app for the whole school)
 4. Commit and push. These values are safe to publish: they identify the project, and the security rules decide who can read or write.
 
 ## 5. Who is a member
-The Mountain is members only. A verified `@aivancity.education` account becomes a member **automatically when it sends the
-`/apply` form**. Organizers can also add people by hand with the **roster** (useful for yourself and other organizers).
+The Mountain is members only. **Joining is one form** (the **Join** button, the Mountain's "New here? Join the club", or
+"I'm going" on an event): school email, password, display name, WhatsApp number, coding level, optional GitHub, and one
+checkbox. It creates the account and the join answers (`requests/{uid}`) together. Once an organizer approves the account
+on `/pulse`, the person is a member: their first sign-in creates their ninja on the Mountain from those answers, with no
+second form. Organizers can also add people by hand with the **roster** (useful for yourself and other organizers).
+Accounts made before the one-form join and never finished see **Finish joining** and fill in the short form once.
 
 **Add yourself first** (you need to be on the roster to do anything else):
 1. **Firestore Database → Data → Start collection** named `roster`.
@@ -89,8 +93,8 @@ After sending the form, the person sees a **Join the WhatsApp group** button. Be
 an organizer still accepts each person inside WhatsApp, so the link is useless to anyone who skipped the form.
 The link never expires, so there is nothing to renew. If it leaks, reset it in WhatsApp (**Invite via link → Reset link**) and paste the new one into `invites/whatsapp`.
 
-Sending the form also makes the person a club member straight away: they can sign in at `/mountain`,
-pick their display name and track their bandana and badges. Nobody has to add them to the roster.
+Once their account is approved they are a club member: they sign in at `/mountain` and their ninja is already there.
+Nobody has to add them to the roster.
 Leave `invites/whatsapp` empty (or delete it) to switch to manual invites: the page then tells people an organizer will send the invite.
 
 ## 7. Feedback (the `/feedback` form)
@@ -148,8 +152,8 @@ Fill in the title, date, time, place, a short description and the full details (
 - **Show this event on the site** (untick to keep it as a draft only organizers see).
 Each event gets its own page (`/event?id=…`) with all the details; share that link in the WhatsApp group.
 
-**Registering:** anyone with an aivancity account can tap **I'm going**. Students who aren't members yet create an account
-and fill in the short join form (WhatsApp number, level) on the event page itself. Members are confirmed straight away (unless the event has a
+**Registering:** anyone with an aivancity account can tap **I'm going**. Students who aren't members yet fill in the
+same one-step Join form on the event page itself, and their spot is saved right away. Members are confirmed straight away (unless the event has a
 limited number of places: then you confirm each spot or move it to the waiting list); everyone else shows as **To confirm**. On the event page (organizers see a **Registrations** list) tap **Confirm**
 (this also approves their account), **Move to waiting list** or **Remove**, or **Confirm all**. **Download CSV** gives the list.
 Data: `events/{id}` (organizers write, everyone reads published ones) and `registrations/{eventId}_{uid}`
@@ -163,8 +167,8 @@ from that page (**Edit**): the changes are saved as event `d-YYYY-MM-DD` and rep
 schedule marked "Cancelled", no more sign-ups), **Hide from the public** (only organizers see it), and **Delete…**
 (removed from the site; events made on the site are deleted for good, sessions from the schedule file can be restored
 from the Events list on `/pulse`). Each change asks for confirmation first, and can be undone except deleting a site event.
-**I'm going** shows on every upcoming session. Members tap it once; people who aren't members yet create an account,
-join, and appear as **To confirm** in that session's registrations.
+**I'm going** shows on every upcoming session. Members tap it once; people who aren't members yet fill in the Join form
+and appear as **To confirm** in that session's registrations.
 
 ## 8. Every Thursday: the check-in code
 An organizer opens **/checkin** (also in their profile menu, and on /pulse) on the laptop connected to the projector:

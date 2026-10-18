@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261018i"></script>
+<script src="assets/i18n.js?v=20261018j"></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
@@ -73,7 +73,8 @@ button, input, select { font: inherit; color: inherit; }
 .you-tag { position: fixed; left: 0; top: 0; background: var(--cyan); border: 2px solid var(--ink); border-radius: 999px; padding: 0 9px; font-size: 12px; font-weight: 800; will-change: transform; }
 
 /* cards: sign-in, setup, peak list, ninja popover */
-.veil { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; padding: 16px; background: rgba(30, 30, 60, 0.25); }
+.veil { position: fixed; inset: 0; z-index: 8; display: grid; justify-items: center; padding: calc(72px + env(safe-area-inset-top, 0px)) 16px 16px; background: rgba(30, 30, 60, 0.25); overflow-y: auto; }
+.veil > .card { margin-block: auto; }   /* centered, and scrolls when the join form is taller than the screen */
 .card { width: min(440px, 100%); background: var(--paper); border: 2px solid var(--ink); border-radius: 28px; padding: 26px; display: flex; flex-direction: column; gap: 14px;
   max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: auto; }
 .card h1, .card h2 { margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
@@ -234,7 +235,7 @@ label { font-weight: 700; font-size: 14px; }
     <h1 data-si-intro data-i18n="m.signin.h">Start your <b>climb</b></h1>
     <p data-si-intro data-i18n="m.signin.p"></p>
     <div id="siBox"></div>
-    <p class="back" data-i18n="m.signin.back"><a href="/">← Back to the website</a> · Not a member yet? <a href="/apply">Join the club</a></p>
+    <p class="back" data-i18n="m.signin.back"><a href="/">← Back to the website</a></p>
   </div>
 </div>
 
@@ -244,8 +245,8 @@ label { font-weight: 700; font-size: 14px; }
     <h1 data-i18n="m.notlisted.h">Members <b>only</b></h1>
     <p id="notlistedP1"></p>
     <p data-i18n="m.notlisted.p2"></p>
-    <div class="msg ok" id="requestMsg" hidden data-i18n="m.notlisted.pending"></div>
-    <a class="btn" href="/apply" id="applyBtn" data-i18n="m.notlisted.cta" style="display:grid;place-items:center;text-decoration:none">Apply to join →</a>
+    <div class="msg err" id="requestMsg" hidden data-i18n="m.notlisted.removed"></div>
+    <a class="btn" href="/apply" id="applyBtn" data-i18n="m.notlisted.cta" style="display:grid;place-items:center;text-decoration:none">Finish joining →</a>
     <p class="back" id="notlistedBack" data-i18n="m.notlisted.back"><a href="/">← Back to the website</a> · <a href="#" id="otherAccount">Use another email</a></p>
   </div>
 </div>
@@ -324,15 +325,15 @@ label { font-weight: 700; font-size: 14px; }
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261018i"></script>
-<script src="assets/world/world.js?v=20261018i"></script>
-<script src="assets/js-yaml.min.js?v=20261018i"></script>
-<script src="assets/schedule.js?v=20261018i"></script>
-<script src="assets/sessions.js?v=20261018i"></script>
-<script src="assets/platform/config.js?v=20261018i"></script>
-<script src="assets/platform/engine.js?v=20261018i"></script>
-<script src="assets/platform/signin.js?v=20261018i"></script>
-<script src="assets/platform/data.js?v=20261018i"></script>
+<script src="assets/world/world-data.js?v=20261018j"></script>
+<script src="assets/world/world.js?v=20261018j"></script>
+<script src="assets/js-yaml.min.js?v=20261018j"></script>
+<script src="assets/schedule.js?v=20261018j"></script>
+<script src="assets/sessions.js?v=20261018j"></script>
+<script src="assets/platform/config.js?v=20261018j"></script>
+<script src="assets/platform/engine.js?v=20261018j"></script>
+<script src="assets/platform/signin.js?v=20261018j"></script>
+<script src="assets/platform/data.js?v=20261018j"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -614,12 +615,15 @@ label { font-weight: 700; font-size: 14px; }
       $('notlisted').hidden = false; notlistedEmail = user.email || '';
       $('notlistedP1').textContent = T('m.notlisted.p1', { email: notlistedEmail });
       const st = await data.requestStatus();
-      if (st) $('requestMsg').hidden = false;
+      const removed = !!(st && st.status === 'removed');
+      $('requestMsg').hidden = !removed; $('applyBtn').hidden = removed;
       return;
     }
-    profile = await data.getProfile(user.uid);
+    // first visit after approval: the profile is made from the join answers (the form below is only for older accounts)
+    profile = await data.ensureMember();
     if (!profile) { $('setup').hidden = false; return; }
     await refresh(); loadExtras();
+    if (profile.fresh) setDrawer(true);
     // opened from the profile menu on another page
     if (location.hash === '#me') { history.replaceState(null, '', location.pathname + location.search); setDrawer(true); }
     } catch (e) {

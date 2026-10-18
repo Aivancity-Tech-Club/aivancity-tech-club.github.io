@@ -68,10 +68,12 @@ service cloud.firestore {
       allow list, write: if isOrganizer();
     }
 
-    // Applications to join the club and its WhatsApp group (the /apply form).
-    // Any verified school account can send or update its own; only the person and organizers can read it.
+    // Joining the club (the one Join form: name, WhatsApp number, level, optional GitHub). Sent together with the account,
+    // before an organizer approves it; it only counts once the account is approved (see school() / onRoster()).
+    // Only the person and organizers can read it.
     function validRequest(d) {
-      return d.keys().hasOnly(['email', 'name', 'program', 'phone', 'interests', 'level', 'heard', 'consent', 'lang', 'at', 'status', 'note'])
+      return d.keys().hasOnly(['email', 'name', 'program', 'phone', 'interests', 'level', 'heard', 'consent', 'lang', 'at', 'status', 'note', 'github'])
+        && (!('github' in d) || (d.github is string && d.github.size() <= 39))
         && d.email == email()
         && d.name is string && d.name.size() > 0 && d.name.size() <= 60
         && d.program is string && d.program.size() <= 60

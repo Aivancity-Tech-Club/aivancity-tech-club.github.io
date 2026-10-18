@@ -129,11 +129,11 @@ The website and member platform of the **aivancity Tech Club** and its Google De
 | `/about` | everyone | The two groups (Tech Club + GDG), the team photos, link to the rules |
 | `/schedule` | everyone | Full season schedule, filters (level / type / language), .ics calendar download, "I'm going", votes |
 | `/rules` | everyone | Public points & bandana rulebook, rendered from `rules/rules.yaml` |
-| `/apply` | school accounts | Sign in or create an account, then the join form (WhatsApp invite + membership) |
+| `/apply` | everyone | **Join the club**: one form (account + display name + WhatsApp number + level + optional GitHub); after an organizer approves the account: the WhatsApp invite, and the ninja appears on the Mountain by itself |
 | `/feedback` | everyone | Anonymous feedback form |
 | `/mountain` | members | The game world (PixiJS): every member is a ninja on the peak of their bandana; "My climb" drawer with check-in, proofs, outfits |
 | `/village` | members | The club board: missions (Help, Build together, Club work), events, open-source projects, theme of the week, comments |
-| `/event?id=…` / `/event?d=…` | everyone | One session's full details and "I'm going" (newcomers create an account and join the club right there); organizers also see the registrations and places taken |
+| `/event?id=…` / `/event?d=…` | everyone | One session's full details and "I'm going" (newcomers fill in the same Join form right there); organizers also see the registrations and places taken |
 | `/event-edit` | organizers | Create or edit an event (saved in Firestore, shown on the schedule) |
 | `/camp?u=…` | members | Each member's own page |
 | `/pulse` | organizers | Attendance, drifting members, approving new accounts, votes, data check, deleting someone's data on request |
@@ -179,7 +179,7 @@ assets/
     config.js         Firebase web config, school email domain, CONFIRM mode, Microsoft sign-in switch, App Check site key
     data.js           the data layer: same functions for the demo backend and the Firebase backend
     engine.js         PointsEngine: computes points, bandanas, badges from facts + rules.yaml (points are never stored)
-    signin.js         sign-in / create account / reset password / waiting-for-approval UI
+    signin.js         the one sign-in / Join the club / reset password / waiting-for-approval box, used on every page
     live.js           quietly loads the platform for members on public pages
   world/world.js      the Mountain renderer (PixiJS): peaks, ninjas, labels, camera
   world/world-data.js ninja and accessory artwork data
