@@ -1,0 +1,132 @@
+/* Halloween decorations: temporary. Loaded only by assets/halloween.js, which also holds the on/off switch.
+   Every rule is scoped to html.hw, so without the script this file changes nothing.
+   Decorations sit behind the page content (z-index -1) and never take clicks. */
+
+html.hw {
+  --hw-orange: #f28c28; --hw-orange-ink: #b04a0c; --hw-purple: #4b2a6b; --hw-blood: #8e1b1b; --hw-blood-hi: #6e1010;
+  --hw-bat: #2a2033; --hw-ghost: #fffdf9; --hw-moon: #fff1c9; --hw-crater: #f3dfa9;
+  --hw-haze: rgba(88, 48, 130, .10); --hw-glow: rgba(242, 140, 40, .09);
+  --warm-accent: var(--hw-orange-ink); --hl: rgba(242, 140, 40, .30);
+}
+@media (prefers-color-scheme: dark) {
+  /* nights turn a deep purple; text, borders and buttons keep their colours */
+  html.hw {
+    --bg: #17121d; --surface: #241d2c;
+    --hw-bat: #0d0911; --hw-ghost: #f3ede4; --hw-moon: #f6e6bd; --hw-crater: #e2cd98; --hw-blood: #a52626; --hw-blood-hi: #7d1616;
+    --hw-haze: rgba(126, 64, 186, .24); --hw-glow: rgba(242, 140, 40, .12);
+    --warm-accent: #ffa04d; --hl: transparent;
+  }
+}
+
+/* small touches on the existing look: pumpkin-orange offset shadows and text selection */
+html.hw .meet-card, html.hw .person, html.hw .session.is-next { box-shadow: 6px 6px 0 var(--hw-orange); }
+html.hw .person { box-shadow: 5px 5px 0 var(--hw-orange); }
+html.hw .btn:hover { box-shadow: 4px 4px 0 var(--hw-orange); }
+html.hw ::selection { background: rgba(242, 140, 40, .35); }
+
+/* navigation bar: a spiderweb in the left corner and a thin dripping edge */
+html.hw .site-header::before { content: ""; position: absolute; z-index: -1; top: 0; left: 0; width: 86px; height: 86px; pointer-events: none; opacity: .32;
+  background: var(--line);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='black' stroke-width='1.6'><path d='M0 0L100 0M0 0L95 31M0 0L81 59M0 0L59 81M0 0L31 95M0 0L0 100M20 0Q16 3 19 6M19 6Q14 7 16 12M16 12Q11 12 12 16M12 16Q7 14 6 19M6 19Q3 16 0 20M37 0Q31 5 35 11M35 11Q26 13 30 22M30 22Q21 22 22 30M22 30Q13 26 11 35M11 35Q5 31 0 37M54 0Q45 7 51 17M51 17Q38 19 44 32M44 32Q31 32 32 44M32 44Q19 38 17 51M17 51Q7 45 0 54M71 0Q60 9 68 22M68 22Q51 25 57 41M57 41Q42 42 41 57M41 57Q25 51 22 68M22 68Q9 60 0 71M88 0Q74 12 84 27M84 27Q63 31 71 51M71 51Q51 51 51 71M51 71Q31 63 27 84M27 84Q12 74 0 88'/></svg>") top left/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='black' stroke-width='1.6'><path d='M0 0L100 0M0 0L95 31M0 0L81 59M0 0L59 81M0 0L31 95M0 0L0 100M20 0Q16 3 19 6M19 6Q14 7 16 12M16 12Q11 12 12 16M12 16Q7 14 6 19M6 19Q3 16 0 20M37 0Q31 5 35 11M35 11Q26 13 30 22M30 22Q21 22 22 30M22 30Q13 26 11 35M11 35Q5 31 0 37M54 0Q45 7 51 17M51 17Q38 19 44 32M44 32Q31 32 32 44M32 44Q19 38 17 51M17 51Q7 45 0 54M71 0Q60 9 68 22M68 22Q51 25 57 41M57 41Q42 42 41 57M41 57Q25 51 22 68M22 68Q9 60 0 71M88 0Q74 12 84 27M84 27Q63 31 71 51M71 51Q51 51 51 71M51 71Q31 63 27 84M27 84Q12 74 0 88'/></svg>") top left/contain no-repeat; }
+html.hw .site-header::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 30px; pointer-events: none;
+  background: linear-gradient(var(--hw-blood-hi), var(--hw-blood) 30%);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 40'><path d='M0 0H720V3.4Q698 4.2 676 2.8Q653 6 630 5.2Q610 6 590 3.2Q569 4 548 2.5Q524 5.2 500 4.4Q484 6.8 468 6Q449 6.8 430 3.6Q405 4.4 380 2.1Q361 5 342 4.2Q321 5 300 2.6Q275 3.8 250 3Q232 7.2 214 6.4Q201 7.2 188 5.6Q169 6.4 150 2.2Q123 3.9 96 3.1Q83 5.6 70 4.8Q54 5.6 38 2.4Q19 4.2 0 3.4ZM14.2 2Q19.6 2.4 19.6 5.1L19.8 5.1C19.8 4 19 4.6 19 6.4A3 3.2 0 0 0 25 6.4C25 4.6 24.2 4 24.2 5.1L24.4 5.1Q24.4 2.4 31.4 2ZM44.4 3.3Q58.1 3.7 58.1 7.9L58.4 13.7C58.4 15 56.4 16 56.4 18.7A4.6 4.8 0 0 0 65.6 18.7C65.6 16 63.6 15 63.6 13.7L63.9 7.9Q63.9 3.7 80.9 3.3ZM69.8 3.6Q73.9 4 73.9 6.3L74.1 7.1C74.1 7.9 73.4 8.4 73.4 10A2.6 2.7 0 0 0 78.6 10C78.6 8.4 77.9 7.9 77.9 7.1L78.1 6.3Q78.1 4 83.5 3.6ZM108.3 1.7Q128 2.1 128 7L128.3 23.2C128.3 24.8 125.6 25.9 125.6 29.1A5.4 5.7 0 0 0 136.4 29.1C136.4 25.9 133.7 24.8 133.7 23.2L134 7Q134 2.1 158.2 1.7ZM165.7 3.3Q168.8 3.7 168.8 5.8L169.1 5.8C169.1 4.8 168.6 5.2 168.6 6.7A2.4 2.5 0 0 0 173.4 6.7C173.4 5.2 172.9 4.8 172.9 5.8L173.2 5.8Q173.2 3.7 177.3 3.3ZM185.7 5.2Q197.1 5.6 197.1 9.3L197.4 9.9C197.4 11.2 195.8 12 195.8 14.6A4.2 4.4 0 0 0 204.2 14.6C204.2 12 202.6 11.2 202.6 9.9L202.9 9.3Q202.9 5.6 217.1 5.2ZM200.2 5.4Q207 5.8 207 8.9L207.2 21.1C207.2 22.1 205.6 22.8 205.6 24.8A3.4 3.6 0 0 0 212.4 24.8C212.4 22.8 210.8 22.1 210.8 21.1L211 8.9Q211 5.8 219.6 5.4ZM258.4 2.1Q265.4 2.5 265.4 5.3L265.7 5.3C265.7 4.9 264.8 5.5 264.8 7.5A3.2 3.4 0 0 0 271.2 7.5C271.2 5.5 270.3 4.9 270.3 5.3L270.6 5.3Q270.6 2.5 279.5 2.1ZM305.8 2.5Q315.5 2.9 315.5 6.3L315.7 10.7C315.7 11.8 314.2 12.6 314.2 14.9A3.8 4 0 0 0 321.8 14.9C321.8 12.6 320.3 11.8 320.3 10.7L320.5 6.3Q320.5 2.9 332.6 2.5ZM341 2.4Q358.5 2.8 358.5 7.2L358.8 30.2C358.8 31.8 356 32.8 356 35.8A5 5.2 0 0 0 366 35.8C366 32.8 363.2 31.8 363.2 30.2L363.5 7.2Q363.5 2.8 385 2.4ZM394.7 2Q399.9 2.4 399.9 4.9L400.1 6.3C400.1 7.1 399.2 7.7 399.2 9.4A2.8 2.9 0 0 0 404.8 9.4C404.8 7.7 403.9 7.1 403.9 6.3L404.1 4.9Q404.1 2.4 410.7 2ZM434.8 3.9Q443.9 4.3 443.9 7.5L444.2 7.5C444.2 5.4 443.4 6.1 443.4 8.3A3.6 3.8 0 0 0 450.6 8.3C450.6 6.1 449.8 5.4 449.8 7.5L450.1 7.5Q450.1 4.3 461.7 3.9ZM456.5 4.5Q478.6 4.9 478.6 10.1L479 19.5C479 21.3 476.2 22.4 476.2 25.9A5.8 6.1 0 0 0 487.8 25.9C487.8 22.4 485 21.3 485 19.5L485.4 10.1Q485.4 4.9 512.6 4.5ZM489.3 3.9Q492.9 4.2 492.9 6.6L493.1 9.4C493.1 10.2 492.4 10.7 492.4 12.2A2.6 2.7 0 0 0 497.6 12.2C497.6 10.7 496.9 10.2 496.9 9.4L497.1 6.6Q497.1 4.2 501.9 3.9ZM546.4 1.9Q557.6 2.3 557.6 5.9L557.8 11.9C557.8 13.1 556 13.9 556 16.3A4 4.2 0 0 0 564 16.3C564 13.9 562.2 13.1 562.2 11.9L562.4 5.9Q562.4 2.3 576.3 1.9ZM598.2 3.1Q602 3.5 602 5.7L602.2 5.9C602.2 6.6 601.6 7.1 601.6 8.5A2.4 2.5 0 0 0 606.4 8.5C606.4 7.1 605.8 6.6 605.8 5.9L606 5.7Q606 3.5 610.9 3.1ZM628.3 3.6Q642.6 4 642.6 8L642.9 23.2C642.9 24.5 640.6 25.4 640.6 28A4.4 4.6 0 0 0 649.4 28C649.4 25.4 647.1 24.5 647.1 23.2L647.4 8Q647.4 4 665.1 3.6ZM683.8 2.2Q691.6 2.6 691.6 5.7L691.9 7.9C691.9 8.9 690.6 9.6 690.6 11.6A3.4 3.6 0 0 0 697.4 11.6C697.4 9.6 696.1 8.9 696.1 7.9L696.4 5.7Q696.4 2.6 706.2 2.2ZM138.4 37.5A1.6 1.6 0 1 0 141.6 37.5A1.6 1.6 0 1 0 138.4 37.5ZM370.7 38.8A1.3 1.3 0 1 0 373.3 38.8A1.3 1.3 0 1 0 370.7 38.8Z'/></svg>") left top/540px 30px repeat-x;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 40'><path d='M0 0H720V3.4Q698 4.2 676 2.8Q653 6 630 5.2Q610 6 590 3.2Q569 4 548 2.5Q524 5.2 500 4.4Q484 6.8 468 6Q449 6.8 430 3.6Q405 4.4 380 2.1Q361 5 342 4.2Q321 5 300 2.6Q275 3.8 250 3Q232 7.2 214 6.4Q201 7.2 188 5.6Q169 6.4 150 2.2Q123 3.9 96 3.1Q83 5.6 70 4.8Q54 5.6 38 2.4Q19 4.2 0 3.4ZM14.2 2Q19.6 2.4 19.6 5.1L19.8 5.1C19.8 4 19 4.6 19 6.4A3 3.2 0 0 0 25 6.4C25 4.6 24.2 4 24.2 5.1L24.4 5.1Q24.4 2.4 31.4 2ZM44.4 3.3Q58.1 3.7 58.1 7.9L58.4 13.7C58.4 15 56.4 16 56.4 18.7A4.6 4.8 0 0 0 65.6 18.7C65.6 16 63.6 15 63.6 13.7L63.9 7.9Q63.9 3.7 80.9 3.3ZM69.8 3.6Q73.9 4 73.9 6.3L74.1 7.1C74.1 7.9 73.4 8.4 73.4 10A2.6 2.7 0 0 0 78.6 10C78.6 8.4 77.9 7.9 77.9 7.1L78.1 6.3Q78.1 4 83.5 3.6ZM108.3 1.7Q128 2.1 128 7L128.3 23.2C128.3 24.8 125.6 25.9 125.6 29.1A5.4 5.7 0 0 0 136.4 29.1C136.4 25.9 133.7 24.8 133.7 23.2L134 7Q134 2.1 158.2 1.7ZM165.7 3.3Q168.8 3.7 168.8 5.8L169.1 5.8C169.1 4.8 168.6 5.2 168.6 6.7A2.4 2.5 0 0 0 173.4 6.7C173.4 5.2 172.9 4.8 172.9 5.8L173.2 5.8Q173.2 3.7 177.3 3.3ZM185.7 5.2Q197.1 5.6 197.1 9.3L197.4 9.9C197.4 11.2 195.8 12 195.8 14.6A4.2 4.4 0 0 0 204.2 14.6C204.2 12 202.6 11.2 202.6 9.9L202.9 9.3Q202.9 5.6 217.1 5.2ZM200.2 5.4Q207 5.8 207 8.9L207.2 21.1C207.2 22.1 205.6 22.8 205.6 24.8A3.4 3.6 0 0 0 212.4 24.8C212.4 22.8 210.8 22.1 210.8 21.1L211 8.9Q211 5.8 219.6 5.4ZM258.4 2.1Q265.4 2.5 265.4 5.3L265.7 5.3C265.7 4.9 264.8 5.5 264.8 7.5A3.2 3.4 0 0 0 271.2 7.5C271.2 5.5 270.3 4.9 270.3 5.3L270.6 5.3Q270.6 2.5 279.5 2.1ZM305.8 2.5Q315.5 2.9 315.5 6.3L315.7 10.7C315.7 11.8 314.2 12.6 314.2 14.9A3.8 4 0 0 0 321.8 14.9C321.8 12.6 320.3 11.8 320.3 10.7L320.5 6.3Q320.5 2.9 332.6 2.5ZM341 2.4Q358.5 2.8 358.5 7.2L358.8 30.2C358.8 31.8 356 32.8 356 35.8A5 5.2 0 0 0 366 35.8C366 32.8 363.2 31.8 363.2 30.2L363.5 7.2Q363.5 2.8 385 2.4ZM394.7 2Q399.9 2.4 399.9 4.9L400.1 6.3C400.1 7.1 399.2 7.7 399.2 9.4A2.8 2.9 0 0 0 404.8 9.4C404.8 7.7 403.9 7.1 403.9 6.3L404.1 4.9Q404.1 2.4 410.7 2ZM434.8 3.9Q443.9 4.3 443.9 7.5L444.2 7.5C444.2 5.4 443.4 6.1 443.4 8.3A3.6 3.8 0 0 0 450.6 8.3C450.6 6.1 449.8 5.4 449.8 7.5L450.1 7.5Q450.1 4.3 461.7 3.9ZM456.5 4.5Q478.6 4.9 478.6 10.1L479 19.5C479 21.3 476.2 22.4 476.2 25.9A5.8 6.1 0 0 0 487.8 25.9C487.8 22.4 485 21.3 485 19.5L485.4 10.1Q485.4 4.9 512.6 4.5ZM489.3 3.9Q492.9 4.2 492.9 6.6L493.1 9.4C493.1 10.2 492.4 10.7 492.4 12.2A2.6 2.7 0 0 0 497.6 12.2C497.6 10.7 496.9 10.2 496.9 9.4L497.1 6.6Q497.1 4.2 501.9 3.9ZM546.4 1.9Q557.6 2.3 557.6 5.9L557.8 11.9C557.8 13.1 556 13.9 556 16.3A4 4.2 0 0 0 564 16.3C564 13.9 562.2 13.1 562.2 11.9L562.4 5.9Q562.4 2.3 576.3 1.9ZM598.2 3.1Q602 3.5 602 5.7L602.2 5.9C602.2 6.6 601.6 7.1 601.6 8.5A2.4 2.5 0 0 0 606.4 8.5C606.4 7.1 605.8 6.6 605.8 5.9L606 5.7Q606 3.5 610.9 3.1ZM628.3 3.6Q642.6 4 642.6 8L642.9 23.2C642.9 24.5 640.6 25.4 640.6 28A4.4 4.6 0 0 0 649.4 28C649.4 25.4 647.1 24.5 647.1 23.2L647.4 8Q647.4 4 665.1 3.6ZM683.8 2.2Q691.6 2.6 691.6 5.7L691.9 7.9C691.9 8.9 690.6 9.6 690.6 11.6A3.4 3.6 0 0 0 697.4 11.6C697.4 9.6 696.1 8.9 696.1 7.9L696.4 5.7Q696.4 2.6 706.2 2.2ZM138.4 37.5A1.6 1.6 0 1 0 141.6 37.5A1.6 1.6 0 1 0 138.4 37.5ZM370.7 38.8A1.3 1.3 0 1 0 373.3 38.8A1.3 1.3 0 1 0 370.7 38.8Z'/></svg>") left top/540px 30px repeat-x; }
+
+/* ---------- the night sky behind the page ---------- */
+.hw-scene { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; contain: strict; }
+.hw-scene svg { display: block; width: 100%; height: auto; overflow: visible; }
+.hw-haze { position: absolute; inset: 0;
+  background: radial-gradient(120% 60% at 50% -10%, var(--hw-haze), transparent 70%), radial-gradient(90% 40% at 50% 115%, var(--hw-glow), transparent 70%); }
+
+.hw-moon { position: absolute; top: calc(var(--header-h, 70px) + 3vh); right: 7vw; width: clamp(64px, 9vw, 120px); }
+.hw-moon::before { content: ""; position: absolute; inset: -45%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 196, 110, .32), transparent); }
+.hw-moon svg { position: relative; }
+.hw-moon .hw-disc { fill: var(--hw-moon); stroke: var(--line); stroke-width: 2; }
+.hw-moon .hw-crater { fill: var(--hw-crater); }
+.hw-moon .hw-tiny { fill: var(--hw-bat); }
+
+.hw-web { position: absolute; width: clamp(90px, 13vw, 170px); opacity: .28; }
+.hw-web path { fill: none; stroke: var(--line); stroke-width: 1.1; vector-effect: non-scaling-stroke; }
+.hw-web-bl { left: 0; bottom: 0; transform: scaleY(-1); }
+
+.hw-bat { position: absolute; left: 0; top: var(--y); width: var(--s); animation: hw-fly var(--d) linear var(--dl) infinite; }
+.hw-bat.hw-rev { animation-direction: reverse; }
+.hw-bat .hw-bob { animation: hw-bob 3.2s ease-in-out infinite alternate; }
+.hw-bat svg, .hw-swoop svg { fill: var(--hw-bat); stroke: var(--line); stroke-width: 1.2; stroke-linejoin: round; paint-order: stroke; transform-origin: 50% 35%; animation: hw-flap .34s ease-in-out infinite; }
+@keyframes hw-fly { from { transform: translateX(-12vw); } to { transform: translateX(112vw); } }
+@keyframes hw-bob { from { transform: translateY(-14px); } to { transform: translateY(16px); } }
+@keyframes hw-flap { 50% { transform: scaleY(.42); } }
+
+.hw-ghost { position: absolute; left: var(--x); top: var(--y); width: 34px; opacity: 0; animation: hw-haunt 19s ease-in-out var(--dl) infinite; }
+.hw-ghost .hw-sheet { fill: var(--hw-ghost); stroke: var(--line); stroke-width: 2; stroke-linejoin: round; }
+.hw-ghost .hw-eye { fill: #221d19; }
+@keyframes hw-haunt {
+  0%, 62%, 100% { opacity: 0; transform: translate(0, 12px) rotate(-4deg); }
+  70% { opacity: .85; transform: translate(6px, 0) rotate(3deg); }
+  80% { opacity: .85; transform: translate(-4px, -10px) rotate(-3deg); }
+  90% { opacity: 0; transform: translate(4px, -22px) rotate(2deg); }
+}
+
+.hw-float { position: absolute; left: var(--x); top: var(--y); width: var(--s); opacity: .7; animation: hw-drift 6.5s ease-in-out var(--dl) infinite alternate; }
+@keyframes hw-drift { from { transform: translateY(-8px) rotate(-6deg); } to { transform: translateY(10px) rotate(6deg); } }
+.hw-scene .hw-gourd ellipse, .hw-pumpkin .hw-gourd ellipse { fill: var(--hw-orange); stroke: var(--line); stroke-width: 2; }
+.hw-scene .hw-stem, .hw-pumpkin .hw-stem { fill: none; stroke: #3c6b3a; stroke-width: 3.2; stroke-linecap: round; }
+
+.hw-leaf { position: absolute; left: var(--x); top: -40px; width: var(--s); opacity: .8; animation: hw-fall var(--d) linear var(--dl) infinite; }
+.hw-leaf .hw-sway { animation: hw-sway var(--sw) ease-in-out infinite alternate; }
+.hw-leaf .hw-blade { fill: var(--c); stroke: var(--line); stroke-width: 1.4; stroke-linejoin: round; }
+.hw-leaf .hw-rib { fill: none; stroke: var(--line); stroke-width: 1.2; stroke-linecap: round; opacity: .6; }
+@keyframes hw-fall { to { transform: translateY(calc(100vh + 80px)); } }
+@keyframes hw-sway { from { transform: translateX(-28px) rotate(-35deg); } to { transform: translateX(28px) rotate(55deg); } }
+
+.hw-swoop { position: absolute; left: 0; top: 0; width: 44px; opacity: 0; }
+.hw-swoop.go { animation: hw-swoop 2.6s cubic-bezier(.45, .05, .55, .95) forwards; }
+@keyframes hw-swoop {
+  0% { opacity: 0; transform: translate(-60px, 70vh) scale(.6); }
+  12%, 82% { opacity: 1; }
+  50% { transform: translate(50vw, 30vh) scale(1.1); }
+  100% { opacity: 0; transform: translate(104vw, 6vh) scale(.8); }
+}
+
+/* ---------- the pumpkin in the corner (pauses / plays the animations) ---------- */
+.hw-pumpkin { position: fixed; z-index: 15; right: calc(14px + env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  width: 52px; height: 52px; padding: 4px; border: 0; border-radius: 50%; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.hw-pumpkin svg { width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 6px rgba(242, 140, 40, .35)); transform-origin: 50% 90%; transition: transform .2s ease; }
+.hw-pumpkin:hover svg { transform: rotate(-8deg) scale(1.06); }
+.hw-pumpkin:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.hw-pumpkin .hw-face path { fill: #ffd36b; animation: hw-candle 2.8s steps(1) infinite; }
+@keyframes hw-candle { 0%, 100% { opacity: 1; } 41% { opacity: .62; } 44% { opacity: 1; } 71% { opacity: .78; } 74% { opacity: 1; } }
+.hw-calm .hw-pumpkin .hw-face path { fill: #3a2410; opacity: .85; animation: none; }
+.hw-calm .hw-pumpkin svg { filter: none; }
+
+/* mouse embers */
+.hw-embers { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+.hw-embers i { position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, #ffd36b 0 35%, var(--hw-orange) 60%, transparent 72%); }
+.hw-embers i.on { animation: hw-ember .75s ease-out forwards; }
+@keyframes hw-ember { 0% { opacity: .9; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), -26px) scale(.3); } }
+
+/* ---------- screen sizes ---------- */
+@media (max-width: 700px) {
+  .hw-wide { display: none; }
+  html.hw .site-header::before { width: 58px; height: 58px; }
+  html.hw .site-header::after { height: 23px; -webkit-mask-size: 414px 23px; mask-size: 414px 23px; }
+  .hw-moon { top: calc(var(--header-h, 70px) + 60px); right: 3vw; width: 52px; }
+  .hw-pumpkin { width: 42px; height: 42px; right: calc(8px + env(safe-area-inset-right, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---------- calm: paused by the pumpkin, or less motion asked by the system ---------- */
+.hw-calm .hw-anim, .hw-calm .hw-embers { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hw-anim, .hw-embers { display: none; }
+  .hw-scene *, .hw-pumpkin * { animation: none !important; transition: none !important; }
+}
+/* high-contrast modes and printing: no decorations at all */
+@media (forced-colors: active) {
+  .hw-scene, .hw-embers, html.hw .site-header::before, html.hw .site-header::after { display: none; }
+}
+@media print {
+  .hw-scene, .hw-embers, .hw-pumpkin, html.hw .site-header::before, html.hw .site-header::after { display: none !important; }
+}
