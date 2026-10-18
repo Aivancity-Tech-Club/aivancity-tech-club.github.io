@@ -54,10 +54,19 @@ html.hw .site-header::after { content: ""; position: absolute; left: 0; right: 0
 .hw-bat { position: absolute; left: 0; top: var(--y); width: var(--s); animation: hw-fly var(--d) linear var(--dl) infinite; }
 .hw-bat.hw-rev { animation-direction: reverse; }
 .hw-bat .hw-bob { animation: hw-bob 3.2s ease-in-out infinite alternate; }
-.hw-bat svg, .hw-swoop svg { fill: var(--hw-bat); stroke: var(--line); stroke-width: 1.2; stroke-linejoin: round; paint-order: stroke; transform-origin: 50% 35%; animation: hw-flap .34s ease-in-out infinite; }
+.hw-bat svg, .hw-swoop svg { overflow: visible; }
+.hw-scene .hw-body, .hw-scene .hw-wing { fill: var(--hw-bat); stroke: var(--line); stroke-width: 1.1; stroke-linejoin: round; paint-order: stroke; }
+.hw-scene .hw-far { fill: color-mix(in srgb, var(--hw-bat) 72%, #fff); }
+.hw-scene .hw-beye { fill: #ffd36b; }
+/* wings beat up and down around the shoulder (the far wing a beat later) */
+.hw-scene .hw-wing { transform-box: view-box; transform-origin: 30px 20px; animation: hw-wing .32s ease-in-out infinite alternate; }
+.hw-scene .hw-far { transform-origin: 27px 20px; animation-delay: -.08s; }
+/* flying right to left: the bat turns round */
+.hw-bat.hw-rev svg { transform: scaleX(-1); }
+.hw-swoop svg { transform: rotate(-14deg); }
 @keyframes hw-fly { from { transform: translateX(-12vw); } to { transform: translateX(112vw); } }
 @keyframes hw-bob { from { transform: translateY(-14px); } to { transform: translateY(16px); } }
-@keyframes hw-flap { 50% { transform: scaleY(.42); } }
+@keyframes hw-wing { from { transform: scaleY(1); } to { transform: scaleY(-.55); } }
 
 .hw-ghost { position: absolute; left: var(--x); top: var(--y); width: 34px; opacity: 0; animation: hw-haunt 19s ease-in-out var(--dl) infinite; }
 .hw-ghost .hw-sheet { fill: var(--hw-ghost); stroke: var(--line); stroke-width: 2; stroke-linejoin: round; }
@@ -101,13 +110,6 @@ html.hw .site-header::after { content: ""; position: absolute; left: 0; right: 0
 .hw-calm .hw-pumpkin .hw-face path { fill: #3a2410; opacity: .85; animation: none; }
 .hw-calm .hw-pumpkin svg { filter: none; }
 
-/* mouse embers */
-.hw-embers { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
-.hw-embers i { position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; opacity: 0;
-  background: radial-gradient(circle, #ffd36b 0 35%, var(--hw-orange) 60%, transparent 72%); }
-.hw-embers i.on { animation: hw-ember .75s ease-out forwards; }
-@keyframes hw-ember { 0% { opacity: .9; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), -26px) scale(.3); } }
-
 /* ---------- screen sizes ---------- */
 @media (max-width: 700px) {
   .hw-wide { display: none; }
@@ -118,15 +120,15 @@ html.hw .site-header::after { content: ""; position: absolute; left: 0; right: 0
 }
 
 /* ---------- calm: paused by the pumpkin, or less motion asked by the system ---------- */
-.hw-calm .hw-anim, .hw-calm .hw-embers { display: none; }
+.hw-calm .hw-anim { display: none; }
 @media (prefers-reduced-motion: reduce) {
-  .hw-anim, .hw-embers { display: none; }
+  .hw-anim { display: none; }
   .hw-scene *, .hw-pumpkin * { animation: none !important; transition: none !important; }
 }
 /* high-contrast modes and printing: no decorations at all */
 @media (forced-colors: active) {
-  .hw-scene, .hw-embers, html.hw .site-header::before, html.hw .site-header::after { display: none; }
+  .hw-scene, html.hw .site-header::before, html.hw .site-header::after { display: none; }
 }
 @media print {
-  .hw-scene, .hw-embers, .hw-pumpkin, html.hw .site-header::before, html.hw .site-header::after { display: none !important; }
+  .hw-scene, .hw-pumpkin, html.hw .site-header::before, html.hw .site-header::after { display: none !important; }
 }

@@ -10,7 +10,8 @@
 
    Visitors can pause the animations with the pumpkin button (remembered on their device).
    People whose system asks for less motion only get the still decorations.
-   Everything sits behind the page content and ignores clicks, so nothing on the page changes. */
+   Everything sits behind the page content and ignores clicks, so nothing on the page changes.
+   (No cursor effects: anything that follows the mouse can get in the way of clicking.) */
 (() => {
   const HALLOWEEN = { on: true, from: '2026-10-01', until: '2026-11-02' };
 
@@ -41,7 +42,12 @@
   const label = () => TEXT[root.lang === 'fr' ? 'fr' : 'en'];
 
   /* ---------- artwork (hand-drawn style: flat fills, dark outline) ---------- */
-  const BAT = '<svg viewBox="0 0 64 26" aria-hidden="true" focusable="false"><path d="M32 8l-2.4-5.5-.6 4.6C25 7 21 4 15 3 9 2.5 4 5 1 10c4-1.5 7-.5 9 2 2-2.6 6-2.6 8 0 2.2-2 6-1.6 8 1.8 2.4-.4 4.6 1.6 6 5.2 1.4-3.6 3.6-5.6 6-5.2 2-3.4 5.8-3.8 8-1.8 2-2.6 6-2.6 8 0 2-2.5 5-3.5 9-2-3-5-8-7.5-14-7-6 1-10 4-14 4.1l-.6-4.6z"/></svg>';
+  // a bat seen from the side, flying to the right: the near wing flaps around the shoulder, the far wing follows
+  const BAT = '<svg viewBox="0 0 60 36" aria-hidden="true" focusable="false">'
+    + '<path class="hw-wing hw-far" d="M28.5 20C27.5 13 24 7 18 3C17 6 14.5 8 10 8.5C12 10.5 12.5 13 11.5 15.5C14.5 15 17 16.5 18 19C20.5 17.8 23.5 18.2 25 20.5Z"/>'
+    + '<path class="hw-body" d="M17 22.5C19 19 25 18 32 18.5L37 17.5L38 13.5L40 16.6L42.5 14L43 17.8C45.5 19 46.5 21 45 22.6C43 24.4 38 24.6 33 24.6C27 25.6 21 26 17 22.5Z"/>'
+    + '<circle class="hw-beye" cx="42.3" cy="19.8" r=".9"/>'
+    + '<path class="hw-wing" d="M31.5 20C30 11 25 4 16 .5C15 4 12 6.5 6 7C8.5 9.5 9 12.5 7.5 15.5C11.5 14.8 14.5 16.5 15.5 19.5C18.5 17.8 22.5 18 25 21Z"/></svg>';
   const GHOST = '<svg viewBox="0 0 40 48" aria-hidden="true" focusable="false"><path class="hw-sheet" d="M6 44V20a14 14 0 0 1 28 0v24l-4.7-4-4.6 4-4.7-4-4.7 4-4.6-4z"/><ellipse class="hw-eye" cx="15" cy="20" rx="2.2" ry="3.2"/><ellipse class="hw-eye" cx="25" cy="20" rx="2.2" ry="3.2"/><ellipse class="hw-eye" cx="20" cy="28.5" rx="2" ry="2.6"/></svg>';
   const PUMPKIN = (face) => `<svg viewBox="0 0 48 44" aria-hidden="true" focusable="false"><path class="hw-stem" d="M24 11c-.5-4 .5-7 4-9"/><g class="hw-gourd"><ellipse cx="16" cy="27" rx="12" ry="14.5"/><ellipse cx="32" cy="27" rx="12" ry="14.5"/><ellipse cx="24" cy="27" rx="8.5" ry="15.5"/></g>${face ? '<g class="hw-face"><path d="M14 23l4-6 4 6z"/><path d="M26 23l4-6 4 6z"/><path d="M13 30q11 8 22 0l-3 1.5-2.5-2-2.6 2.6-2.4-2.4-2.4 2.4-2.6-2.6-2.5 2z"/></g>' : ''}</svg>`;
   const LEAF = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="hw-blade" d="M12 1.5c5.5 4 9 10 0 21-9-11-5.5-17 0-21z"/><path class="hw-rib" d="M12 5v17"/></svg>';
@@ -124,26 +130,6 @@
       next();
     }, rand(25000, 45000));
     next();
-
-    // a few tiny embers follow the mouse (mouse and trackpad only, never on touch)
-    if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
-      const layer = el('hw-embers');
-      layer.setAttribute('aria-hidden', 'true');
-      document.body.append(layer);
-      const pool = Array.from({ length: 10 }, () => layer.appendChild(document.createElement('i')));
-      let k = 0, last = 0, lx = 0, ly = 0;
-      addEventListener('pointermove', (e) => {
-        if (e.pointerType !== 'mouse' || !moving()) return;
-        const now = e.timeStamp;
-        if (now - last < 45 || Math.hypot(e.clientX - lx, e.clientY - ly) < 14) return;
-        last = now; lx = e.clientX; ly = e.clientY;
-        const s = pool[k++ % pool.length];
-        s.className = '';
-        s.style.cssText = `left:${e.clientX}px;top:${e.clientY}px;--dx:${rand(-14, 14).toFixed(0)}px`;
-        void s.offsetWidth;
-        s.className = 'on';
-      }, { passive: true });
-    }
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);

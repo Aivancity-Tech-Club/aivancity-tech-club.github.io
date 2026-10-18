@@ -346,7 +346,7 @@ const restDoc = (d) => { const o = {}; for (const [k, v] of Object.entries(d.fie
 async function loadSiteEvents() {
   const giveUp = setTimeout(() => { if (!EVENTS_READY) { EVENTS_READY = true; dispatchEvent(new CustomEvent("club:events")); } }, 3000);
   try {
-    if (!window.CLUB_PLATFORM) await new Promise((res, rej) => { const x = document.createElement("script"); x.src = "/assets/platform/config.js"; x.onload = res; x.onerror = rej; document.head.appendChild(x); });
+    if (!window.CLUB_PLATFORM) await new Promise((res, rej) => { const x = document.createElement("script"); x.src = "/assets/platform/config.js" + (ASSET_V ? "?" + ASSET_V : ""); x.onload = res; x.onerror = rej; document.head.appendChild(x); });
     const C = window.CLUB_PLATFORM || {};
     if (!C.FIREBASE) {                     // demo mode: events created in this browser
       let X = null; try { X = JSON.parse(localStorage.getItem("nw-demo-extra-v1")); } catch (e) {}

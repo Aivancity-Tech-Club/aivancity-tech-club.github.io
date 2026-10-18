@@ -6,6 +6,15 @@
 (function () {
 'use strict';
 const CFG = window.CLUB_PLATFORM || {};
+// fallback only (see init): load the Firebase SDK one part after the other and start it once
+async function loadFirebaseDirect(parts) {
+  for (const n of parts) {
+    if (n === 'app' ? window.firebase : window.firebase && firebase[n]) continue;
+    await new Promise((res, rej) => { const s = document.createElement('script'); s.dataset.fb = n;
+      s.src = `https://www.gstatic.com/firebasejs/10.12.2/firebase-${n}-compat.js`; s.onload = res; s.onerror = () => rej(new Error('Could not load Firebase')); document.head.appendChild(s); });
+  }
+  if (!firebase.apps.length) firebase.initializeApp(CFG.FIREBASE);
+}
 const DOMAIN = (CFG.EMAIL_DOMAIN || 'aivancity.education').toLowerCase();
 const ORG_CONFIRM = CFG.CONFIRM === 'organizer';   // no confirmation email: organizers review new accounts
 const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -322,7 +331,9 @@ function firebaseBackend() {
   return {
     mode: 'firebase',
     async init() {
-      await CFG.loadFirebase(['auth', 'firestore']);   // config.js: one Firebase per page, with App Check when it's on
+      // config.js loads Firebase (with App Check when it's on). An older config.js kept by the browser's cache has no loader: load it here.
+      if (typeof CFG.loadFirebase === 'function') await CFG.loadFirebase(['auth', 'firestore']);
+      else await loadFirebaseDirect(['app', 'auth', 'firestore']);
       auth = firebase.auth(); db = firebase.firestore();
       checkSchoolAccount = async () => {
         const u = auth.currentUser;
