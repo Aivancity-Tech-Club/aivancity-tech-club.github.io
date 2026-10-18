@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261018c"></script>
+<script src="assets/i18n.js?v=20261018h"></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
@@ -93,6 +93,10 @@ label { font-weight: 700; font-size: 14px; }
 .msg.ok { background: var(--p-green); } .msg.err { background: var(--p-red); }
 .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; font-size: 14px; }
 .check input { width: 20px; height: 20px; margin-top: 1px; accent-color: var(--blue); flex: none; }
+.field-help { margin: 0; font-size: 13px; line-height: 1.4; color: var(--ink-soft); }
+.consent-box { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.consent-box legend { padding: 0; margin-bottom: 6px; font-weight: 800; font-size: 14px; }
+.consent-box .field-help { padding-left: 37px; }
 
 /* My climb drawer */
 .drawer { position: fixed; z-index: 10; top: 0; right: 0; bottom: 0; width: min(420px, 100%); background: var(--ground); border-left: 2px solid var(--ink);
@@ -252,8 +256,12 @@ label { font-weight: 700; font-size: 14px; }
     <h1 data-i18n="m.setup.h">Welcome to <b>the club</b></h1>
     <p data-i18n="m.setup.p">Pick the name other members will see on the mountain.</p>
     <div class="field"><label for="name" data-i18n="m.setup.name">Display name</label><input class="input" id="name" maxlength="40" placeholder="Amina K." required></div>
-    <div class="field"><label for="github" data-i18n="m.setup.github">GitHub username <span style="font-weight:400">(optional, used to count your merged changes)</span></label><input class="input" id="github" maxlength="39" placeholder="amina-k"></div>
-    <label class="check"><input type="checkbox" id="consent"> <span data-i18n="m.setup.consent">My name, bandana, points and activity are visible to signed-in club members. Only organizers can see my email.</span></label>
+    <div class="field"><label for="github" data-i18n="m.setup.github">GitHub username <span style="font-weight:400">(optional)</span></label><input class="input" id="github" maxlength="39" placeholder="amina-k" aria-describedby="githubHelp" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <p class="field-help" id="githubHelp" data-i18n="m.setup.github.help">Only the username, not a link. Organizers use it to check the code you send as proof (pull requests, projects). You can leave it empty.</p></div>
+    <fieldset class="consent-box"><legend data-i18n="m.setup.consent.h">Before you enter</legend>
+      <label class="check"><input type="checkbox" id="consent" aria-describedby="consentHelp"> <span data-i18n="m.setup.consent">I agree that other club members can see my display name, bandana, points and club activity.</span></label>
+      <p class="field-help" id="consentHelp" data-i18n="m.setup.consent.help">Only signed-in club members see the mountain. Your email stays private: only organizers can see it.</p>
+    </fieldset>
     <button class="btn" type="submit" data-i18n="m.setup.btn">Enter the mountain</button>
     <div class="msg err" id="setupMsg" hidden></div>
   </form>
@@ -316,14 +324,15 @@ label { font-weight: 700; font-size: 14px; }
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261018c"></script>
-<script src="assets/world/world.js?v=20261018c"></script>
-<script src="assets/js-yaml.min.js?v=20261018c"></script>
-<script src="assets/schedule.js?v=20261018c"></script>
-<script src="assets/platform/config.js?v=20261018c"></script>
-<script src="assets/platform/engine.js?v=20261018c"></script>
-<script src="assets/platform/signin.js?v=20261018c"></script>
-<script src="assets/platform/data.js?v=20261018c"></script>
+<script src="assets/world/world-data.js?v=20261018h"></script>
+<script src="assets/world/world.js?v=20261018h"></script>
+<script src="assets/js-yaml.min.js?v=20261018h"></script>
+<script src="assets/schedule.js?v=20261018h"></script>
+<script src="assets/sessions.js?v=20261018h"></script>
+<script src="assets/platform/config.js?v=20261018h"></script>
+<script src="assets/platform/engine.js?v=20261018h"></script>
+<script src="assets/platform/signin.js?v=20261018h"></script>
+<script src="assets/platform/data.js?v=20261018h"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);

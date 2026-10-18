@@ -30,6 +30,8 @@ function cleanEvent(e) {
     description: t(e.description, 300), description_fr: t(e.description_fr, 300), details: t(e.details, 5000), details_fr: t(e.details_fr, 5000),
     speaker: t(e.speaker, 120), link: /^https:\/\/\S+$/.test(t(e.link, 500)) ? t(e.link, 500) : '', linkText: t(e.linkText, 40),
     registration: !!e.registration, capacity: Math.max(0, Math.min(1000, parseInt(e.capacity, 10) || 0)), deadline: day(e.deadline), published: !!e.published,
+    // lifecycle: cancelled = stays on the site, marked Cancelled; hidden = only organizers see it; deleted = gone (file sessions keep a marker)
+    cancelled: !!e.cancelled, hidden: !!e.hidden, deleted: !!e.deleted,
   };
 }
 const validEmail = (e) => new RegExp('^[^@\\s]+@' + DOMAIN.replace(/\./g, '\\.') + '$', 'i').test(String(e || '').trim());
@@ -169,7 +171,6 @@ function demoBackend() {
     async addComment(postId, text) { const B = board(); (B.comments[postId] = B.comments[postId] || []).push({ id: 'c' + Date.now(), by: 'you', text, createdAt: Date.now(), hidden: false, reports: {} }); saveBoard(B); return { ok: true }; },
     async deleteComment(postId, cid) { const B = board(); B.comments[postId] = (B.comments[postId] || []).filter(c => c.id !== cid); saveBoard(B); return { ok: true }; },
     // ---------- sessions: "I'm going" and votes; camps; organizer follow-ups ----------
-    async loadRsvps() { return extra().rsvps; },
     async setRsvp(date, on) { const X = extra(); X.rsvps = X.rsvps.filter(r => !(r.date === date && r.uid === 'you')); if (on) X.rsvps.push({ date, uid: 'you' }); saveExtra(X); return { ok: true }; },
     async loadVotes() { return extra().votes; },
     async vote(date, choice) { const X = extra(); X.votes = X.votes.filter(v => !(v.date === date && v.uid === 'you')); if (choice) X.votes.push({ date, uid: 'you', choice }); saveExtra(X); return { ok: true }; },
@@ -178,6 +179,11 @@ function demoBackend() {
     async reportCamp(uid) { const X = extra(); if (X.camps[uid]) { X.camps[uid].reports = { ...(X.camps[uid].reports || {}), you: true }; saveExtra(X); } return { ok: true }; },
     async hideCamp(uid, hidden) { const X = extra(); if (X.camps[uid]) { X.camps[uid].hidden = !!hidden; saveExtra(X); } return { ok: true }; },
     async loadRequests() { return extra().requests; },
+    async loadAudit() {
+      const X = extra();
+      return { requests: X.requests.map(r => ({ id: r.uid, ...r, email: r.uid + '@' + DOMAIN })), members: state.members.map(m => ({ id: m.uid, ...m })), priv: [], roster: [],
+        blocked: [], confirmed: [], pending: X.pending || [], registrations: X.regs || demoRegs(), events: X.events || demoEvents() };
+    },
     async loadPulse() { return extra().pulse; },
     async markContacted(uid) { const X = extra(); X.pulse[uid] = { contactedAt: Date.now(), by: 'you' }; saveExtra(X); return { ok: true }; },
     // ---------- organizers: Thursday check-in codes ----------
@@ -187,7 +193,12 @@ function demoBackend() {
     async countCheckins(date) { return state.facts.filter(f => f.type === 'attend' && f.date === date).length; },
     async requestManualConfirm() { return { ok: true }; }, async manualConfirmPending() { return false; },
     async loadPendingConfirms() { const X = extra(); return X.pending || [{ uid: 'newbie', email: 'jane.doe@' + DOMAIN, name: 'Jane D.', at: now - 3600e3 }]; },
-    async confirmByHand(uid) { const X = extra(); X.pending = (X.pending || [{ uid: 'newbie' }]).filter(p => p.uid !== uid); saveExtra(X); return { ok: true }; },
+    async confirmByHand(uid, yes) {
+      const X = extra(); X.pending = (X.pending || [{ uid: 'newbie' }]).filter(p => p.uid !== uid);
+      X.regs = (X.regs || demoRegs()).map(r => (r.uid === uid && r.status === 'pending' ? { ...r, status: yes ? 'confirmed' : 'cancelled' } : r));
+      saveExtra(X); return { ok: true };
+    },
+    async loadPendingRegistrations() { return (extra().regs || demoRegs()).filter(r => r.status === 'pending'); },
     // ---------- events made on the site, and registrations ----------
     async loadEvents(all) { return (extra().events || demoEvents()).filter(e => all || e.published); },
     async getEvent(id) { return (extra().events || demoEvents()).find(e => e.id === id) || null; },
@@ -197,6 +208,29 @@ function demoBackend() {
     },
     async deleteEvent(id) { const X = extra(); X.events = (X.events || demoEvents()).filter(e => e.id !== id); saveExtra(X); return { ok: true }; },
     async loadRegistrations(eventId) { return (extra().regs || demoRegs()).filter(r => r.event === eventId); },
+    async myRegistrations() { return (extra().regs || demoRegs()).filter(r => r.uid === 'you'); },
+    async myRegistration(eventId) { return (extra().regs || demoRegs()).find(r => r.event === eventId && r.uid === 'you') || null; },
+    async myRsvps() { return extra().rsvps.filter(r => r.uid === 'you'); },
+    // organizers: everything stored about one person (to erase it when they ask)
+    async personData(uid) {
+      const X = extra(), B = board();
+      const counts = { profile: state.members.some(m => m.uid === uid) ? 1 : 0, request: X.requests.some(r => r.uid === uid) ? 1 : 0,
+        facts: state.facts.filter(f => f.uid === uid).length, registrations: (X.regs || demoRegs()).filter(r => r.uid === uid).length,
+        posts: B.posts.filter(p => p.by === uid).length, comments: Object.values(B.comments).flat().filter(c => c.by === uid).length,
+        other: (X.camps[uid] ? 1 : 0) + X.rsvps.filter(r => r.uid === uid).length + X.votes.filter(v => v.uid === uid).length };
+      return { uid, counts, total: Object.values(counts).reduce((a, n) => a + n, 0) };
+    },
+    async erasePerson(plan) {
+      const uid = plan.uid, X = extra(), B = board();
+      state.members = state.members.filter(m => m.uid !== uid); state.facts = state.facts.filter(f => f.uid !== uid); save();
+      X.requests = X.requests.filter(r => r.uid !== uid); X.regs = (X.regs || demoRegs()).filter(r => r.uid !== uid);
+      X.rsvps = X.rsvps.filter(r => r.uid !== uid); X.votes = X.votes.filter(v => v.uid !== uid); delete X.camps[uid]; delete X.pulse[uid];
+      X.pending = (X.pending || []).filter(p => p.uid !== uid); saveExtra(X);
+      const gone = new Set(B.posts.filter(p => p.by === uid).map(p => p.id));
+      B.posts = B.posts.filter(p => !gone.has(p.id)); gone.forEach(id => delete B.comments[id]);
+      Object.keys(B.comments).forEach(k => { B.comments[k] = B.comments[k].filter(c => c.by !== uid); }); saveBoard(B);
+      return { ok: true, n: plan.total };
+    },
     async register(eventId, status) {
       const X = extra(); X.regs = X.regs || demoRegs(); const id = eventId + '_you';
       X.regs = X.regs.filter(r => r.id !== id).concat({ id, event: eventId, uid: 'you', status, at: Date.now() }); saveExtra(X); return { ok: true };
@@ -209,7 +243,6 @@ function demoBackend() {
 }
 
 /* ================= Firebase backend ================= */
-function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); }); }
 function linkErrorText(e) {
   const c = (e && e.code) || '';
   if (c.includes('invalid-action-code') || c.includes('expired-action-code')) return tr('err.link.expired', 'That sign-in link has expired or was already used. Request a new one below and open it right away.') + ' (' + c.replace('auth/', '') + ')';
@@ -286,13 +319,10 @@ function firebaseBackend() {
   let lastVerified = false;
   const isBlocked = async (uid) => { try { const d = await db.collection('blocked').doc(uid).get(); return d.exists; } catch (e) { return false; } };
   const manuallyConfirmed = async (uid) => { try { const d = await db.collection('confirmed').doc(uid).get(); return d.exists; } catch (e) { return false; } };
-  const V = '10.12.2', base = 'https://www.gstatic.com/firebasejs/' + V + '/';
   return {
     mode: 'firebase',
     async init() {
-      await loadScript(base + 'firebase-app-compat.js');
-      await Promise.all([loadScript(base + 'firebase-auth-compat.js'), loadScript(base + 'firebase-firestore-compat.js')]);
-      firebase.initializeApp(CFG.FIREBASE);
+      await CFG.loadFirebase(['auth', 'firestore']);   // config.js: one Firebase per page, with App Check when it's on
       auth = firebase.auth(); db = firebase.firestore();
       checkSchoolAccount = async () => {
         const u = auth.currentUser;
@@ -350,6 +380,8 @@ function firebaseBackend() {
         if (u && !verified) verified = await manuallyConfirmed(u.uid);
         if (u && !verified && ORG_CONFIRM && validEmail(u.email)) reviewQueue(u);   // waits for an organizer
         lastVerified = verified;
+        // confirmed another way (the confirmation email from the quarantine, or Microsoft): leave the organizers' review list
+        if (u && verified && ORG_CONFIRM) db.collection('confirmPending').doc(u.uid).delete().catch(() => {});
         cb(u ? { uid: u.uid, email: u.email, verified } : null);
       });
     },
@@ -394,16 +426,29 @@ function firebaseBackend() {
     async manualConfirmPending() {
       try { const d = await db.collection('confirmPending').doc(auth.currentUser.uid).get(); return d.exists; } catch (e) { return false; }
     },
+    // accounts waiting for an organizer; anyone already approved, or already a member, is taken off the list (and the stale entry removed)
     async loadPendingConfirms() {
-      const s = await db.collection('confirmPending').get();
-      return s.docs.map(d => { const x = d.data(); return { uid: d.id, email: x.email, name: x.name, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; });
+      const [s, ok, mem] = await Promise.all([db.collection('confirmPending').get(), db.collection('confirmed').get(), db.collection('members').get()]);
+      const done = new Set([...ok.docs.map(d => d.id), ...mem.docs.map(d => d.id)]);
+      s.docs.filter(d => done.has(d.id)).forEach(d => d.ref.delete().catch(() => {}));
+      return s.docs.filter(d => !done.has(d.id))
+        .map(d => { const x = d.data(); return { uid: d.id, email: x.email, name: x.name, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; });
     },
     async confirmByHand(uid, yes) {
       const b = db.batch();
       if (yes) b.set(db.collection('confirmed').doc(uid), { by: auth.currentUser.uid, at: FV().serverTimestamp() });
       else if (ORG_CONFIRM) b.set(db.collection('blocked').doc(uid), { by: auth.currentUser.uid, at: FV().serverTimestamp() });
       b.delete(db.collection('confirmPending').doc(uid));
+      try {
+        const regs = await db.collection('registrations').where('uid', '==', uid).where('status', '==', 'pending').get();
+        regs.docs.forEach(d => b.update(d.ref, { status: yes ? 'confirmed' : 'cancelled' }));
+      } catch (e) { /* the account decision still goes through */ }
       try { await b.commit(); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    // spots waiting for an organizer (people whose account isn't reviewed yet), across every session
+    async loadPendingRegistrations() {
+      const s = await db.collection('registrations').where('status', '==', 'pending').get();
+      return s.docs.map(d => ({ id: d.id, ...d.data() }));
     },
     async resetPassword(email) {
       if (!validEmail(email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
@@ -555,10 +600,6 @@ function firebaseBackend() {
     },
     async deleteComment(postId, cid) { try { await target(postId, cid).delete(); return { ok: true }; } catch (e) { return fail(e); } },
     // ---------- sessions: "I'm going" and votes (doc id = date_uid, so one per person and session) ----------
-    async loadRsvps(fromDate) {
-      const s = await db.collection('rsvps').where('date', '>=', fromDate || '2000-01-01').get();
-      return s.docs.map(d => ({ date: d.data().date, uid: d.data().uid }));
-    },
     async setRsvp(date, on) {
       const uid = auth.currentUser.uid, ref = db.collection('rsvps').doc(date + '_' + uid);
       try { if (on) await ref.set({ date, uid, at: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; } catch (e) { return fail(e); }
@@ -634,10 +675,67 @@ function firebaseBackend() {
         return { ok: true, id: ref.id };
       } catch (e) { return fail(e); }
     },
-    async deleteEvent(id) { try { await db.collection('events').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    async deleteEvent(id) {
+      try {
+        const regs = await db.collection('registrations').where('event', '==', id).get(), b = db.batch();
+        regs.docs.forEach(d => b.delete(d.ref)); b.delete(db.collection('events').doc(id)); await b.commit();
+        return { ok: true };
+      } catch (e) { return fail(e); }
+    },
+    // ---------- organizers: everything the Data check on /pulse looks at (read-only) ----------
+    async loadAudit() {
+      const all = async (c) => (await db.collection(c).get()).docs.map(d => ({ id: d.id, ...d.data() }));
+      const [requests, members, priv, roster, blocked, confirmed, pending, registrations, events] = await Promise.all(
+        ['requests', 'members', 'private', 'roster', 'blocked', 'confirmed', 'confirmPending', 'registrations', 'events'].map(c => all(c).catch(() => [])));
+      return { requests, members, priv, roster, blocked, confirmed, pending, registrations, events };
+    },
     async loadRegistrations(eventId) {
       const s = await db.collection('registrations').where('event', '==', eventId).get();
       return s.docs.map(d => { const x = d.data(); return { id: d.id, event: x.event, uid: x.uid, status: x.status, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; });
+    },
+    // your own spots (registrations are private: each person reads only their own)
+    async myRegistrations() {
+      const u = auth.currentUser; if (!u) return [];
+      const s = await db.collection('registrations').where('uid', '==', u.uid).get();
+      return s.docs.map(d => { const x = d.data(); return { id: d.id, event: x.event, uid: x.uid, status: x.status, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; });
+    },
+    async myRegistration(eventId) {
+      const u = auth.currentUser; if (!u) return null;
+      const d = await db.collection('registrations').doc(eventId + '_' + u.uid).get();
+      if (!d.exists) return null;
+      const x = d.data(); return { id: d.id, event: x.event, uid: x.uid, status: x.status, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 };
+    },
+    // the old "I'm going" (rsvps), only to move them into registrations
+    async myRsvps() {
+      const u = auth.currentUser; if (!u) return [];
+      const s = await db.collection('rsvps').where('uid', '==', u.uid).get();
+      return s.docs.map(d => ({ date: d.data().date, uid: u.uid }));
+    },
+    /* organizers: everything stored about one person, to erase it when they ask (RGPD).
+       Kept: blocked/{uid} (so a refused account stays refused) and missions they took on other people's posts. */
+    async personData(uid, email) {
+      const refs = (s) => s.docs.map(d => d.ref);
+      const where = (c, f = 'uid') => db.collection(c).where(f, '==', uid).get().then(refs).catch(() => []);
+      const one = (c, id) => db.collection(c).doc(id).get().then(d => (d.exists ? [d.ref] : [])).catch(() => []);
+      const em = String(email || '').toLowerCase();
+      const [facts, registrations, rsvps, votes, posts, profile, priv, request, camp, pend, conf, pulse, roster, board] = await Promise.all([
+        where('facts'), where('registrations'), where('rsvps'), where('votes'), where('board', 'by'),
+        one('members', uid), one('private', uid), one('requests', uid), one('camps', uid), one('confirmPending', uid), one('confirmed', uid), one('pulse', uid),
+        em ? one('roster', em) : [], db.collection('board').get().then(refs).catch(() => [])]);
+      const mine = new Set(posts.map(r => r.path));
+      // their comments anywhere, and every comment under their own posts (those go with the post)
+      const comments = (await Promise.all(board.map(p => (mine.has(p.path) ? p.collection('comments').get() : p.collection('comments').where('by', '==', uid).get())
+        .then(refs).catch(() => [])))).flat();
+      const counts = { profile: profile.length, request: request.length, facts: facts.length, registrations: registrations.length, posts: posts.length,
+        comments: comments.length, other: priv.length + camp.length + pend.length + conf.length + pulse.length + roster.length + rsvps.length + votes.length };
+      const all = [...comments, ...posts, ...facts, ...registrations, ...rsvps, ...votes, ...camp, ...priv, ...pend, ...conf, ...pulse, ...roster, ...request, ...profile];
+      return { uid, counts, total: all.length, refs: all };
+    },
+    async erasePerson(plan) {
+      try {
+        for (let i = 0; i < plan.refs.length; i += 400) { const b = db.batch(); plan.refs.slice(i, i + 400).forEach(r => b.delete(r)); await b.commit(); }
+        return { ok: true, n: plan.refs.length };
+      } catch (e) { return fail(e); }
     },
     async register(eventId, status) {
       const uid = auth.currentUser.uid;

@@ -52,10 +52,13 @@ service cloud.firestore {
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40;
       allow update: if isMember() && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'github', 'accessories', 'activeMission'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40
+        && request.resource.data.get('github', '') is string && request.resource.data.get('github', '').size() <= 39
         && request.resource.data.accessories.size() <= 2
         && (request.resource.data.get('activeMission', null) == resource.data.get('activeMission', null)
             || activeMissionOk(request.resource.data.get('activeMission', null)));
-      allow delete: if false;
+      // "Delete this person's data" on /pulse (never an organizer's profile)
+      allow delete: if isOrganizer() && request.auth.uid != uid && resource.data.get('role', 'member') != 'organizer';
     }
 
     // Roster: document ID = the member's full school email address, in lower case.
@@ -116,7 +119,7 @@ service cloud.firestore {
 
     // The confirmation email didn't arrive: the person asks an organizer to confirm them by hand.
     match /confirmPending/{uid} {
-      allow create, update: if schoolEmail() && request.auth.uid == uid
+      allow create, update: if schoolEmail() && notBlocked() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['email', 'name', 'at'])
         && request.resource.data.email == email()
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
@@ -136,7 +139,10 @@ service cloud.firestore {
     // Email addresses: only the person and organizers can read them.
     match /private/{uid} {
       allow read: if (signedIn() && request.auth.uid == uid) || isOrganizer();
-      allow write: if onRoster() && request.auth.uid == uid;
+      // only your own address, exactly as your account has it
+      allow create, update: if onRoster() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email']) && request.resource.data.email.lower() == email();
+      allow delete: if (onRoster() && request.auth.uid == uid) || isOrganizer();
     }
 
     // ---------- Village Board: missions, events, open-source projects ----------
@@ -232,26 +238,22 @@ service cloud.firestore {
       }
     }
 
-    // ---------- Sessions: "I'm going" and votes on planned sessions (members only) ----------
+    // ---------- Sessions: votes on planned sessions (members only) ----------
     // One document per person and session: id = "YYYY-MM-DD_uid".
+    // rsvps: the old "I'm going" (now in registrations). Nothing new is written; the site moves each member's own over and removes them.
     match /rsvps/{id} {
       allow read: if isMember();
-      allow create: if isMember() && id == request.resource.data.date + '_' + request.auth.uid
-        && request.resource.data.keys().hasOnly(['date', 'uid', 'at'])
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && request.resource.data.at == request.time;
-      allow delete: if isMember() && resource.data.uid == request.auth.uid;
+      allow delete: if (isMember() && resource.data.uid == request.auth.uid) || isOrganizer();
     }
     match /votes/{id} {
       allow read: if isMember();
       allow create, update: if isMember() && id == request.resource.data.date + '_' + request.auth.uid
         && request.resource.data.keys().hasOnly(['date', 'uid', 'choice', 'at'])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}(-[a-z0-9-]{1,40})?$')
         && request.resource.data.choice is string && request.resource.data.choice.size() > 0 && request.resource.data.choice.size() <= 40
         && request.resource.data.at == request.time;
-      allow delete: if isMember() && resource.data.uid == request.auth.uid;
+      allow delete: if (isMember() && resource.data.uid == request.auth.uid) || isOrganizer();
     }
 
     // ---------- Camps: each member's own space on the Mountain (members only) ----------
@@ -276,6 +278,7 @@ service cloud.firestore {
         && onlyKeys(['color', 'working', 'dream', 'askMe', 'about', 'song', 'proud', 'updatedAt']);
       allow update: if isMember() && request.auth.uid != uid && reportOnly();
       allow update: if isOrganizer() && onlyKeys(['hidden']);
+      allow delete: if isOrganizer();
     }
 
     // Organizers only: who has been contacted after drifting away (pulse/{uid} { contactedAt, by }).
@@ -283,19 +286,20 @@ service cloud.firestore {
       allow read, write: if isOrganizer();
     }
 
-    // One document per session code: { date: "YYYY-MM-DD", validFrom: timestamp, validUntil: timestamp, double: bool }.
-    // Members can't read or list codes; the rules below only check that a typed code exists.
     // ---------- Events made on the site by organizers (events/{id}) ----------
     // Anyone can see published events (the schedule is public); only organizers create, edit or delete them.
     function eventOk(d) {
       return d.keys().hasOnly(['title', 'title_fr', 'date', 'time', 'time_fr', 'room', 'type', 'type_fr', 'format', 'level', 'lang', 'track',
           'description', 'description_fr', 'details', 'details_fr', 'speaker', 'link', 'linkText', 'registration', 'capacity', 'deadline', 'published',
+          'cancelled', 'hidden', 'deleted',
           'createdBy', 'createdAt', 'updatedAt'])
         && d.title is string && d.title.size() > 0 && d.title.size() <= 120
         && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && d.description is string && d.description.size() <= 300
         && d.details is string && d.details.size() <= 5000 && d.details_fr is string && d.details_fr.size() <= 5000
         && d.registration is bool && d.published is bool
+        && (d.get('deadline', '') == '' || (d.deadline is string && d.deadline.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && d.get('cancelled', false) is bool && d.get('hidden', false) is bool && d.get('deleted', false) is bool
         && d.capacity is int && d.capacity >= 0 && d.capacity <= 1000;
     }
     match /events/{id} {
@@ -304,29 +308,47 @@ service cloud.firestore {
       allow delete: if isOrganizer();
     }
 
-    // Registrations (registrations/{eventId}_{uid}): any school account can ask for a spot, even before an organizer has
-    // reviewed the account. Members are confirmed straight away; everyone else waits ('pending') until an organizer confirms.
-    // Readable by anyone so the site can show how many places are left (documents hold no names, only account ids).
+    // Registrations (registrations/{eventId}_{uid}): the one "I'm going" for every session. Any school account can ask for a spot,
+    // even before an organizer has reviewed the account. Members can be confirmed straight away; everyone else waits ('pending')
+    // until an organizer confirms. Private: each person sees only their own; organizers see everyone (and the counts).
     function regOk(id) {
       return schoolEmail() && notBlocked()
         && request.resource.data.keys().hasOnly(['event', 'uid', 'status', 'at'])
         && request.resource.data.uid == request.auth.uid
         && id == request.resource.data.event + '_' + request.auth.uid
         && request.resource.data.at == request.time
-        && (request.resource.data.status in ['pending', 'waitlist', 'cancelled'] || (request.resource.data.status == 'confirmed' && isMember()))
-        // an event made on the site with registration on, or a session from the schedule file ("d-YYYY-MM-DD")
-        && (request.resource.data.event.matches('^d-[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-            || get(/databases/$(db)/documents/events/$(request.resource.data.event)).data.published == true);
+        && (request.resource.data.status in ['pending', 'waitlist', 'cancelled'] || (request.resource.data.status == 'confirmed' && isMember()));
+    }
+    // Is this event taking sign-ups? A session from the schedule file ("d-YYYY-MM-DD", maybe with its own key) unless an organizer
+    // cancelled, hid or deleted it; or a published event made on the site that isn't cancelled.
+    // Sign-ups close at the end of the event's day (or of its registration deadline), UTC.
+    function evPath(e) { return /databases/$(db)/documents/events/$(e); }
+    function notOver(y, m, d) { return request.time < timestamp.date(int(y), int(m), int(d)) + duration.value(1, 'd'); }
+    function dayNotOver(day) { return notOver(day.split('-')[0], day.split('-')[1], day.split('-')[2]); }
+    function docOpen(x) {
+      return x.get('cancelled', false) == false && x.get('hidden', false) == false && x.get('deleted', false) == false
+        && dayNotOver(x.date) && (x.get('deadline', '') == '' || dayNotOver(x.deadline));
+    }
+    function eventOpen(e) {
+      return e.matches('^d-[0-9]{4}-[0-9]{2}-[0-9]{2}(-[a-z0-9-]{1,40})?$')
+        ? (exists(evPath(e)) ? docOpen(get(evPath(e)).data) : notOver(e.split('-')[1], e.split('-')[2], e.split('-')[3]))
+        : (get(evPath(e)).data.published == true && docOpen(get(evPath(e)).data));
     }
     match /registrations/{id} {
-      allow read: if true;
-      allow create: if regOk(id) && request.resource.data.status != 'cancelled';
-      allow update: if regOk(id) && resource.data.uid == request.auth.uid && resource.data.event == request.resource.data.event;
+      // your own spot (it may not exist yet), or your own list; organizers read everything
+      allow get: if isOrganizer() || (signedIn() && id.matches('^.+_' + request.auth.uid + '$'));
+      allow list: if isOrganizer() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if regOk(id) && request.resource.data.status != 'cancelled' && eventOpen(request.resource.data.event);
+      // people can always cancel their own spot; anything else only while the event takes sign-ups
+      allow update: if regOk(id) && resource.data.uid == request.auth.uid && resource.data.event == request.resource.data.event
+        && (request.resource.data.status == 'cancelled' || eventOpen(request.resource.data.event));
       allow update: if isOrganizer() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
         && request.resource.data.status in ['pending', 'confirmed', 'waitlist', 'cancelled'];
       allow delete: if isOrganizer();
     }
 
+    // One document per session code: { date: "YYYY-MM-DD", validFrom: timestamp, validUntil: timestamp, double: bool }.
+    // Members can't read or list codes; the check-in rule below only checks that a typed code exists.
     match /checkinCodes/{c} {
       allow read, write: if isOrganizer();
     }
@@ -381,8 +403,9 @@ service cloud.firestore {
         && request.resource.data.verifiedBy == request.auth.uid
         && request.resource.data.status in ['approved', 'rejected'];
 
-      // Facts are never deleted. Corrections are new facts, so the log stays complete.
-      allow delete: if false;
+      // Facts are never deleted to correct something (corrections are new facts, so the log stays complete).
+      // The one exception: an organizer erasing someone's data at their request ("Delete this person's data" on /pulse).
+      allow delete: if isOrganizer() && resource.data.uid != request.auth.uid;
     }
   }
 }

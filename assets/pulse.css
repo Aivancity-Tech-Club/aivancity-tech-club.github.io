@@ -27,4 +27,22 @@
 .p-list .row-actions .chip { font-size: .8rem; }
 .p-alert { border-color: #f9ab00; box-shadow: 4px 4px 0 #f9ab00; }
 .p-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.p-list a { color: inherit; }
+.p-list a:not(.btn) { color: inherit; }
+.p-wants { display: block; margin-top: 4px; color: var(--ink) !important; font-weight: 700; }
+/* Data check */
+.dc { margin-top: 18px; }
+.dc-item { border-top: 1px solid color-mix(in srgb, var(--line) 18%, transparent); padding: 10px 0; }
+.dc-item summary { cursor: pointer; }
+.dc-item summary small { font-family: var(--mono); margin-left: 6px; }
+.dc-item ul { margin: 6px 0 0; padding-left: 1.2em; font-size: .92rem; overflow-wrap: anywhere; }
+.dc-item .help { margin: 6px 0 0; }
+
+/* Delete someone's data */
+.er-form { display: grid; gap: 12px; max-width: 520px; margin-top: 12px; }
+#erOut { margin-top: 14px; }
+.er-list { margin-bottom: 14px; }
+#erOut .ev-confirm { padding: 16px; border-radius: 16px; border: var(--stroke) solid #b3261e; background: var(--surface); }
+#erOut .ev-confirm p { margin: 0 0 12px; font-size: .95rem; }
+#erOut .ev-confirm .ev-confirm-h { font-weight: 800; font-size: 1.05rem; margin-bottom: 6px; }
+#erOut .ev-confirm-act { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (prefers-color-scheme: dark) { #erOut .ev-confirm { border-color: #f2b8b5; } }

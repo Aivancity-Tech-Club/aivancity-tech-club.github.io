@@ -124,4 +124,6 @@ article.session[data-key]:has(.session-title:focus-visible) { outline: 3px solid
 .session-title:focus-visible { outline: none; }
 @media (prefers-reduced-motion: reduce) { article.session[data-key], article.session[data-key]:hover { transition: none; transform: none; } }
 /* "I'm going" for people who aren't members yet; members have their own one-tap button */
-html.is-member .reg-row.for-visitors { display: none; }
+/* a cancelled session keeps its card, clearly marked */
+article.session.is-cancelled h3 { text-decoration: line-through; text-decoration-thickness: 2px; }
+article.session.is-cancelled .session-body > p:not(.session-actions) { opacity: .75; }

@@ -51,12 +51,14 @@ const fmtDay = (d) => { const s = parseDate(d).toLocaleDateString(LOC(), { weekd
 /* ---------- mount one event into an element ----------
    opts: { id } or { date }, heading: 'h1' | 'h2', onTitle(text), focusRegister */
 async function mount(root, opts) {
-  const H = opts.heading || 'h2';
+  const H = opts.heading || 'h2', H2 = H === 'h1' ? 'h2' : 'h3';
   const q = (sel) => root.querySelector(sel);
   root.innerHTML = `<div class="ev">
       <${H} class="ev-title" tabindex="-1">${esc(T('ev.loading'))}</${H}>
       <div class="session-meta ev-chips"></div>
       <p class="ev-lede"></p>
+      <div class="ev-manage" hidden></div>
+      <p class="notice bad ev-banner" role="status" hidden></p>
       <div class="ev-body" hidden>
         <div class="ev-facts"></div>
         <div class="ev-actions"></div>
@@ -69,11 +71,12 @@ async function mount(root, opts) {
   let ev = null;
   const err = await platform();
   // a session from schedule.js can have an organizer's edited version saved as event "d-YYYY-MM-DD"
-  const date = opts.date || (/^d-\d{4}-\d{2}-\d{2}$/.test(opts.id || '') ? opts.id.slice(2) : null);
-  const fileSession = date ? SESSIONS.find(s => s.date === date && s.track !== 'break') || null : null;
-  const siteId = date ? 'd-' + date : opts.id;
+  const fk = opts.date || (FILE_ID.test(opts.id || '') ? opts.id.slice(2) : null);   // a session from schedule.js (see fileKey)
+  const fileSession = fk ? findFileSession(fk) : null;
+  const siteId = fk ? 'd-' + fk : opts.id;
   const saved = siteId && !err ? await data.getEvent(siteId) : null;
   ev = fileSession ? (saved ? { ...fileSession, ...saved } : fileSession) : saved;
+  const reread = async () => { const x = await data.getEvent(siteId); return fileSession ? { ...fileSession, ...(x || {}) } : x; };
   if (!root.isConnected) return () => {};
   if (!ev) {
     q('.ev-title').textContent = T('ev.notfound');
@@ -82,19 +85,26 @@ async function mount(root, opts) {
   }
   ev = { ...ev, _d: parseDate(ev.date) };
   const fromFile = !!fileSession, isSite = !!ev.id && !fromFile, today = today0(), past = ev._d < today;
-  // who can register: events with registration on (everyone); any other session in schedule.js: people who aren't members yet,
-  // so "I'm going" also works for visitors (members keep their one-tap button on the card)
-  const key = fromFile ? 'd-' + ev.date : ev.id, forAll = !!ev.registration, regOn = !past;
+  // one "I'm going" for every session (registrations/{key}_{uid}), the same one as the button on the schedule cards
+  const key = fromFile ? 'd-' + fk : ev.id;
+  const regOn = () => !past && !ev.cancelled;
+  // hidden: a site event that isn't published, or a file session an organizer hid
+  const isHidden = () => (isSite ? ev.published === false || !!ev.hidden : !!ev.hidden);
   let regs = [], busy = false, msg = null, siBox = null, people = {}, orgFilter = 'all';
   const W = () => who || { me: null, member: false, hasReq: false, refused: false, isOrg: false };
+  // registrations are private: organizers load everyone's (and see the count); anyone else only their own spot
   const taken = () => regs.filter(r => r.status === 'pending' || r.status === 'confirmed').length;
-  const full = () => ev.capacity && taken() >= ev.capacity;
+  const full = () => W().isOrg && ev.capacity && taken() >= ev.capacity;
   const mine = () => (W().me ? regs.find(r => r.uid === W().me.uid) : null);
   const deadlinePassed = () => ev.deadline && parseDate(ev.deadline) < today;
 
   function draw() {
     if (!root.isConnected) return;
     const w = W();
+    if (ev.deleted && !w.isOrg) {   // removed: only organizers still see it (to restore it)
+      q('.ev-title').textContent = T('ev.removed'); q('.ev-chips').innerHTML = ''; q('.ev-banner').hidden = true; q('.ev-manage').hidden = true;
+      q('.ev-lede').innerHTML = `<a class="btn btn-ghost" href="/schedule">${esc(T('ev.back'))} →</a>`; q('.ev-body').hidden = true; return;
+    }
     q('.ev-title').textContent = P(ev, 'title');
     if (opts.onTitle) opts.onTitle(P(ev, 'title'));
     q('.ev-chips').innerHTML = [
@@ -104,32 +114,104 @@ async function mount(root, opts) {
       ev.level ? `<span class="chip chip-level lv-${esc(ev.level)}">${esc(T('level.' + ev.level))}</span>` : '',
       past ? `<span class="chip chip-done">${esc(T('sched.done'))}</span>` : '',
       !past && ev.planned ? `<span class="chip chip-planned">${esc(T('sched.planned'))}</span>` : '',
-      w.isOrg && isSite && !ev.published ? `<span class="chip chip-planned">${esc(T('ev.draft'))}</span>` : '',
+      ev.cancelled ? `<span class="chip chip-cancelled">${esc(T('ev.cancelled.chip'))}</span>` : '',
+      w.isOrg && isHidden() && !ev.deleted ? `<span class="chip chip-planned">${esc(T('ev.hidden.chip'))}</span>` : '',
+      w.isOrg && ev.deleted ? `<span class="chip chip-cancelled">${esc(T('ev.deleted.chip'))}</span>` : '',
     ].join('');
     q('.ev-lede').textContent = P(ev, 'description') || '';
+    q('.ev-banner').hidden = !ev.cancelled; q('.ev-banner').textContent = ev.cancelled ? T('ev.cancelled.banner') : '';
+    drawManage();
     const fact = (k, v) => (v ? `<span><small>${esc(T(k))}</small>${v}</span>` : '');
     q('.ev-facts').innerHTML = fact('ev.when', esc(fmtDay(ev.date))) + fact('ev.time', esc(P(ev, 'time') || T('sched.time')))
       + fact('ev.where', esc(P(ev, 'room') || T('sched.room'))) + (ev.speaker ? fact('ev.speaker', esc(ev.speaker)) : '')
-      + (ev.registration && ev.capacity ? fact('ev.placesh', esc(T(full() ? 'ev.full' : 'ev.places', { n: taken(), cap: ev.capacity }))) : '')
+      + (W().isOrg && ev.registration && ev.capacity ? fact('ev.placesh', esc(T(full() ? 'ev.full' : 'ev.places', { n: taken(), cap: ev.capacity }))) : '')
       + (ev.registration && ev.deadline && !past ? fact('ev.deadline', esc(fmtDay(ev.deadline))) : '');
     q('.ev-actions').innerHTML = `
       ${ev.link && !past ? `<a class="btn btn-primary" href="${esc(ev.link)}" target="_blank" rel="noopener">${esc(P(ev, 'linkText') || T('sched.more'))} ↗</a>` : ''}
-      ${!past ? `<button type="button" class="cal-btn" data-ics="${esc(sessionKey(ev))}">${esc(T('sched.cal.one'))}</button>` : ''}
-      <button type="button" class="cal-btn no-ico" data-copy>${esc(T('ev.copy'))}</button>
-      ${w.isOrg ? `<a class="cal-btn no-ico" href="/event-edit?${fromFile ? 'd=' + ev.date : 'id=' + encodeURIComponent(ev.id)}">${esc(T('ev.edit'))}</a>` : ''}`;
+      ${!past && !ev.cancelled ? `<button type="button" class="cal-btn" data-ics="${esc(sessionKey(ev))}">${esc(T('sched.cal.one'))}</button>` : ''}
+      <button type="button" class="cal-btn no-ico" data-copy>${esc(T('ev.copy'))}</button>`;
     const details = P(ev, 'details');
-    q('.ev-details').innerHTML = details ? `<h3>${esc(T('ev.about'))}</h3>${richText(details)}` : '';
+    q('.ev-details').innerHTML = details ? `<${H2}>${esc(T('ev.about'))}</${H2}>${richText(details)}` : '';
     q('.ev-recap').innerHTML = past && ev.recap ? recapHTML(ev) : '';
     q('.ev-body').hidden = false;
     drawReg(); drawOrg();
   }
 
+  /* ---------- organizers: Manage (edit, cancel, hide, delete) ----------
+   A small menu; anything that changes what people see asks for a confirmation first. */
+  let menuOpen = false, confirming = null, manageMsg = null;
+  const editHref = '/event-edit?' + (fromFile ? 'd=' + encodeURIComponent(fk) : 'id=' + encodeURIComponent(ev.id));
+  const CHANGES = {
+    cancel:   { patch: { cancelled: true }, ask: true },
+    uncancel: { patch: { cancelled: false } },
+    hide:     { patch: isSite ? { published: false } : { hidden: true }, ask: true },
+    show:     { patch: { published: true, hidden: false } },
+    delete:   { ask: true, danger: true },
+    restore:  { patch: { deleted: false } },
+  };
+  function drawManage() {
+    const box = q('.ev-manage');
+    if (!W().isOrg) { box.hidden = true; return; }
+    box.hidden = false;
+    const item = (k, danger) => `<li><button type="button" class="ev-mi${danger ? ' danger' : ''}" data-mi="${k}">${esc(T('ev.m.' + k))}</button></li>`;
+    const items = ev.deleted ? item('restore') : [
+      `<li><a class="ev-mi" href="${editHref}">${esc(T('ev.m.edit'))}</a></li>`,
+      item(ev.cancelled ? 'uncancel' : 'cancel'),
+      item(isHidden() ? 'show' : 'hide'),
+      item('delete', true),
+    ].join('');
+    const c = confirming && CHANGES[confirming];
+    const delKind = isSite ? 'site' : 'file';
+    box.innerHTML = `<button type="button" class="btn btn-ghost ev-manage-btn" aria-expanded="${menuOpen}" data-menu>${esc(T('ev.manage'))} <span aria-hidden="true">▾</span></button>
+      <ul class="ev-menu"${menuOpen ? '' : ' hidden'}>${items}</ul>
+      ${c ? `<div class="ev-confirm${c.danger ? ' danger' : ''}" role="group" aria-labelledby="evcH">
+          <p class="ev-confirm-h" id="evcH">${esc(T('ev.c.' + confirming + '.h'))}</p>
+          <p>${esc(T('ev.c.' + confirming + '.p' + (confirming === 'delete' ? '.' + delKind : '')))}</p>
+          <div class="ev-confirm-act"><button type="button" class="btn ${c.danger ? 'btn-danger' : 'btn-primary'}" data-yes="${confirming}">${esc(T('ev.c.' + confirming + '.yes'))}</button>
+            <button type="button" class="btn btn-ghost" data-no>${esc(T('ev.c.no'))}</button></div></div>` : ''}
+      ${manageMsg ? `<p class="notice ${manageMsg.ok ? 'ok' : 'bad'} form-msg" role="status">${esc(manageMsg.text)}</p>` : ''}`;
+  }
+  async function change(kind) {
+    manageMsg = null;
+    let r;
+    if (kind === 'delete' && isSite) r = await data.deleteEvent(ev.id);
+    else {
+      const fields = { ...ev }; delete fields._d; delete fields.id;
+      const patch = kind === 'delete' ? { deleted: true } : CHANGES[kind].patch;
+      // a file session's saved version must stay published, so the public site knows it was changed, hidden or deleted
+      r = await data.saveEvent({ ...fields, ...patch, ...(fromFile ? { published: true } : {}), id: key });
+    }
+    if (!r.ok) { manageMsg = { text: T(r.code || 'err.generic') + (r.detail ? ` (${r.detail})` : '') }; drawManage(); return; }
+    if (window.loadSiteEvents) loadSiteEvents();   // the schedule behind the panel updates too
+    if (kind === 'delete' && isSite) { if (opts.onRemoved) opts.onRemoved(); return; }
+    const fresh = await reread(); ev = { ...fresh, _d: parseDate(fresh.date) };
+    manageMsg = { ok: true, text: T('ev.done.' + kind) };
+    draw();
+    const btn = q('[data-menu]'); if (btn) btn.focus();
+  }
+  root.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-menu]')) { menuOpen = !menuOpen; confirming = null; manageMsg = null; drawManage(); const f = q('.ev-menu .ev-mi'); if (menuOpen && f) f.focus(); return; }
+    const mi = e.target.closest('[data-mi]');
+    if (mi) {
+      const k = mi.dataset.mi; menuOpen = false;
+      if (CHANGES[k].ask) { confirming = k; drawManage(); q('[data-yes]').focus(); }
+      else { confirming = null; drawManage(); await change(k); }
+      return;
+    }
+    if (e.target.closest('[data-no]')) { confirming = null; drawManage(); q('[data-menu]').focus(); return; }
+    const yes = e.target.closest('[data-yes]');
+    if (yes) { yes.disabled = true; const k = yes.dataset.yes; confirming = null; await change(k); }
+  });
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && (menuOpen || confirming)) { e.stopPropagation(); menuOpen = false; confirming = null; drawManage(); q('[data-menu]').focus(); }
+  });
+
   /* ---------- registration ---------- */
-  const intro = () => `<h3 class="reg-h">${esc(T(full() ? 'ev.waitlist.h' : 'ev.reg.h'))}</h3>`;
+  const intro = () => `<${H2} class="reg-h">${esc(T(full() ? 'ev.waitlist.h' : 'ev.reg.h'))}</${H2}>`;
   const msgHTML = () => (msg ? `<p class="notice ${msg.ok ? 'ok' : 'bad'} form-msg" role="${msg.ok ? 'status' : 'alert'}">${esc(msg.text)}</p>` : '');
   function drawReg() {
     const box = q('.ev-reg'), w = W();
-    if (!regOn || (!forAll && w.member)) { box.hidden = true; return; }
+    if (!regOn()) { box.hidden = true; return; }
     box.hidden = false;
     if (past) { box.innerHTML = `${intro()}<p class="help">${esc(T('ev.reg.past'))}</p>`; return; }
     const r = mine();
@@ -146,7 +228,7 @@ async function mount(root, opts) {
     if (w.refused) { box.innerHTML = `${intro()}<p class="help">${esc(T('ev.reg.refused'))}</p>`; return; }
     if (r && r.status !== 'cancelled') {
       const k = { confirmed: 'ev.st.confirmed', pending: 'ev.st.pending', waitlist: 'ev.st.waitlist' }[r.status] || 'ev.st.pending';
-      box.innerHTML = `<h3 class="reg-h">${esc(T(k + '.h'))}</h3><p class="ev-status st-${esc(r.status)}">${esc(T(k))}</p>${msgHTML()}
+      box.innerHTML = `<${H2} class="reg-h">${esc(T(k + '.h'))}</${H2}><p class="ev-status st-${esc(r.status)}">${esc(T(k))}</p>${msgHTML()}
         <p style="margin:0"><button type="button" class="link-btn" data-act="cancel" ${busy ? 'disabled' : ''}>${esc(T('ev.cancel'))}</button></p>`;
       return;
     }
@@ -170,16 +252,28 @@ async function mount(root, opts) {
     box.innerHTML = `${intro()}${!w.member ? `<p class="help">${esc(T('ev.reg.review'))}</p>` : ''}${msgHTML()}
       <p style="margin:0"><button type="button" class="btn btn-primary" data-act="go" ${busy ? 'disabled' : ''}>${esc(T(full() ? 'ev.waitlist.btn' : 'rsvp.btn'))}</button></p>`;
   }
-  async function reloadRegs() { if (regOn && !err) { try { regs = await data.loadRegistrations(key); } catch (e) { regs = []; } } }
+  async function reloadRegs() {
+    if (past || err) return;
+    try { regs = W().isOrg ? await data.loadRegistrations(key) : W().me ? await data.myRegistration(key).then(r => (r ? [r] : [])) : []; } catch (e) { regs = []; }
+  }
   async function signUpForSpot() {
-    const status = full() ? 'waitlist' : W().member && forAll ? 'confirmed' : 'pending';
+    // members are confirmed straight away, unless places are limited: then an organizer confirms (or puts them on the waiting list)
+    const status = full() ? 'waitlist' : W().member && !ev.capacity ? 'confirmed' : 'pending';
     let r = await data.register(key, status);
     if (!r.ok && status === 'confirmed') r = await data.register(key, 'pending');   // profile not finished yet: an organizer confirms
     return r;
   }
+  // members: keep the one-tap button on the schedule cards behind the panel in step
+  function syncCards() {
+    const X = window.CLUB_LIVE, me = W().me; if (!X || !me) return;
+    const r = regs.find(x => x.uid === me.uid);
+    X.regs = X.regs.filter(x => x.event !== key).concat(r ? [r] : []);
+    if (typeof fillLive === 'function') document.querySelectorAll('#season, #upcoming-list').forEach(fillLive);
+  }
   async function act(fn) {
     busy = true; msg = null; drawReg();
-    try { await fn(); } finally { busy = false; await reloadRegs(); q('.ev-reg').innerHTML = ''; draw(); const b = q('.ev-reg'); if (b && !b.hidden) b.focus({ preventScroll: true }); }
+    try { await fn(); } finally {
+      busy = false; await reloadRegs(); syncCards(); q('.ev-reg').innerHTML = ''; draw(); const b = q('.ev-reg'); if (b && !b.hidden) b.focus({ preventScroll: true }); }
   }
 
   root.addEventListener('click', async (e) => {
@@ -215,16 +309,16 @@ async function mount(root, opts) {
   async function loadPeople() { const ids = regs.map(r => r.uid).filter(u => !people[u]); if (ids.length) Object.assign(people, await data.whoAre(ids)); }
   function drawOrg() {
     const box = q('.ev-org');
-    if (!W().isOrg || !regOn) { box.hidden = true; return; }
+    if (!W().isOrg || past) { box.hidden = true; return; }
     box.hidden = false;
     const n = (s) => regs.filter(r => r.status === s).length;
     const list = regs.filter(r => (orgFilter === 'all' ? r.status !== 'cancelled' : r.status === orgFilter)).sort((a, b) => a.at - b.at);
     const wa = (p) => (p.phone ? `https://wa.me/${p.phone.replace(/[^0-9]/g, '')}` : '');
-    box.innerHTML = `<div class="ev-org-head"><h3>${esc(T('ev.org.h'))}</h3>
+    box.innerHTML = `<div class="ev-org-head"><${H2}>${esc(T('ev.org.h'))}</${H2}>
         <div class="ev-org-tools">
         ${regs.length ? `<button type="button" class="btn btn-ghost" data-org="csv">${esc(T('ev.csv'))}</button>` : ''}
         ${n('pending') ? `<button type="button" class="btn btn-primary" data-org="all">${esc(T('ev.confirmall', { n: n('pending') }))}</button>` : ''}</div></div>
-      ${regOn ? `<div class="s-tabs" role="group" aria-label="${esc(T('ev.org.h'))}">${['all', 'pending', 'confirmed', 'waitlist', 'cancelled'].map(s =>
+      ${!past ? `<div class="s-tabs" role="group" aria-label="${esc(T('ev.org.h'))}">${['all', 'pending', 'confirmed', 'waitlist', 'cancelled'].map(s =>
           `<button type="button" class="s-tab" data-of="${s}" aria-pressed="${orgFilter === s}">${esc(T('ev.os.' + s))} <small>${s === 'all' ? regs.filter(r => r.status !== 'cancelled').length : n(s)}</small></button>`).join('')}</div>
       ${list.length ? `<ul class="ev-people">${list.map(r => { const p = people[r.uid] || {};
         return `<li><div><b>${esc(p.name || '…')}</b>${p.member ? '' : ` <span class="chip chip-planned">${esc(T('ev.newacc'))}</span>`}<small>${esc(p.email || '')}${p.phone ? ' · ' + esc(p.phone) : ''}</small></div>
@@ -288,8 +382,8 @@ async function open(s, { register = false, push = true } = {}) {
   link.href = eventHref(s); link.textContent = T('ev.openpage') + ' ↗';
   panel.querySelector('.ev-x').setAttribute('aria-label', T('vb.close'));
   panel.hidden = false; document.documentElement.classList.add('ev-locked');
-  if (push) history.pushState({ ev: 1 }, '', location.pathname + (s.id ? '?event=' + encodeURIComponent(s.id) : '?d=' + s.date));
-  const pending = mount(body, { id: s.id, date: s.id ? null : s.date, heading: 'h2', focusRegister: register });
+  if (push) history.pushState({ ev: 1 }, '', location.pathname + (s.id ? '?event=' + encodeURIComponent(s.id) : '?d=' + encodeURIComponent(fileKey(s))));
+  const pending = mount(body, { id: s.id, date: s.id ? null : fileKey(s), heading: 'h2', focusRegister: register, onRemoved: () => close() });
   const t = body.querySelector('.ev-title'); t.id = 'evPanelTitle'; t.focus({ preventScroll: true });
   body.parentElement.scrollTop = 0;
   unmount = await pending;
@@ -304,7 +398,8 @@ function close(push = true) {
 addEventListener('popstate', () => {
   if (!panel) return;
   const p = new URLSearchParams(location.search), id = p.get('event'), d = p.get('d');
-  if (id || d) open(id ? { id } : { date: d }, { push: false }); else close(false);
+  const s = id ? { id } : d ? findFileSession(d) : null;
+  if (s) open(s, { push: false }); else close(false);
 });
 
 window.ClubEvent = { mount, open, close };

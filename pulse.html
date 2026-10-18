@@ -14,11 +14,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261018c">
-  <link rel="stylesheet" href="assets/village.css?v=20261018c">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261018c">
-  <script src="assets/i18n.js?v=20261018c"></script>
-  <script src="assets/halloween.js?v=20261018c"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261018h">
+  <link rel="stylesheet" href="assets/village.css?v=20261018h">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261018h">
+  <script src="assets/i18n.js?v=20261018h"></script>
+  <script src="assets/halloween.js?v=20261018h"></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -56,6 +56,21 @@
         <div class="form-card gate" id="gNo" hidden><p data-i18n="pulse.only">This page is for organizers.</p><a class="btn btn-ghost" href="/mountain" data-i18n="vb.gate.mountain">Go to the Mountain →</a></div>
         <p class="notice info" id="demoNote" hidden data-i18n="pulse.demo"></p>
         <div id="pulse" hidden></div>
+        <section class="p-card dc" id="dataCheck" hidden aria-labelledby="dcH">
+          <h2 id="dcH" data-i18n="dc.h">Data check</h2>
+          <p class="help" data-i18n="dc.p">Looks through the club's database for things that don't line up. It only reads; nothing is changed.</p>
+          <p><button type="button" class="btn btn-ghost" id="dcRun" data-i18n="dc.run">Run the check</button></p>
+          <div id="dcOut" aria-live="polite"></div>
+        </section>
+        <section class="p-card dc" id="erase" hidden aria-labelledby="erH">
+          <h2 id="erH" data-i18n="er.h">Delete someone's data</h2>
+          <p class="help" data-i18n="er.p">When someone asks the club to delete their data (their right under the GDPR). Pick the person, check what will go, then confirm.</p>
+          <form class="er-form" id="erForm">
+            <div class="field"><label for="erWho" data-i18n="er.who">Person</label><select class="select" id="erWho"></select></div>
+            <p style="margin:0"><button type="submit" class="btn btn-ghost" data-i18n="er.look">See what we have</button></p>
+          </form>
+          <div id="erOut" aria-live="polite"></div>
+        </section>
       </div>
     </section>
   </main>
@@ -67,10 +82,12 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261018c"></script>
-  <script src="assets/platform/config.js?v=20261018c"></script>
-  <script src="assets/platform/signin.js?v=20261018c"></script>
-  <script src="assets/platform/data.js?v=20261018c"></script>
+  <script src="assets/schedule.js?v=20261018h"></script>
+
+  <script src="assets/sessions.js?v=20261018h"></script>
+  <script src="assets/platform/config.js?v=20261018h"></script>
+  <script src="assets/platform/signin.js?v=20261018h"></script>
+  <script src="assets/platform/data.js?v=20261018h"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -117,29 +134,35 @@
     }
 
     function render() {
-      const { members, facts, requests, pulse, rsvps, votes, board, pending, events } = S;
+      const { members, facts, requests, pulse, going, votes, board, pending, events, pendingRegs } = S;
+      // the session each pending spot is for (a file session "d-…", or an event made on the site)
+      const sessionTitle = (key) => { const s = FILE_ID.test(key) ? findFileSession(key.slice(2)) : null, e = events.find(x => x.id === key);
+        const x = e ? { ...(s || {}), ...e } : s; return x ? `${I18N.pick(x, "title")} (${fmt(x.date)})` : key; };
+      const wantsTo = (uid) => pendingRegs.filter(r => r.uid === uid).map(r => sessionTitle(r.event));
       const name = (uid) => (members.find(m => m.uid === uid) || requests.find(r => r.uid === uid) || {}).name || "—";
       const attends = {}; facts.filter(f => f.type === "attend" && f.status === "approved").forEach(f => (attends[f.uid] = attends[f.uid] || []).push(f.date));
       Object.values(attends).forEach(a => a.sort());
       const perDate = Object.fromEntries(pastThu.map(d => [d, Object.values(attends).filter(a => a.includes(d)).length]));
       const last4 = pastThu.slice(-4), active = Object.keys(attends).filter(u => attends[u].some(d => last4.includes(d))).length;
       const avg = last4.length ? Math.round(last4.reduce((a, d) => a + perDate[d], 0) / last4.length) : 0;
-      const going = nextSession ? rsvps.filter(r => r.date === nextSession.date) : [];
       const contacted = (uid) => pulse[uid] && daysAgo(pulse[uid].contactedAt) < 14 ? pulse[uid] : null;
       const reqBy = Object.fromEntries(requests.map(r => [r.uid, r]));
       const lastTwo = pastThu.slice(-2);
+      // organizers run the club: they don't belong in the follow-up lists below
+      const isOrgUid = new Set(members.filter(m => m.role === "organizer").map(m => m.uid));
+      const notOrg = (u) => !isOrgUid.has(u);
 
       // drifting: came at least twice, missed the last two Thursdays
-      const drifting = Object.entries(attends).filter(([u, a]) => a.length >= 2 && lastTwo.length === 2 && !a.some(d => lastTwo.includes(d)))
+      const drifting = Object.entries(attends).filter(([u, a]) => notOrg(u) && a.length >= 2 && lastTwo.length === 2 && !a.some(d => lastTwo.includes(d)))
         .map(([u, a]) => ({ uid: u, name: name(u), n: a.length, last: a[a.length - 1], phone: (reqBy[u] || {}).phone, lang: (reqBy[u] || {}).lang }))
         .sort((x, y) => (x.last < y.last ? 1 : -1));
       // signed up a week ago or more and never checked in
-      const never = requests.filter(r => !attends[r.uid] && r.at && daysAgo(r.at) >= 7).map(r => ({ ...r, since: daysAgo(r.at) })).sort((a, b) => a.since - b.since);
+      const never = requests.filter(r => notOrg(r.uid) && !attends[r.uid] && r.at && daysAgo(r.at) >= 7).map(r => ({ ...r, since: daysAgo(r.at) })).sort((a, b) => a.since - b.since);
       // newcomers: first check-in in the last 3 weeks, or signed up in the last 3 weeks (fewer than 3 sessions so far)
       const buddyOf = {}; board.filter(p => p.kind === "mission" && p.for && p.status !== "closed").forEach(p => { buddyOf[p.for] = p; });
       const cutoff = new Date(Date.now() - 21 * DAY).toISOString().slice(0, 10);
       const newcomers = [...new Set([...Object.entries(attends).filter(([u, a]) => a[0] >= cutoff).map(([u]) => u), ...requests.filter(r => r.at && daysAgo(r.at) <= 21).map(r => r.uid)])]
-        .filter(u => (attends[u] || []).length < 3).map(u => ({ uid: u, name: name(u), n: (attends[u] || []).length, mission: buddyOf[u] || null }))
+        .filter(u => notOrg(u) && (attends[u] || []).length < 3).map(u => ({ uid: u, name: name(u), n: (attends[u] || []).length, mission: buddyOf[u] || null }))
         .sort((a, b) => (!!a.mission - !!b.mission));
 
       const max = Math.max(1, ...Object.values(perDate), going.length);
@@ -157,16 +180,25 @@
 
       const confirmHTML = pending.length ? `<section class="p-card p-alert"><h2>${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.h" : "pulse.conf.h"))} <small>${pending.length}</small></h2>
           <p class="help">${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.p" : "pulse.conf.p"))}</p>
-          <ul class="p-list">${pending.sort((a, b) => a.at - b.at).map(p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.conf.row", { email: p.email, d: p.at ? fmt(new Date(p.at).toISOString().slice(0, 10)) : "—" }))}</small></div>
+          <ul class="p-list">${pending.sort((a, b) => a.at - b.at).map(p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.conf.row", { email: p.email, d: p.at ? fmt(new Date(p.at).toISOString().slice(0, 10)) : "—" }))}</small>${wantsTo(p.uid).length ? `<small class="p-wants">${esc(T("pulse.new.wants", { list: wantsTo(p.uid).join(", ") }))}</small>` : ""}</div>
             <div class="row-actions"><button type="button" class="btn btn-primary" data-confirm="${esc(p.uid)}">${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.yes" : "pulse.conf.yes"))}</button><button type="button" class="btn btn-ghost" data-reject="${esc(p.uid)}">${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.no" : "pulse.conf.no"))}</button></div></li>`).join("")}</ul></section>` : "";
       // events made on the site: upcoming first, with how many people registered and how many still need confirming
+      // status at a glance: deleted (file sessions only), hidden, cancelled
+      const evChips = (e) => [e.deleted && "pv.deleted", !e.deleted && (e.hidden || e.published === false) && "pv.hidden", e.cancelled && "pv.cancelled"]
+        .filter(Boolean).map(k => ` <span class="chip ${k === "pv.hidden" ? "chip-planned" : "chip-cancelled"}">${esc(T(k))}</span>`).join("");
       const byDate = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
       const evRows = events.filter(e => e.date >= today).sort(byDate).concat(events.filter(e => e.date < today).sort(byDate).reverse());
       const eventsHTML = `<section class="p-card"><div class="p-head"><h2>${esc(T("pv.h"))} <small>${events.length}</small></h2><a class="btn btn-primary" href="/event-edit">${esc(T("pv.new"))}</a></div>
-          ${list(evRows, T("pv.none"), e => `<li><div><b><a href="/event?id=${encodeURIComponent(e.id)}">${esc(I18N.pick(e, "title"))}</a></b>${e.published ? "" : ` <span class="chip chip-planned">${esc(T("pv.draft"))}</span>`}
+          ${list(evRows, T("pv.none"), e => `<li><div><b><a href="/event?id=${encodeURIComponent(e.id)}">${esc(I18N.pick(e, "title"))}</a></b>${evChips(e)}
               <small>${esc(fmt(e.date))}${e.registration ? " · " + esc(T("pv.row", { n: e.regs.filter(r => r.status === "pending" || r.status === "confirmed").length, p: e.regs.filter(r => r.status === "pending").length })) : ""}</small></div>
-            <div class="row-actions"><a class="btn btn-ghost" href="/event-edit?id=${encodeURIComponent(e.id)}">${esc(T("ev.edit"))}</a></div></li>`)}</section>`;
-      $("pulse").innerHTML = confirmHTML + eventsHTML + `
+            <div class="row-actions"><a class="btn btn-ghost" href="/event-edit?${FILE_ID.test(e.id) ? "d=" + encodeURIComponent(e.id.slice(2)) : "id=" + encodeURIComponent(e.id)}">${esc(T("ev.edit"))}</a></div></li>`)}</section>`;
+      // spots still waiting from people whose account is already approved (approving an account confirms the rest)
+      const waitingAcc = new Set(pending.map(p => p.uid));
+      const loose = pendingRegs.filter(r => !waitingAcc.has(r.uid));
+      const spotsHTML = loose.length ? `<section class="p-card p-alert"><h2>${esc(T("pulse.spots.h"))} <small>${loose.length}</small></h2>
+          <ul class="p-list">${loose.map(r => `<li><div><b>${esc(name(r.uid))}</b><small>${esc(sessionTitle(r.event))}</small></div>
+            <div class="row-actions"><button type="button" class="btn btn-primary" data-spot="${esc(r.id)}">${esc(T("ev.confirm"))}</button></div></li>`).join("")}</ul></section>` : "";
+      $("pulse").innerHTML = confirmHTML + spotsHTML + eventsHTML + `
         <div class="kpis">
           <div><b>${members.length}</b><span>${esc(T("pulse.k.members"))}</span></div>
           <div><b>${active}</b><span>${esc(T("pulse.k.active"))}</span></div>
@@ -200,23 +232,128 @@
         </section>
 
         ${SESSIONS.filter(s => s.vote && s.date >= today).map(s => {
-          const vs = votes.filter(v => v.date === s.date);
+          const vs = votes.filter(v => v.date === fileKey(s));
           return `<section class="p-card"><h2>${esc(T("pulse.vote.h", { d: fmt(s.date) }))} <small>${vs.length}</small></h2><ul class="p-list">${s.vote.options.map(o => `<li><div><b>${esc(I18N.pick(o, "title"))}</b></div><span class="mono">${vs.filter(v => v.choice === o.id).length}</span></li>`).join("")}</ul></section>`;
         }).join("")}
         <p class="help" id="pMsg" role="status"></p>`;
-      show("pulse");
+      show("pulse"); $("dataCheck").hidden = false; drawErasePicker();
     }
 
+    // who said "I'm going" to the next Thursday session (registrations; organizers can read them all)
+    const nextGoing = () => (nextSession ? data.loadRegistrations("d-" + fileKey(nextSession)).then(rs => rs.filter(r => r.status === "pending" || r.status === "confirmed")).catch(() => []) : Promise.resolve([]));
     async function load() {
-      const [members, facts, requests, pulse, rsvps, votes, board, pending] = await Promise.all([data.loadMembers(), data.loadFacts(), data.loadRequests(), data.loadPulse(), data.loadRsvps(today), data.loadVotes(today), data.loadBoard(true), data.loadPendingConfirms().catch(() => [])]);
+      const [members, facts, requests, pulse, going, votes, board, pending] = await Promise.all([data.loadMembers(), data.loadFacts(), data.loadRequests(), data.loadPulse(), nextGoing(), data.loadVotes(today), data.loadBoard(true), data.loadPendingConfirms().catch(() => [])]);
       const events = await data.loadEvents(true).catch(() => []);
       await Promise.all(events.map(async e => { e.regs = e.registration ? await data.loadRegistrations(e.id).catch(() => []) : []; }));
-      S = { members, facts, requests, pulse, rsvps, votes, board, pending, events }; render();
+      const pendingRegs = await data.loadPendingRegistrations().catch(() => []);
+      S = { members, facts, requests, pulse, going, votes, board, pending, events, pendingRegs }; render();
     }
+
+    /* ---------- Data check: read-only consistency checks over the whole database ---------- */
+    async function dataCheck() {
+      const out = $("dcOut"); $("dcRun").disabled = true; out.innerHTML = `<p class="help">${esc(T("pulse.loading"))}</p>`;
+      try {
+        const D = await data.loadAudit();
+        const byId = (list) => Object.fromEntries(list.map(x => [x.id, x]));
+        const req = byId(D.requests), mem = byId(D.members), priv = byId(D.priv), blocked = new Set(D.blocked.map(x => x.id));
+        const confirmed = new Set(D.confirmed.map(x => x.id)), events = byId(D.events), roster = new Set(D.roster.map(x => x.id.toLowerCase()));
+        const emailOf = (uid) => ((req[uid] || {}).email || (priv[uid] || {}).email || (D.pending.find(p => (p.id || p.uid) === uid) || {}).email || "").toLowerCase();
+        const nameOf = (uid) => (mem[uid] || {}).name || (req[uid] || {}).name || (D.pending.find(p => (p.id || p.uid) === uid) || {}).name || uid.slice(0, 8) + "…";
+        const who = (uid) => `${nameOf(uid)}${emailOf(uid) ? " · " + emailOf(uid) : ""}`;
+        const today = ClubData.todayStr(), found = [];
+        const add = (key, items) => { if (items.length) found.push({ key, items }); };
+
+        // 1) one email, several accounts (someone signed up twice)
+        const byEmail = {};
+        [...D.requests.map(r => r.id), ...D.priv.map(p => p.id), ...D.pending.map(p => p.id || p.uid)].forEach(uid => { const e = emailOf(uid); if (e) (byEmail[e] = byEmail[e] || new Set()).add(uid); });
+        add("dc.dup", Object.entries(byEmail).filter(([, s]) => s.size > 1).map(([e, s]) => `${e}: ${[...s].map(u => u.slice(0, 8) + "…").join(", ")}`));
+        // 2) a member profile, but no join form and not on the roster (the rules don't count them as members)
+        add("dc.orphan", D.members.filter(m => !req[m.id] && !roster.has(emailOf(m.id))).map(m => who(m.id)));
+        // 3) removed or refused people who still have a profile, a join form or a spot
+        add("dc.removed", D.requests.filter(r => r.status === "removed" && mem[r.id]).map(r => who(r.id)));
+        add("dc.blocked", [...blocked].filter(u => req[u] || mem[u] || D.registrations.some(r => r.uid === u && r.status !== "cancelled")).map(who));
+        // 4) still waiting for approval although already approved or a member (the page cleans these up)
+        add("dc.stale", D.pending.map(p => p.id || p.uid).filter(u => confirmed.has(u) || mem[u]).map(who));
+        // 5) spots for sessions that no longer exist, and spots still pending for sessions already over
+        const sessionOf = (key) => events[key] || (FILE_ID.test(key) ? findFileSession(key.slice(2)) : null);
+        add("dc.ghost", D.registrations.filter(r => r.status !== "cancelled" && !sessionOf(r.event)).map(r => `${who(r.uid)} → ${r.event}`));
+        add("dc.oldpending", D.registrations.filter(r => r.status === "pending" && sessionOf(r.event) && (sessionOf(r.event).date || "9999") < today)
+          .map(r => `${who(r.uid)} → ${I18N.pick(sessionOf(r.event), "title")}`));
+        // 6) join forms from accounts that were never approved (no confirmation, no profile)
+        add("dc.unapproved", D.requests.filter(r => r.status !== "removed" && !confirmed.has(r.id) && !mem[r.id] && D.pending.some(p => (p.id || p.uid) === r.id)).map(r => who(r.id)));
+        // 7) for information: who has organizer rights
+        const orgs = D.members.filter(m => m.role === "organizer").map(m => who(m.id));
+
+        out.innerHTML = (found.length
+          ? `<p class="notice bad">${esc(T("dc.found", { n: found.reduce((a, f) => a + f.items.length, 0) }))}</p>` + found.map(f =>
+              `<details class="dc-item" open><summary><b>${esc(T(f.key))}</b> <small>${f.items.length}</small></summary>
+                <p class="help">${esc(T(f.key + ".fix"))}</p><ul>${f.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul></details>`).join("")
+          : `<p class="notice ok">${esc(T("dc.ok"))}</p>`)
+          + `<p class="help">${esc(T("dc.counts", { m: D.members.length, r: D.requests.length, p: D.pending.length, g: D.registrations.length, e: D.events.length }))}</p>`
+          + `<p class="help">${esc(T("dc.orgs", { list: orgs.join(" · ") || "—" }))}</p>`;
+      } catch (e) { out.innerHTML = `<p class="notice bad">${esc(T("m.dberror", { e: e.code || e.message || "?" }))}</p>`; }
+      $("dcRun").disabled = false;
+    }
+    $("dcRun").addEventListener("click", dataCheck);
+
+    /* ---------- Delete someone's data (on request). Organizers' own data can't be deleted here. ---------- */
+    let erPlan = null, erSure = false;
+    function erasePeople() {
+      const { members, requests, pending } = S, out = {};
+      const orgs = new Set(members.filter(m => m.role === "organizer").map(m => m.uid));
+      members.forEach(m => (out[m.uid] = { uid: m.uid, name: m.name }));
+      requests.forEach(r => (out[r.uid] = { uid: r.uid, name: (out[r.uid] || {}).name || r.name, email: r.email }));
+      pending.forEach(p => { const u = p.uid || p.id; out[u] = { uid: u, name: (out[u] || {}).name || p.name, email: (out[u] || {}).email || p.email }; });
+      return Object.values(out).filter(p => !orgs.has(p.uid) && p.uid !== data.currentUid()).sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+    }
+    function drawErasePicker() {
+      const sel = $("erWho"), cur = sel.value;
+      sel.innerHTML = `<option value="">${esc(T("er.pick"))}</option>` + erasePeople().map(p => `<option value="${esc(p.uid)}"${p.uid === cur ? " selected" : ""}>${esc((p.name || "—") + (p.email ? " · " + p.email : ""))}</option>`).join("");
+      $("erase").hidden = false;
+    }
+    function drawErase(msg) {
+      const out = $("erOut");
+      if (msg) { out.innerHTML = msg; return; }
+      if (!erPlan) { out.innerHTML = ""; return; }
+      const c = erPlan.counts, row = (k, n) => (n ? `<li><span>${esc(T("er.c." + k))}</span><b class="mono">${n}</b></li>` : "");
+      out.innerHTML = !erPlan.total ? `<p class="notice info">${esc(T("er.none"))}</p>` : `
+        <ul class="p-list er-list">${["profile", "request", "facts", "registrations", "posts", "comments", "other"].map(k => row(k, c[k])).join("")}</ul>
+        <div class="ev-confirm danger" role="group" aria-labelledby="erSureH">
+          <p class="ev-confirm-h" id="erSureH">${esc(T("er.sure.h", { name: erPlan.name }))}</p>
+          <p>${esc(T("er.sure.p"))}</p>
+          <div class="ev-confirm-act"><button type="button" class="btn btn-danger" data-er="go">${esc(T(erSure ? "er.go2" : erPlan.total === 1 ? "er.go1" : "er.go", { n: erPlan.total }))}</button>
+            <button type="button" class="btn btn-ghost" data-er="no">${esc(T("ev.c.no"))}</button></div>
+        </div>`;
+    }
+    $("erForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const uid = $("erWho").value; erPlan = null; erSure = false;
+      if (!uid) { drawErase(`<p class="notice bad" role="alert">${esc(T("er.pick"))}</p>`); $("erWho").focus(); return; }
+      drawErase(`<p class="help">${esc(T("pulse.loading"))}</p>`);
+      const p = erasePeople().find(x => x.uid === uid) || { uid };
+      try {
+        const email = p.email || ((await data.whoAre([uid]))[uid] || {}).email || "";
+        erPlan = { ...(await data.personData(uid, email)), name: p.name || uid.slice(0, 8) + "…", email };
+        drawErase();
+      } catch (x) { drawErase(`<p class="notice bad">${esc(T("m.dberror", { e: x.code || x.message || "?" }))}</p>`); }
+    });
+    $("erOut").addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-er]"); if (!b) return;
+      if (b.dataset.er === "no") { erPlan = null; erSure = false; drawErase(); $("erWho").focus(); return; }
+      if (!erSure) { erSure = true; drawErase(); $("erOut").querySelector("[data-er=go]").focus(); return; }   // a second click, so nobody deletes by accident
+      b.disabled = true;
+      const plan = erPlan, r = await data.erasePerson(plan);
+      erPlan = null; erSure = false;
+      if (!r.ok) { drawErase(`<p class="notice bad" role="alert">${esc(T(r.code || "err.generic"))}</p>`); return; }
+      drawErase(`<p class="notice ok" role="status">${esc(T("er.done", { n: r.n, name: plan.name }))}</p><p class="help">${esc(T("er.auth", { email: plan.email || "—" }))}</p>`);
+      await load();
+    });
 
     $("pulse").addEventListener("click", async (e) => {
       const c = e.target.closest("[data-contacted]"), b = e.target.closest("[data-buddy]");
       if (c) { c.disabled = true; const r = await data.markContacted(c.dataset.contacted); if (r.ok) await load(); else c.disabled = false; }
+      const sp = e.target.closest("[data-spot]");
+      if (sp) { sp.disabled = true; const reg = S.pendingRegs.find(r => r.id === sp.dataset.spot); const r = await data.setRegistration(reg, "confirmed"); if (r.ok) await load(); else { sp.disabled = false; $("pMsg").textContent = T(r.code || "err.generic"); } }
       const cf = e.target.closest("[data-confirm], [data-reject]");
       if (cf) { cf.disabled = true; const r = await data.confirmByHand(cf.dataset.confirm || cf.dataset.reject, !!cf.dataset.confirm); if (r.ok) await load(); else { cf.disabled = false; $("pMsg").textContent = T(r.code || "err.generic"); } }
       if (b) { editing = b.dataset.buddy; render(); const t = $("bmBody"); if (t) t.focus(); }
