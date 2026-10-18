@@ -23,9 +23,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261018j">
-  <script src="assets/i18n.js?v=20261018j"></script>
-  <script src="assets/halloween.js?v=20261018j"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261018k">
+  <script src="assets/i18n.js?v=20261018k"></script>
+  <script src="assets/halloween.js?v=20261018k"></script>
 </head>
 <body data-i18n-title="apply.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -50,9 +50,9 @@
   <main id="main">
     <section class="page-head">
       <div class="wrap">
-        <p class="eyebrow" data-i18n="eb.apply">Come build with us</p>
-        <h1 data-i18n="apply.h1">Join <b>the club</b></h1>
-        <p class="lede" data-i18n="apply.lede"></p>
+        <p class="eyebrow" id="pEyebrow" data-i18n="eb.apply">Come build with us</p>
+        <h1 id="pH1" data-i18n="apply.h1">Join <b>the club</b></h1>
+        <p class="lede" id="pLede" data-i18n="apply.lede"></p>
         <ol class="steps" id="steps">
           <li data-i18n="apply.step1">Fill in one short form</li>
           <li data-i18n="apply.step2">An organizer approves you</li>
@@ -62,7 +62,7 @@
     </section>
 
     <section style="padding-top:24px">
-      <div class="wrap form-layout">
+      <div class="wrap form-layout" id="pLayout">
         <div class="form-card" aria-live="polite">
           <p class="notice info" id="demoNote" hidden data-i18n="apply.demo"></p>
 
@@ -128,7 +128,7 @@
           </div>
         </div>
 
-        <aside class="form-side">
+        <aside class="form-side" id="pSide">
           <div class="form-card" style="padding:22px">
             <h2 class="side-h" data-i18n="apply.why.h"></h2>
             <p class="help" style="font-size:.95rem" data-i18n="apply.why.p"></p>
@@ -150,9 +150,9 @@
     </div>
   </footer>
 
-  <script src="assets/platform/config.js?v=20261018j"></script>
-  <script src="assets/platform/signin.js?v=20261018j"></script>
-  <script src="assets/platform/data.js?v=20261018j"></script>
+  <script src="assets/platform/config.js?v=20261018k"></script>
+  <script src="assets/platform/signin.js?v=20261018k"></script>
+  <script src="assets/platform/data.js?v=20261018k"></script>
   <script>
   (async () => {
     const $ = id => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -160,7 +160,23 @@
     $("interests").innerHTML = INTERESTS.map(k => `<label class="choice"><input type="checkbox" name="interest" value="${k}"><span data-i18n="int.${k}"></span></label>`).join("");
     I18N.apply($("interests"));
     const views = ["vLoading", "vSignin", "vForm", "vDone"];
+    /* The page follows what the box shows: joining (steps 1-2-3 and the side notes) or signing in / resetting a password
+       (a plain "Welcome back" page, no steps: signing in isn't joining again). */
+    let pageMode = "join";
+    function page(mode) {
+      const m = mode === "forgot" ? "forgot" : mode === "signin" || mode === "link" ? "signin" : "join";
+      if (m === pageMode) return; pageMode = m;
+      const keys = { join: ["eb.apply", "apply.h1", "apply.lede", "apply.title"], signin: ["eb.signin", "apply.h1.signin", "apply.lede.signin", "apply.title.signin"],
+        forgot: ["eb.signin", "apply.h1.forgot", "apply.lede.forgot", "apply.title.forgot"] }[m];
+      $("pEyebrow").dataset.i18n = keys[0]; $("pH1").dataset.i18n = keys[1]; $("pLede").dataset.i18n = keys[2];
+      document.body.dataset.i18nTitle = keys[3];
+      I18N.apply(document.querySelector(".page-head")); document.title = T(keys[3]) + " · aivancity Tech Club";
+      const joining = m === "join";
+      $("steps").hidden = !joining; $("pSide").hidden = !joining; $("pLayout").classList.toggle("solo", !joining);
+      document.querySelectorAll("#vSignin [data-si-intro]").forEach(x => { x.hidden = !joining || x.hidden; });
+    }
     function show(v, waiting) {
+      if (v !== "vSignin") page("join");
       views.forEach(x => $(x).hidden = x !== v);
       const step = waiting ? 1 : { vLoading: 0, vSignin: 0, vForm: 0, vDone: 2 }[v];
       [...$("steps").children].forEach((li, i) => { li.className = i < step ? "done" : i === step ? "on" : ""; });
@@ -171,7 +187,7 @@
 
     const data = ClubData.create();
     try { await data.init(); } catch (e) { show("vLoading"); $("vLoading").textContent = T("err.generic") + " (" + (e.message || "?") + ")"; return; }
-    const siBox = ClubSignIn.mount($("siBox"), data);
+    const siBox = ClubSignIn.mount($("siBox"), data, { onMode: page });
     if (data.mode === "demo") $("demoNote").hidden = false;
 
     let user = null, req = null;
@@ -206,7 +222,7 @@
       user = u;
       // signed out: the Join form first (people who tap Join are almost always new); "Already have an account? Sign in" is right below it
       if (!u) { show("vSignin"); if (data.linkError) siBox.signin(data.linkError); else siBox.join(); return; }
-      if (!u.verified) { show("vSignin", true); siBox.verify(u.email); return; }
+      if (!u.verified) { show("vSignin", true); siBox.verify(u.email); scrollTo({ top: 0, behavior: "smooth" }); return; }
       renderWho();
       const [r, onRoster] = await Promise.all([data.requestStatus(), data.onRoster()]);
       req = r; fill(r);

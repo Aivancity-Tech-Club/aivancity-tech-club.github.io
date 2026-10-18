@@ -51,6 +51,9 @@ const CSS = `
 .si .si-levels input { accent-color: #2b3767; }
 .si .si-check { display: flex; gap: 10px; align-items: flex-start; font-size: .95rem; font-weight: 400; }
 .si .si-check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: #2b3767; }
+.si .si-err { margin: 4px 0 0; color: #b3261e; font-size: .88rem; font-weight: 700; }
+.si [aria-invalid="true"] { border-color: #b3261e !important; }
+@media (prefers-color-scheme: dark) { .si .si-err { color: #f2b8b5; } .si [aria-invalid="true"] { border-color: #f2b8b5 !important; } }
 .si .si-opt { font-weight: 400; opacity: .8; }
 .si .ms-btn { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .si .or { display: flex; align-items: center; gap: 10px; font-size: .85rem; opacity: .8; margin: 0; }
@@ -78,8 +81,14 @@ function mount(el, data, opts = {}) {
     const pr = el.querySelector('#si-program'); if (pr) kept.program = pr.value;
     if (el.querySelector('[name=si-int]')) kept.interests = [...el.querySelectorAll('[name=si-int]:checked')].map(x => x.value);
   }
+  // inline errors: msg.field names the field the message is about, and the message shows right under that field
+  const fe = (id) => (msg && msg.field === id ? `<p class="si-err" id="${id}-err">${esc(msg.text)}</p>` : '');
+  const inv = (id, hint) => {
+    const bad = msg && msg.field === id, ids = [hint, bad ? id + '-err' : ''].filter(Boolean).join(' ');
+    return `${bad ? ' aria-invalid="true"' : ''}${ids ? ` aria-describedby="${ids}"` : ''}`;
+  };
   function msgHTML() {
-    if (!msg) return '';
+    if (!msg || msg.field) return '';
     const act = msg.offerCreate ? ` <a href="#" data-si="join">${esc(T('join.withthis'))}</a>` : msg.offerSignin ? ` <a href="#" data-si="signin">${esc(T('join.signin.instead'))}</a>` : '';
     return `<p class="si-msg ${msg.ok ? 'ok' : 'bad'}" role="${msg.ok ? 'status' : 'alert'}">${esc(msg.text)}${act}</p>`;
   }
@@ -88,7 +97,9 @@ function mount(el, data, opts = {}) {
   function whyBtn() { return `<button type="button" class="si-i" data-si="why" aria-expanded="${whyOpen}" aria-controls="si-why" aria-label="${esc(T('q.why.aria'))}" title="${esc(T('q.why.aria'))}">i</button>`; }
   function whyBox() { return whyOpen ? `<div class="si-why" id="si-why" role="note"><b>${esc(T('q.why.h'))}</b>${T('q.why.p')}</div>` : `<div id="si-why" hidden></div>`; }
 
-  function render() {
+  // the page around the box can follow along (e.g. /apply hides its join steps while someone signs in)
+  function render() { draw(); if (opts.onMode) opts.onMode(mode); }
+  function draw() {
     keep();
     // the page's own heading/intro make no sense on the "confirm your email" step
     (el.parentElement || document).querySelectorAll('[data-si-intro]').forEach(x => { x.hidden = mode === 'verify'; });
@@ -141,31 +152,29 @@ function mount(el, data, opts = {}) {
       const ORG = window.ClubData && ClubData.ORG_CONFIRM;
       el.innerHTML = `<div class="si"><form novalidate data-si-form="join">
         <div class="field"><label for="si-name">${esc(T('join.name'))}</label>
-          <input class="input" id="si-name" maxlength="40" autocomplete="name" required value="${esc(kept.name)}" aria-describedby="si-name-h">
-          <p class="si-hint" id="si-name-h">${esc(T('join.name.help'))}</p></div>
+          <input class="input" id="si-name" maxlength="40" autocomplete="nickname" required value="${esc(kept.name)}"${inv('si-name', 'si-name-h')}>
+          <p class="si-hint" id="si-name-h">${esc(T('join.name.help'))}</p>${fe('si-name')}</div>
         <div class="field"><label for="si-email">${esc(T('m.signin.email'))}</label>
-          <input class="input" id="si-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" required value="${esc(kept.email)}"></div>
+          <input class="input" id="si-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" required placeholder="name@aivancity.education" value="${esc(kept.email)}"${inv('si-email')}>${fe('si-email')}</div>
         <div class="field"><label for="si-pw">${esc(T('pw.password.new'))}</label>
-          <div class="si-pw"><input class="input" id="si-pw" type="${showPw ? 'text' : 'password'}" autocomplete="new-password" minlength="8" required value="${esc(kept.pw)}">
-          <button type="button" class="si-eye" data-si="eye" aria-pressed="${showPw}" aria-controls="si-pw">${esc(T(showPw ? 'pw.hide' : 'pw.show'))}</button></div></div>
-        <div class="field"><label for="si-pw2">${esc(T('pw.password.again'))}</label>
-          <input class="input" id="si-pw2" type="${showPw ? 'text' : 'password'}" autocomplete="new-password" minlength="8" required value="${esc(kept.pw2 || '')}"></div>
+          <div class="si-pw"><input class="input" id="si-pw" type="${showPw ? 'text' : 'password'}" autocomplete="new-password" minlength="8" required value="${esc(kept.pw)}"${inv('si-pw')}>
+          <button type="button" class="si-eye" data-si="eye" aria-pressed="${showPw}" aria-controls="si-pw">${esc(T(showPw ? 'pw.hide' : 'pw.show'))}</button></div>${fe('si-pw')}</div>
         <div class="field"><label for="si-phone">${esc(T('ev.join.phone'))}</label>
-          <input class="input" id="si-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+33 6 12 34 56 78" required value="${esc(kept.phone)}" aria-describedby="si-phone-h">
-          <p class="si-hint" id="si-phone-h">${esc(T('ev.join.phone.help'))}</p></div>
+          <input class="input" id="si-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+33 6 12 34 56 78" required value="${esc(kept.phone)}"${inv('si-phone', 'si-phone-h')}>
+          <p class="si-hint" id="si-phone-h">${esc(T('ev.join.phone.help'))}</p>${fe('si-phone')}</div>
         <div class="field"><label for="si-program">${esc(T('join.program'))}</label>
-          <input class="input" id="si-program" maxlength="60" autocomplete="off" required placeholder="${esc(T('join.program.ph'))}" value="${esc(kept.program)}" aria-describedby="si-program-h">
-          <p class="si-hint" id="si-program-h">${esc(T('join.program.help'))}</p></div>
-        <fieldset class="si-levels si-many"><legend>${esc(T('join.interests'))}</legend>
-          ${INTERESTS.map(k => `<label><input type="checkbox" name="si-int" value="${k}"${kept.interests.includes(k) ? ' checked' : ''}><span>${T('int.' + k)}</span></label>`).join('')}</fieldset>
-        <fieldset class="si-levels si-many"><legend>${esc(T('apply.level.legend'))}</legend>
-          ${['new', 'some', 'solid'].map(l => `<label><input type="radio" name="si-level" value="${l}"${kept.level === l ? ' checked' : ''}><span>${esc(T('apply.level.' + l))}</span></label>`).join('')}</fieldset>
+          <input class="input" id="si-program" maxlength="60" autocomplete="off" required placeholder="${esc(T('join.program.ph'))}" value="${esc(kept.program)}"${inv('si-program', 'si-program-h')}>
+          <p class="si-hint" id="si-program-h">${esc(T('join.program.help'))}</p>${fe('si-program')}</div>
+        <fieldset class="si-levels si-many"${inv('si-int')}><legend>${esc(T('join.interests'))}</legend>
+          ${INTERESTS.map(k => `<label><input type="checkbox" name="si-int" value="${k}"${kept.interests.includes(k) ? ' checked' : ''}><span>${T('int.' + k)}</span></label>`).join('')}${fe('si-int')}</fieldset>
+        <fieldset class="si-levels si-many"${inv('si-level')}><legend>${esc(T('apply.level.legend'))}</legend>
+          ${['new', 'some', 'solid'].map(l => `<label><input type="radio" name="si-level" value="${l}"${kept.level === l ? ' checked' : ''}><span>${esc(T('apply.level.' + l))}</span></label>`).join('')}${fe('si-level')}</fieldset>
         <div class="field"><label for="si-gh">${esc(T('join.github'))} <span class="si-opt">${esc(T('join.optional'))}</span></label>
-          <input class="input" id="si-gh" maxlength="39" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="amina-k" value="${esc(kept.github)}" aria-describedby="si-gh-h">
-          <p class="si-hint" id="si-gh-h">${esc(T('m.setup.github.help'))}</p></div>
-        <label class="si-check"><input type="checkbox" id="si-consent"${kept.consent ? ' checked' : ''}><span>${esc(T('join.consent'))}</span></label>
+          <input class="input" id="si-gh" maxlength="39" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="amina-k" value="${esc(kept.github)}"${inv('si-gh', 'si-gh-h')}>
+          <p class="si-hint" id="si-gh-h">${esc(T('m.setup.github.help'))}</p>${fe('si-gh')}</div>
+        <div><label class="si-check"><input type="checkbox" id="si-consent"${kept.consent ? ' checked' : ''}${inv('si-consent')}><span>${esc(T('join.consent'))}</span></label>${fe('si-consent')}</div>
         ${msgHTML()}
-        <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled' : ''}>${esc(T('join.btn'))}</button></div>
+        <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T(busy ? 'join.busy' : 'join.btn'))}</button></div>
         <p class="si-hint">${esc(T(ORG ? 'join.hint.org' : 'join.hint.email'))}</p>
         <p class="si-links"><a href="#" data-si="signin">${esc(T('join.have'))}</a></p>
       </form></div>`;
@@ -179,14 +188,14 @@ function mount(el, data, opts = {}) {
       ${create && window.ClubData && ClubData.ORG_CONFIRM ? `<div class="field"><label for="si-name">${esc(T('pw.manual.name'))}</label>
         <input class="input" id="si-name" maxlength="60" autocomplete="name" required value="${esc(kept.name || '')}"></div>` : ''}
       <div class="field"><label for="si-email">${esc(T('m.signin.email'))}</label>
-        <input class="input" id="si-email" type="email" inputmode="email" autocomplete="${create ? 'email' : 'username'}" autocapitalize="off" spellcheck="false" required value="${esc(kept.email)}"></div>
+        <input class="input" id="si-email" type="email" inputmode="email" autocomplete="${create ? 'email' : 'username'}" autocapitalize="off" spellcheck="false" required value="${esc(kept.email)}"${inv('si-email')}>${fe('si-email')}</div>
       ${forgot || link ? '' : `<div class="field"><label for="si-pw">${esc(T(create ? 'pw.password.new' : 'pw.password'))}</label>
-        <div class="si-pw"><input class="input" id="si-pw" type="${showPw ? 'text' : 'password'}" autocomplete="${create ? 'new-password' : 'current-password'}" minlength="${create ? 8 : 1}" required value="${esc(kept.pw)}">
-        <button type="button" class="si-eye" data-si="eye" aria-pressed="${showPw}" aria-controls="si-pw">${esc(T(showPw ? 'pw.hide' : 'pw.show'))}</button></div></div>`}
+        <div class="si-pw"><input class="input" id="si-pw" type="${showPw ? 'text' : 'password'}" autocomplete="${create ? 'new-password' : 'current-password'}" minlength="${create ? 8 : 1}" required value="${esc(kept.pw)}"${inv('si-pw')}>
+        <button type="button" class="si-eye" data-si="eye" aria-pressed="${showPw}" aria-controls="si-pw">${esc(T(showPw ? 'pw.hide' : 'pw.show'))}</button></div>${fe('si-pw')}</div>`}
       ${create ? `<div class="field"><label for="si-pw2">${esc(T('pw.password.again'))}</label>
         <input class="input" id="si-pw2" type="${showPw ? 'text' : 'password'}" autocomplete="new-password" minlength="8" required value="${esc(kept.pw2 || '')}"></div>` : ''}
       ${msgHTML()}
-      <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled' : ''}>${esc(T(create ? 'pw.create' : forgot ? 'pw.reset.btn' : link ? 'm.signin.confirm' : 'pw.signin'))}</button></div>
+      <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T(busy ? 'pw.busy' : create ? 'pw.create' : forgot ? 'pw.reset.btn' : link ? 'm.signin.confirm' : 'pw.signin'))}</button></div>
       <p class="si-links">
         ${mode === 'signin' ? `<a href="#" data-si="join">${esc(T('join.new'))}</a><a href="#" data-si="forgot">${esc(T('pw.forgot'))}</a>` : ''}
         ${create || forgot ? `<a href="#" data-si="signin">${esc(T('pw.toSignin'))}</a>` : ''}
@@ -226,19 +235,23 @@ function mount(el, data, opts = {}) {
   });
   // the join form: account + answers in one go
   async function submitJoin() {
-    const bad = (text, sel) => { msg = { text }; render(); const f = sel && el.querySelector(sel); if (f) f.focus(); };
+    // one problem at a time, shown under its field, with the focus moved there
+    const bad = (text, field) => {
+      msg = { text, field }; render();
+      const f = el.querySelector('#' + field) || el.querySelector(`[name=${field}]`); if (f) f.focus();
+    };
     const email = kept.email.trim(), name = kept.name.trim(), phone = kept.phone.trim(), github = kept.github.trim().replace(/^@/, '').replace(/^https?:\/\/github\.com\//i, '').replace(/\/.*$/, '');
-    if (!name) return bad(T('err.name'), '#si-name');
-    if (!email) return bad(T('err.pw.empty'), '#si-email');
-    if (String(kept.pw).length < 8) return bad(T('err.pw.weak'), '#si-pw');
-    if (kept.pw !== (kept.pw2 || '')) return bad(T('pw.mismatch'), '#si-pw2');
-    if (!ClubData.validPhone(phone)) return bad(T('err.phone'), '#si-phone');
     kept.program = kept.program.trim();
-    if (!kept.program) return bad(T('join.err.program'), '#si-program');
-    if (!kept.interests.length) return bad(T('join.err.interests'), '[name=si-int]');
-    if (!kept.level) return bad(T('err.level'), '[name=si-level]');
-    if (github && !/^[A-Za-z0-9-]{1,39}$/.test(github)) return bad(T('join.err.github'), '#si-gh');
-    if (!kept.consent) return bad(T('join.err.consent'), '#si-consent');
+    if (!name) return bad(T('err.name'), 'si-name');
+    if (!email) return bad(T('join.err.email'), 'si-email');
+    if (!ClubData.validEmail(email)) return bad(T('err.email'), 'si-email');
+    if (String(kept.pw).length < 8) return bad(T('err.pw.weak'), 'si-pw');
+    if (!ClubData.validPhone(phone)) return bad(T('err.phone'), 'si-phone');
+    if (!kept.program) return bad(T('join.err.program'), 'si-program');
+    if (!kept.interests.length) return bad(T('join.err.interests'), 'si-int');
+    if (!kept.level) return bad(T('err.level'), 'si-level');
+    if (github && !/^[A-Za-z0-9-]{1,39}$/.test(github)) return bad(T('join.err.github'), 'si-gh');
+    if (!kept.consent) return bad(T('join.err.consent'), 'si-consent');
     if (opts.onStart) opts.onStart();
     await run(async () => {
       const r = await data.joinClub({ email, pw: kept.pw, name, phone, level: kept.level, github, program: kept.program, interests: kept.interests, lang: window.I18N ? I18N.lang : 'en' });
@@ -252,7 +265,10 @@ function mount(el, data, opts = {}) {
     e.preventDefault(); keep();
     if (mode === 'join') return submitJoin();
     const email = kept.email.trim(), pw = kept.pw;
-    if (!email || (!['forgot', 'link'].includes(mode) && !pw)) { msg = { text: T('err.pw.empty') }; render(); return; }
+    const need = (text, field) => { msg = { text, field }; render(); const f = el.querySelector('#' + field); if (f) f.focus(); };
+    if (!email) return need(T('join.err.email'), 'si-email');
+    if (!ClubData.validEmail(email)) return need(T('err.email'), 'si-email');
+    if (!['forgot', 'link'].includes(mode) && !pw) return need(T('pw.err.empty'), 'si-pw');
     if (mode === 'create' && pw !== (kept.pw2 || '')) { msg = { text: T('pw.mismatch') }; render(); const p2 = el.querySelector('#si-pw2'); if (p2) p2.focus(); return; }
     if (mode === 'create' && window.ClubData && ClubData.ORG_CONFIRM && !String(kept.name || '').trim()) { msg = { text: T('pw.manual.noname') }; render(); const n = el.querySelector('#si-name'); if (n) n.focus(); return; }
     await run(async () => {

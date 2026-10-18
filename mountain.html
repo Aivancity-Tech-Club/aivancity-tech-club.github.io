@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261018j"></script>
+<script src="assets/i18n.js?v=20261018k"></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
@@ -74,7 +74,13 @@ button, input, select { font: inherit; color: inherit; }
 
 /* cards: sign-in, setup, peak list, ninja popover */
 .veil { position: fixed; inset: 0; z-index: 8; display: grid; justify-items: center; padding: calc(72px + env(safe-area-inset-top, 0px)) 16px 16px; background: rgba(30, 30, 60, 0.25); overflow-y: auto; }
-.veil > .card { margin-block: auto; }   /* centered, and scrolls when the join form is taller than the screen */
+/* One scroll only: the card grows to its full height and the dimmed backdrop scrolls (thin, quiet scrollbar).
+   Centered when it fits; when the join form is taller than the screen, it starts under the top bar. */
+.veil > .card { margin-block: auto; max-height: none; overflow: visible; }
+.veil { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .45) transparent; overscroll-behavior: contain; }
+.veil::-webkit-scrollbar { width: 8px; }
+.veil::-webkit-scrollbar-track { background: transparent; }
+.veil::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .45); border-radius: 8px; }
 .card { width: min(440px, 100%); background: var(--paper); border: 2px solid var(--ink); border-radius: 28px; padding: 26px; display: flex; flex-direction: column; gap: 14px;
   max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: auto; }
 .card h1, .card h2 { margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
@@ -232,8 +238,8 @@ label { font-weight: 700; font-size: 14px; }
 <!-- sign in -->
 <div class="veil" id="signin" hidden>
   <div class="card" id="signinCard">
-    <h1 data-si-intro data-i18n="m.signin.h">Start your <b>climb</b></h1>
-    <p data-si-intro data-i18n="m.signin.p"></p>
+    <h1 data-si-intro id="siH" data-i18n="m.signin.h">Start your <b>climb</b></h1>
+    <p data-si-intro id="siP" data-i18n="m.signin.p"></p>
     <div id="siBox"></div>
     <p class="back" data-i18n="m.signin.back"><a href="/">← Back to the website</a></p>
   </div>
@@ -325,15 +331,15 @@ label { font-weight: 700; font-size: 14px; }
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261018j"></script>
-<script src="assets/world/world.js?v=20261018j"></script>
-<script src="assets/js-yaml.min.js?v=20261018j"></script>
-<script src="assets/schedule.js?v=20261018j"></script>
-<script src="assets/sessions.js?v=20261018j"></script>
-<script src="assets/platform/config.js?v=20261018j"></script>
-<script src="assets/platform/engine.js?v=20261018j"></script>
-<script src="assets/platform/signin.js?v=20261018j"></script>
-<script src="assets/platform/data.js?v=20261018j"></script>
+<script src="assets/world/world-data.js?v=20261018k"></script>
+<script src="assets/world/world.js?v=20261018k"></script>
+<script src="assets/js-yaml.min.js?v=20261018k"></script>
+<script src="assets/schedule.js?v=20261018k"></script>
+<script src="assets/sessions.js?v=20261018k"></script>
+<script src="assets/platform/config.js?v=20261018k"></script>
+<script src="assets/platform/engine.js?v=20261018k"></script>
+<script src="assets/platform/signin.js?v=20261018k"></script>
+<script src="assets/platform/data.js?v=20261018k"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -578,7 +584,13 @@ label { font-weight: 700; font-size: 14px; }
   $('signOut').onclick = async () => { await data.signOut(); location.reload(); };
   $('demoReset').onclick = () => { data.reset && data.reset(); location.reload(); };
 
-  const siBox = ClubSignIn.mount($('siBox'), data);
+  // the card's title follows the box: signing in, joining, or a new password
+  const siBox = ClubSignIn.mount($('siBox'), data, { onMode: (mode) => {
+    const k = mode === 'join' ? 'm.join' : mode === 'forgot' ? 'apply.h1.forgot' : 'm.signin';
+    const h = k === 'apply.h1.forgot' ? ['apply.h1.forgot', 'apply.lede.forgot'] : [k + '.h', k + '.p'];
+    if ($('siH').dataset.i18n === h[0]) return;
+    $('siH').dataset.i18n = h[0]; $('siP').dataset.i18n = h[1]; I18N.apply($('signinCard'));
+  } });
   // "Use another email" lives in translated HTML, so listen on its container
   $('notlistedBack').addEventListener('click', async (e) => { if (e.target.id !== 'otherAccount') return; e.preventDefault(); await data.signOut(); location.reload(); });
   $('setupForm').addEventListener('submit', async (e) => {
