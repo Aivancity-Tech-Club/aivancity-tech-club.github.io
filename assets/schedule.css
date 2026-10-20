@@ -95,6 +95,10 @@
 /* events with registration: "I'm going" + places */
 .reg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 10px 0 2px !important; }
 .reg-row .btn { min-height: 40px; padding: 8px 18px; font-size: .95rem; }
+/* a member's "I'm going" once tapped: a calm "done" look (green check), tap again to cancel */
+.reg-row .rsvp-on { background: var(--surface, #fff); color: var(--ink); border-color: #2e7d32; box-shadow: inset 0 0 0 1px #2e7d32; }
+.reg-row .rsvp-on:hover { background: color-mix(in srgb, #2e7d32 10%, var(--surface, #fff)); }
+@media (prefers-color-scheme: dark) { .reg-row .rsvp-on { border-color: #81c995; box-shadow: inset 0 0 0 1px #81c995; } }
 .reg-places { font-family: var(--mono); font-size: .85rem; color: var(--ink-soft); }
 .reg-places.full { color: inherit; font-weight: 700; }
 .session-title { color: inherit; text-decoration: none; }

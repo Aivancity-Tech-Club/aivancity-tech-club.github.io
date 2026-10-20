@@ -265,6 +265,25 @@ function linkErrorText(e) {
 }
 /* remembered per browser so static pages can hide "Join" for people already in the club */
 // signed in (any school account, member or not): the top bar shows an account menu instead of "Sign in"
+/* Some browsers built into apps (WhatsApp, Instagram, Outlook…) block what Firebase needs to sign in, so the page stays
+   on "Loading…". After a few seconds without an answer, say so and suggest opening the site in Safari or Chrome. */
+let slowTimer = null;
+function watchSlow() {
+  if (slowTimer || typeof document === 'undefined') return;
+  slowTimer = setTimeout(() => {
+    if (document.getElementById('club-slow')) return;
+    const inApp = /FBAN|FBAV|Instagram|WhatsApp|Line\/|LinkedInApp|Snapchat|Twitter|GSA\//i.test(navigator.userAgent);
+    const n = document.createElement('div'); n.id = 'club-slow'; n.setAttribute('role', 'status');
+    n.style.cssText = 'position:fixed;z-index:200;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;'
+      + 'background:#fffdf9;color:#221d19;border:2px solid #221d19;border-radius:16px;padding:12px 14px;font:500 15px/1.45 Figtree,system-ui,sans-serif;box-shadow:4px 4px 0 #221d19';
+    n.innerHTML = `<b style="display:block;margin-bottom:2px">${tr(inApp ? 'slow.app.h' : 'slow.h', inApp ? 'Open this page in your browser' : 'Still loading…')}</b>`
+      + `${tr(inApp ? 'slow.app.p' : 'slow.p', inApp ? 'The browser inside this app blocks signing in. Tap ⋯ or the share button, then “Open in Safari” or “Open in Chrome”.' : 'Check your connection, then reload the page. If you opened it from an app like WhatsApp, open it in Safari or Chrome instead.')}`
+      + ` <button type="button" style="margin-left:6px;font:inherit;font-weight:700;background:none;border:0;text-decoration:underline;color:inherit;cursor:pointer">${tr('slow.reload', 'Reload')}</button>`;
+    n.querySelector('button').onclick = () => location.reload();
+    document.body.appendChild(n);
+  }, 9000);
+}
+function slowDone() { clearTimeout(slowTimer); slowTimer = null; const n = document.getElementById('club-slow'); if (n) n.remove(); }
 function markSigned(email) { try { email ? localStorage.setItem('nw-signed', email) : localStorage.removeItem('nw-signed'); } catch (e) {} document.documentElement.classList.toggle('is-signed', !!email); if (window.ClubMe) ClubMe.refresh(); }
 function markMember(on) { try { on ? localStorage.setItem('nw-member', '1') : (localStorage.removeItem('nw-member'), localStorage.removeItem('nw-me')); } catch (e) {} document.documentElement.classList.toggle('is-member', !!on); if (window.ClubMe) ClubMe.refresh(); }
 /* Village Board helpers shared by both backends */
@@ -333,6 +352,7 @@ function firebaseBackend() {
   return {
     mode: 'firebase',
     async init() {
+      watchSlow();
       // config.js loads Firebase (with App Check when it's on). An older config.js kept by the browser's cache has no loader: load it here.
       if (typeof CFG.loadFirebase === 'function') await CFG.loadFirebase(['auth', 'firestore']);
       else await loadFirebaseDirect(['app', 'auth', 'firestore']);
@@ -348,7 +368,8 @@ function firebaseBackend() {
         try { const r = await auth.getRedirectResult(); if (r && r.user) { const c = await checkSchoolAccount(); if (!c.ok) this.linkError = c.message; } }
         catch (e) { this.linkError = msErrorText(e); }
       }
-      try { await db.enablePersistence({ synchronizeTabs: true }); } catch (e) { /* private mode or another tab: online only */ }
+      // No offline database cache (enablePersistence): in the browsers built into WhatsApp, Instagram and co. it can hang forever,
+      // and with it every page. The pages keep their own small caches instead.
       if (auth.isSignInWithEmailLink(location.href)) {
         let email = store.get('nw-email');
         // If the link was opened on another device, the page asks for the email (see completeLink).
@@ -364,6 +385,7 @@ function firebaseBackend() {
           history.replaceState(null, '', location.pathname);
         } else this.pendingLink = location.href;
       }
+      slowDone();   // loaded; pages that follow the sign-in arm the watch again in onAuth
     },
     microsoft: !!CFG.MICROSOFT,
     /* Sign in with the school's Microsoft account (popup; falls back to a full-page redirect if popups are blocked).
@@ -385,7 +407,9 @@ function firebaseBackend() {
     },
     // verified: the email is confirmed (email link, confirmation email or Microsoft). Unverified accounts can't read club data.
     onAuth(cb) {
+      watchSlow();
       auth.onAuthStateChanged(async u => {
+        slowDone();
         if (!u) markMember(false);
         markSigned(u ? u.email : null);
         const ms = u && (u.providerData || []).some(p => p.providerId === 'microsoft.com');

@@ -110,7 +110,8 @@ function fillLive(root) {
   root.querySelectorAll("[data-going-row]").forEach(row => {
     const key = row.dataset.goingRow, r = X.regs.find(x => x.event === key), st = r && r.status !== "cancelled" ? r.status : "";
     const note = st === "pending" ? L("rsvp.pending") : st === "waitlist" ? L("rsvp.waitlist") : st ? L("rsvp.undo") : "";
-    row.innerHTML = `<button type="button" class="rsvp-btn" data-going="${esc(key)}" aria-pressed="${!!st}">${esc(L(st === "confirmed" ? "rsvp.yes" : st ? "rsvp.asked" : "rsvp.btn"))}</button>`
+    // same look as the visitors' button it replaces (no flash from blue to white while the page finishes loading)
+    row.innerHTML = `<button type="button" class="btn ${st ? "rsvp-on" : "btn-primary"}" data-going="${esc(key)}" aria-pressed="${!!st}">${esc(L(st === "confirmed" ? "rsvp.yes" : st ? "rsvp.asked" : "rsvp.btn"))}</button>`
       + (note ? `<span class="rsvp-line">${esc(note)}</span>` : "");
   });
   root.querySelectorAll("[data-poll]").forEach(box => {
