@@ -33,6 +33,15 @@ function platform() {
   return ready;
 }
 
+// someone signed in on this device before (the top bar remembers it): wait for the account before showing the sign-up box
+const signedHere = () => { try { return !!localStorage.getItem('nw-signed'); } catch (e) { return true; } };
+// the club data, usable before it has loaded: calls wait for it, simple settings read as "not set" until then
+const laterData = new Proxy({}, { get(_, k) {
+  if (data && typeof data[k] !== 'function') return data[k];
+  if (!data && ['microsoft', 'pendingLink', 'linkError', 'mode'].includes(k)) return undefined;
+  return async (...a) => { await platform(); return data[k](...a); };
+} });
+
 /* ---------- text helpers ---------- */
 const linkify = (t) => t.replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, (u) => `<a href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\//, '')} ↗</a>`);
 // blank line = new paragraph, lines starting with "- " = a list, links become clickable
@@ -68,15 +77,21 @@ async function mount(root, opts) {
         <section class="ev-org" hidden></section>
       </div>
     </div>`;
-  let ev = null;
-  const err = await platform();
+  let ev = null, err = null;
   // a session from schedule.js can have an organizer's edited version saved as event "d-YYYY-MM-DD"
   const fk = opts.date || (FILE_ID.test(opts.id || '') ? opts.id.slice(2) : null);   // a session from schedule.js (see fileKey)
   const fileSession = fk ? findFileSession(fk) : null;
   const siteId = fk ? 'd-' + fk : opts.id;
-  const saved = siteId && !err ? await data.getEvent(siteId) : null;
-  ev = fileSession ? (saved ? { ...fileSession, ...saved } : fileSession) : saved;
   const reread = async () => { const x = await data.getEvent(siteId); return fileSession ? { ...fileSession, ...(x || {}) } : x; };
+  /* Show the details at once from what the schedule already has (the file, plus the events and edits it loaded);
+     the club database loads in the background and only the sign-up box waits for it. */
+  const known = opts.session && opts.session.title ? opts.session
+    : siteId ? (window.allSessions ? allSessions().find(x => (x.id || 'd-' + fileKey(x)) === siteId) : null) || fileSession : null;
+  const background = platform().then(async (e) => {
+    err = e; if (e) return null;
+    try { return await reread(); } catch (x) { return null; }
+  });
+  if (known) ev = { ...known }; else { const fresh = await background; ev = fresh; }
   if (!root.isConnected) return () => {};
   if (!ev) {
     q('.ev-title').textContent = T('ev.notfound');
@@ -217,14 +232,15 @@ async function mount(root, opts) {
     const r = mine();
     if (deadlinePassed() && !(r && r.status !== 'cancelled')) { box.innerHTML = `${intro()}<p class="help">${esc(T('ev.reg.closed', { d: fmtDay(ev.deadline) }))}</p>`; return; }
     if (err) { box.innerHTML = `${intro()}<p class="notice bad">${esc(T('m.dberror', { e: err.code || err.message || '?' }))}</p>`; return; }
-    if (user === undefined) { box.innerHTML = `${intro()}<p class="loading-line" role="status">${esc(T('ev.loading'))}</p>`; return; }
+    // not signed in on this device: show the Join form at once (what it sends waits for the club database); otherwise wait to know who it is
+    if (user === undefined && signedHere()) { box.innerHTML = `${intro()}<p class="loading-line" role="status">${esc(T('ev.loading'))}</p>`; return; }
     // the Join form was just sent: the new account signs in before its answers are saved, so wait instead of flashing another form
     if (joining && w.me) { box.innerHTML = `${intro()}<p class="loading-line" role="status">${esc(T('join.saving'))}</p>`; return; }
     if (!w.me) {
       if (!q('.reg-auth')) {   // keep what the person is typing when the page redraws
         box.innerHTML = `${intro()}<p class="help">${esc(T('ev.reg.account'))}</p><div class="reg-auth"></div>`;
         // the one Join form; once it's sent, save the spot straight away (no second tap)
-        siBox = ClubSignIn.mount(q('.reg-auth'), data, { onStart: () => { joining = true; }, onFail: () => { joining = false; drawReg(); }, onJoined: () => {
+        siBox = ClubSignIn.mount(q('.reg-auth'), laterData, { onStart: () => { joining = true; }, onFail: () => { joining = false; drawReg(); }, onJoined: () => {
           joining = false; if (who) { who.hasReq = true; if (ClubData.INSTANT) who.member = true; }   // joining makes them a member straight away
           act(async () => { const r = await signUpForSpot(); if (!r.ok) msg = { text: T(r.code || 'err.generic') }; });
         } });
@@ -351,16 +367,24 @@ async function mount(root, opts) {
     await reloadRegs(); await loadPeople(); draw();
   }
 
+  // redraw the sign-up box from scratch, except a Join form someone may be filling in (still signed out)
+  const resetReg = () => { if (!(q('.reg-auth') && !W().me)) q('.ev-reg').innerHTML = ''; };
   const onLang = () => { q('.ev-reg').innerHTML = ''; draw(); };
   addEventListener('langchange', onLang);
   const onWho = async () => {
     await reloadRegs(); if (W().isOrg) await loadPeople();
-    q('.ev-reg').innerHTML = ''; draw();
+    resetReg(); draw();
     if (opts.focusRegister) { opts.focusRegister = false; const b = q('.ev-reg'); if (b && !b.hidden) { b.scrollIntoView({ block: 'start' }); b.focus({ preventScroll: true }); } }
   };
   listeners.add(onWho);
-  await reloadRegs(); draw();
-  if (who) onWho();
+  draw();   // straight away, from what the page already knows
+  // then the fresh version from the database (an organizer may have just edited it) and the person's own spot
+  background.then(async (fresh) => {
+    if (!root.isConnected) return;
+    if (fresh && fresh.date) ev = { ...fresh, _d: parseDate(fresh.date) };
+    await reloadRegs(); resetReg(); draw();
+    if (who) onWho();
+  });
   return () => { listeners.delete(onWho); removeEventListener('langchange', onLang); };
 }
 
@@ -390,7 +414,7 @@ async function open(s, { register = false, push = true } = {}) {
   panel.querySelector('.ev-x').setAttribute('aria-label', T('vb.close'));
   panel.hidden = false; document.documentElement.classList.add('ev-locked');
   if (push) history.pushState({ ev: 1 }, '', location.pathname + (s.id ? '?event=' + encodeURIComponent(s.id) : '?d=' + encodeURIComponent(fileKey(s))));
-  const pending = mount(body, { id: s.id, date: s.id ? null : fileKey(s), heading: 'h2', focusRegister: register, onRemoved: () => close() });
+  const pending = mount(body, { id: s.id, date: s.id ? null : fileKey(s), session: s, heading: 'h2', focusRegister: register, onRemoved: () => close() });
   const t = body.querySelector('.ev-title'); t.id = 'evPanelTitle'; t.focus({ preventScroll: true });
   body.parentElement.scrollTop = 0;
   unmount = await pending;

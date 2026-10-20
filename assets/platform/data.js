@@ -818,6 +818,8 @@ function firebaseBackend() {
     async erasePerson(plan) {
       try {
         for (let i = 0; i < plan.refs.length; i += 400) { const b = db.batch(); plan.refs.slice(i, i + 400).forEach(r => b.delete(r)); await b.commit(); }
+        // optionally keep them out: with joining open to every school account, a removed person could otherwise join again
+        if (plan.block) await db.collection('blocked').doc(plan.uid).set({ by: auth.currentUser.uid, at: FV().serverTimestamp() });
         return { ok: true, n: plan.refs.length };
       } catch (e) { return fail(e); }
     },

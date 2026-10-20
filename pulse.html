@@ -16,11 +16,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261020d">
-  <link rel="stylesheet" href="assets/village.css?v=20261020d">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261020d">
-  <script src="assets/i18n.js?v=20261020d"></script>
-  <script src="assets/halloween.js?v=20261020d"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261020f">
+  <link rel="stylesheet" href="assets/village.css?v=20261020f">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261020f">
+  <script src="assets/i18n.js?v=20261020f"></script>
+  <script src="assets/halloween.js?v=20261020f"></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -84,12 +84,12 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261020d"></script>
+  <script src="assets/schedule.js?v=20261020f"></script>
 
-  <script src="assets/sessions.js?v=20261020d"></script>
-  <script src="assets/platform/config.js?v=20261020d"></script>
-  <script src="assets/platform/signin.js?v=20261020d"></script>
-  <script src="assets/platform/data.js?v=20261020d"></script>
+  <script src="assets/sessions.js?v=20261020f"></script>
+  <script src="assets/platform/config.js?v=20261020f"></script>
+  <script src="assets/platform/signin.js?v=20261020f"></script>
+  <script src="assets/platform/data.js?v=20261020f"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -299,7 +299,7 @@
     $("dcRun").addEventListener("click", dataCheck);
 
     /* ---------- Delete someone's data (on request). Organizers' own data can't be deleted here. ---------- */
-    let erPlan = null, erSure = false;
+    let erPlan = null, erSure = false, erBlockOn = false;
     function erasePeople() {
       const { members, requests, pending } = S, out = {};
       const orgs = new Set(members.filter(m => m.role === "organizer").map(m => m.uid));
@@ -323,13 +323,14 @@
         <div class="ev-confirm danger" role="group" aria-labelledby="erSureH">
           <p class="ev-confirm-h" id="erSureH">${esc(T("er.sure.h", { name: erPlan.name }))}</p>
           <p>${esc(T("er.sure.p"))}</p>
+          <label class="check" style="margin-bottom:12px"><input type="checkbox" id="erBlock"${erBlockOn ? " checked" : ""}><span>${esc(T("er.block"))}</span></label>
           <div class="ev-confirm-act"><button type="button" class="btn btn-danger" data-er="go">${esc(T(erSure ? "er.go2" : erPlan.total === 1 ? "er.go1" : "er.go", { n: erPlan.total }))}</button>
             <button type="button" class="btn btn-ghost" data-er="no">${esc(T("ev.c.no"))}</button></div>
         </div>`;
     }
     $("erForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const uid = $("erWho").value; erPlan = null; erSure = false;
+      const uid = $("erWho").value; erPlan = null; erSure = false; erBlockOn = false;
       if (!uid) { drawErase(`<p class="notice bad" role="alert">${esc(T("er.pick"))}</p>`); $("erWho").focus(); return; }
       drawErase(`<p class="loading-line" role="status">${esc(T("pulse.loading"))}</p>`);
       const p = erasePeople().find(x => x.uid === uid) || { uid };
@@ -339,12 +340,13 @@
         drawErase();
       } catch (x) { drawErase(`<p class="notice bad">${esc(T("m.dberror", { e: x.code || x.message || "?" }))}</p>`); }
     });
+    $("erOut").addEventListener("change", (e) => { if (e.target.id === "erBlock") erBlockOn = e.target.checked; });
     $("erOut").addEventListener("click", async (e) => {
       const b = e.target.closest("[data-er]"); if (!b) return;
       if (b.dataset.er === "no") { erPlan = null; erSure = false; drawErase(); $("erWho").focus(); return; }
       if (!erSure) { erSure = true; drawErase(); $("erOut").querySelector("[data-er=go]").focus(); return; }   // a second click, so nobody deletes by accident
       b.disabled = true;
-      const plan = erPlan, r = await data.erasePerson(plan);
+      const plan = { ...erPlan, block: erBlockOn }, r = await data.erasePerson(plan);
       erPlan = null; erSure = false;
       if (!r.ok) { drawErase(`<p class="notice bad" role="alert">${esc(T(r.code || "err.generic"))}</p>`); return; }
       drawErase(`<p class="notice ok" role="status">${esc(T("er.done", { n: r.n, name: plan.name }))}</p><p class="help">${esc(T("er.auth", { email: plan.email || "—" }))}</p>`);

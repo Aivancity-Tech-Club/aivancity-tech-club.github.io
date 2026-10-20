@@ -131,3 +131,5 @@ article.session[data-key]:has(.session-title:focus-visible) { outline: 3px solid
 /* a cancelled session keeps its card, clearly marked */
 article.session.is-cancelled h3 { text-decoration: line-through; text-decoration-thickness: 2px; }
 article.session.is-cancelled .session-body > p:not(.session-actions) { opacity: .75; }
+/* tapped, and the details panel is still getting ready */
+article.session[aria-busy="true"] { cursor: progress; opacity: .8; }

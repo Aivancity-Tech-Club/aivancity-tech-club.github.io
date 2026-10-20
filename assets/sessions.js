@@ -378,17 +378,28 @@ function loadPanel() {
     const js = (src) => new Promise((res, rej) => { const x = document.createElement("script"); x.src = src + (ASSET_V ? "?" + ASSET_V : ""); x.onload = res; x.onerror = rej; document.head.appendChild(x); });
     if (!document.querySelector('link[href*="event.css"]')) { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "/assets/event.css" + (ASSET_V ? "?" + ASSET_V : ""); document.head.appendChild(l); }
     panelLoading = (async () => {
-      if (!window.CLUB_PLATFORM) await js("/assets/platform/config.js");
-      if (!window.ClubSignIn) await js("/assets/platform/signin.js");
-      if (!window.ClubData) await js("/assets/platform/data.js");
-      await js("/assets/event.js");
+      if (!window.CLUB_PLATFORM) await js("/assets/platform/config.js");   // data.js reads it when it loads
+      await Promise.all([window.ClubSignIn ? 0 : js("/assets/platform/signin.js"), window.ClubData ? 0 : js("/assets/platform/data.js"), js("/assets/event.js")]);
     })();
+    panelLoading.catch(() => { panelLoading = null; });   // try again on the next tap
   }
   return panelLoading;
 }
 async function openSession(s, register) {
   if (!s) return;
+  // the panel's code is usually already here (loaded while the page was idle); if not, show that the tap was received
+  const card = document.querySelector(`.session[data-key="${CSS.escape(sessionKey(s))}"]`);
+  if (!window.ClubEvent && card) card.setAttribute("aria-busy", "true");
   try { await loadPanel(); ClubEvent.open(s, { register }); } catch (e) { location.href = eventHref(s) + (register ? "#register" : ""); }
+  finally { if (card) card.removeAttribute("aria-busy"); }
+}
+/* Get the panel ready before anyone taps: when the page is idle, and as soon as a pointer hovers a card or a card gets focus.
+   (Only the site's own small files; the club database still loads only when a panel opens.) */
+if (document.querySelector("#season, #upcoming-list")) {
+  const warm = () => { loadPanel().catch(() => {}); };
+  if ("requestIdleCallback" in window) requestIdleCallback(warm, { timeout: 4000 }); else setTimeout(warm, 2500);
+  document.addEventListener("pointerover", (e) => { if (e.target.closest && e.target.closest(".session")) warm(); }, { passive: true });
+  document.addEventListener("focusin", (e) => { if (e.target.closest && e.target.closest(".session")) warm(); });
 }
 document.addEventListener("click", (e) => {
   const card = e.target.closest("article.session[data-key]"); if (!card || !document.querySelector("#season, #upcoming-list")) return;

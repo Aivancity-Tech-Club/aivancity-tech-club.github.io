@@ -340,14 +340,19 @@ service cloud.firestore {
         ? (exists(evPath(e)) ? docOpen(get(evPath(e)).data) : notOver(e.split('-')[1], e.split('-')[2], e.split('-')[3]))
         : (get(evPath(e)).data.published == true && docOpen(get(evPath(e)).data));
     }
+    // a member may confirm their own spot only where the event confirms spots automatically (the default); otherwise an organizer does
+    function selfConfirmOk(d) {
+      return d.status != 'confirmed' || !exists(evPath(d.event)) || get(evPath(d.event)).data.get('autoConfirm', true) == true;
+    }
     match /registrations/{id} {
       // your own spot (it may not exist yet), or your own list; organizers read everything
       allow get: if isOrganizer() || (signedIn() && id.matches('^.+_' + request.auth.uid + '$'));
       allow list: if isOrganizer() || (signedIn() && resource.data.uid == request.auth.uid);
-      allow create: if regOk(id) && request.resource.data.status != 'cancelled' && eventOpen(request.resource.data.event);
+      allow create: if regOk(id) && request.resource.data.status != 'cancelled' && eventOpen(request.resource.data.event)
+        && selfConfirmOk(request.resource.data);
       // people can always cancel their own spot; anything else only while the event takes sign-ups
       allow update: if regOk(id) && resource.data.uid == request.auth.uid && resource.data.event == request.resource.data.event
-        && (request.resource.data.status == 'cancelled' || eventOpen(request.resource.data.event));
+        && (request.resource.data.status == 'cancelled' || (eventOpen(request.resource.data.event) && selfConfirmOk(request.resource.data)));
       allow update: if isOrganizer() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
         && request.resource.data.status in ['pending', 'confirmed', 'waitlist', 'cancelled'];
       allow delete: if isOrganizer();
