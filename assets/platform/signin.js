@@ -32,6 +32,15 @@ const CSS = `
 .si .si-hint { margin: 0; font-size: .85rem; opacity: .8; }
 .si .si-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .si button[disabled] { opacity: .55; cursor: default; }
+/* waiting for the server: the button keeps its colour and shows a small spinner */
+.si button[aria-busy="true"] { opacity: 1; cursor: progress; display: inline-flex; align-items: center; gap: 8px; }
+.si button[aria-busy="true"]::before, .si .si-spin::before { content: ""; width: 1em; height: 1em; flex: none; border-radius: 50%;
+  border: 2.5px solid currentColor; border-right-color: transparent; animation: si-spin .8s linear infinite; }
+.si .si-spin { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+.si .si-settle { display: grid; gap: 10px; padding: 8px 0; }
+.si .si-settle p { margin: 0; }
+@keyframes si-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .si button[aria-busy="true"]::before, .si .si-spin::before { animation-duration: 2.4s; } }
 .si .si-manual summary { cursor: pointer; font-weight: 700; font-size: .92rem; }
 .si .si-manual[open] { display: grid; gap: 10px; }
 .si .si-steps { margin: 0; padding-left: 20px; display: grid; gap: 10px; font-size: .95rem; }
@@ -66,6 +75,7 @@ function injectCss() {
 
 function mount(el, data, opts = {}) {
   injectCss();
+  let settling = false, waitingVerify = null;   // settling: the Join form was sent, the account is being set up
   let mode = 'signin', verifyEmail = '', msg = null, busy = false, showPw = false, asked = false, openManual = false, refused = false, whyOpen = false, resetSentTo = '';
   const kept = { email: '', pw: '', name: '', phone: '', level: '', github: '', consent: false, program: '', interests: [] };
 
@@ -101,6 +111,11 @@ function mount(el, data, opts = {}) {
   function render() { draw(); if (opts.onMode) opts.onMode(mode); }
   function draw() {
     keep();
+    if (settling) {
+      el.innerHTML = `<div class="si"><div class="si-settle" role="status" aria-live="polite">
+        <p class="si-spin">${esc(T('join.settling'))}</p><p class="si-hint">${esc(T(window.ClubData && ClubData.INSTANT ? 'join.settling.instant' : 'join.settling.p'))}</p></div></div>`;
+      return;
+    }
     // the page's own heading/intro make no sense on the "confirm your email" step
     (el.parentElement || document).querySelectorAll('[data-si-intro]').forEach(x => { x.hidden = mode === 'verify'; });
     if (mode === 'verify' && window.ClubData && ClubData.ORG_CONFIRM) {
@@ -108,7 +123,7 @@ function mount(el, data, opts = {}) {
         <h2 style="margin:0;font-weight:400">${T(refused ? 'pw.wait.refused.h' : 'pw.wait.h')}</h2>
         <p style="margin:0">${T(refused ? 'pw.wait.refused.p' : 'pw.wait.p', { email: esc(verifyEmail) })}</p>
         ${msgHTML()}
-        ${refused ? '' : `<div class="si-row"><button type="button" class="btn btn-primary" data-si="done" ${busy ? 'disabled' : ''}>${esc(T('pw.wait.check'))}</button></div>
+        ${refused ? '' : `<div class="si-row"><button type="button" class="btn btn-primary" data-si="done" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T('pw.wait.check'))}</button></div>
         <details class="si-manual"${openManual ? ' open' : ''}><summary>${esc(T('pw.fast.q'))}</summary>
           <ol class="si-steps">
             <li>${esc(T('pw.fast.1'))}<div><button type="button" class="btn btn-ghost ghost" data-si="fastmail" ${busy ? 'disabled' : ''}>${esc(T('pw.fast.btn'))}</button></div></li>
@@ -123,7 +138,7 @@ function mount(el, data, opts = {}) {
         <h2 style="margin:0;font-weight:400">${T('pw.verify.h')}</h2>
         <p style="margin:0">${T('pw.verify.p', { email: esc(verifyEmail) })}</p>
         ${msgHTML()}
-        <div class="si-row"><button type="button" class="btn btn-primary" data-si="done" ${busy ? 'disabled' : ''}>${esc(T('pw.verify.done'))}</button>
+        <div class="si-row"><button type="button" class="btn btn-primary" data-si="done" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T('pw.verify.done'))}</button>
         <button type="button" class="btn btn-ghost ghost" data-si="resend" ${busy ? 'disabled' : ''}>${esc(T('pw.verify.resend'))}</button></div>
         ${data.requestManualConfirm ? (asked
           ? `<p class="si-msg ok" role="status">${esc(T('pw.manual.sent'))}</p>`
@@ -175,7 +190,7 @@ function mount(el, data, opts = {}) {
         <div><label class="si-check"><input type="checkbox" id="si-consent"${kept.consent ? ' checked' : ''}${inv('si-consent')}><span>${esc(T('join.consent'))}</span></label>${fe('si-consent')}</div>
         ${msgHTML()}
         <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T(busy ? 'join.busy' : 'join.btn'))}</button></div>
-        <p class="si-hint">${esc(T(ORG ? 'join.hint.org' : 'join.hint.email'))}</p>
+        <p class="si-hint">${esc(T(ClubData.INSTANT ? 'join.hint.instant' : ORG ? 'join.hint.org' : 'join.hint.email'))}</p>
         <p class="si-links"><a href="#" data-si="signin">${esc(T('join.have'))}</a></p>
       </form></div>`;
       return;
@@ -205,7 +220,15 @@ function mount(el, data, opts = {}) {
     </form></div>`;
   }
 
-  async function run(fn) { busy = true; render(); try { await fn(); } finally { busy = false; render(); } }
+  async function run(fn) {
+    busy = true; render();
+    try { await fn(); } finally {
+      busy = false;
+      // the page asked for the "waiting for approval" screen while the account was still being saved: show it now
+      if (waitingVerify !== null && !(msg && !msg.ok)) { settling = false; const em = waitingVerify; waitingVerify = null; api.verify(em); return; }
+      waitingVerify = null; render();
+    }
+  }
 
   el.addEventListener('click', async (e) => {
     const a = e.target.closest('[data-si]'); if (!a) return;
@@ -253,9 +276,11 @@ function mount(el, data, opts = {}) {
     if (github && !/^[A-Za-z0-9-]{1,39}$/.test(github)) return bad(T('join.err.github'), 'si-gh');
     if (!kept.consent) return bad(T('join.err.consent'), 'si-consent');
     if (opts.onStart) opts.onStart();
+    settling = true;   // from the tap on: a clear "setting up your account" screen instead of a frozen form
     await run(async () => {
       const r = await data.joinClub({ email, pw: kept.pw, name, phone, level: kept.level, github, program: kept.program, interests: kept.interests, lang: window.I18N ? I18N.lang : 'en' });
-      if (r.ok) { kept.pw = ''; kept.pw2 = ''; msg = null; if (opts.onJoined) opts.onJoined(); return; }
+      if (r.ok) { kept.pw = ''; kept.pw2 = ''; msg = null; settling = true; if (opts.onJoined) opts.onJoined(); return; }
+      settling = false;
       if (opts.onFail) opts.onFail();
       if (/email-already-in-use/.test(r.code || '')) { mode = 'signin'; msg = { text: T('join.exists') }; return; }
       msg = { text: r.message || T('err.generic') };
@@ -291,15 +316,18 @@ function mount(el, data, opts = {}) {
   });
   addEventListener('langchange', () => { if (el.firstChild) render(); });
 
-  return {
-    signin(error) { mode = data.pendingLink ? 'link' : 'signin'; msg = error ? { text: error } : null; render(); },
-    join() { mode = 'join'; msg = null; render(); },
-    create() { mode = 'join'; msg = null; render(); },
+  const api = {
+    signin(error) { settling = false; mode = data.pendingLink ? 'link' : 'signin'; msg = error ? { text: error } : null; render(); },
+    join() { settling = false; mode = 'join'; msg = null; render(); },
+    create() { settling = false; mode = 'join'; msg = null; render(); },
     get name() { return kept.name || ''; },
-    verify(email) { mode = 'verify'; verifyEmail = email || ''; msg = null; render();
+    verify(email) {
+      if (busy && settling) { waitingVerify = email || ''; return; }   // still saving the join answers: switch once they're saved
+      settling = false; mode = 'verify'; verifyEmail = email || ''; msg = null; render();
       if (data.accountRefused) data.accountRefused().then(r => { if (r) { refused = true; render(); } });
       if (data.manualConfirmPending) data.manualConfirmPending().then(p => { if (p && !asked) { asked = true; render(); } }); },
   };
+  return api;
 }
 window.ClubSignIn = { mount };
 })();

@@ -11,14 +11,16 @@
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261020a">
-  <link rel="stylesheet" href="assets/village.css?v=20261020a">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261020a">
-  <script src="assets/i18n.js?v=20261020a"></script>
-  <script src="assets/halloween.js?v=20261020a"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261020d">
+  <link rel="stylesheet" href="assets/village.css?v=20261020d">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261020d">
+  <script src="assets/i18n.js?v=20261020d"></script>
+  <script src="assets/halloween.js?v=20261020d"></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -51,7 +53,7 @@
     </section>
     <section class="pulse-sec">
       <div class="wrap">
-        <p class="help" id="pLoading" role="status" data-i18n="pulse.loading">Loading…</p>
+        <p class="loading-line" id="pLoading" role="status" data-i18n="pulse.loading">Loading…</p>
         <div class="form-card gate" id="gSignin" hidden><div id="siBox"></div></div>
         <div class="form-card gate" id="gNo" hidden><p data-i18n="pulse.only">This page is for organizers.</p><a class="btn btn-ghost" href="/mountain" data-i18n="vb.gate.mountain">Go to the Mountain →</a></div>
         <p class="notice info" id="demoNote" hidden data-i18n="pulse.demo"></p>
@@ -82,12 +84,12 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261020a"></script>
+  <script src="assets/schedule.js?v=20261020d"></script>
 
-  <script src="assets/sessions.js?v=20261020a"></script>
-  <script src="assets/platform/config.js?v=20261020a"></script>
-  <script src="assets/platform/signin.js?v=20261020a"></script>
-  <script src="assets/platform/data.js?v=20261020a"></script>
+  <script src="assets/sessions.js?v=20261020d"></script>
+  <script src="assets/platform/config.js?v=20261020d"></script>
+  <script src="assets/platform/signin.js?v=20261020d"></script>
+  <script src="assets/platform/data.js?v=20261020d"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -251,7 +253,7 @@
 
     /* ---------- Data check: read-only consistency checks over the whole database ---------- */
     async function dataCheck() {
-      const out = $("dcOut"); $("dcRun").disabled = true; out.innerHTML = `<p class="help">${esc(T("pulse.loading"))}</p>`;
+      const out = $("dcOut"); $("dcRun").disabled = true; out.innerHTML = `<p class="loading-line" role="status">${esc(T("pulse.loading"))}</p>`;
       try {
         const D = await data.loadAudit();
         const byId = (list) => Object.fromEntries(list.map(x => [x.id, x]));
@@ -329,7 +331,7 @@
       e.preventDefault();
       const uid = $("erWho").value; erPlan = null; erSure = false;
       if (!uid) { drawErase(`<p class="notice bad" role="alert">${esc(T("er.pick"))}</p>`); $("erWho").focus(); return; }
-      drawErase(`<p class="help">${esc(T("pulse.loading"))}</p>`);
+      drawErase(`<p class="loading-line" role="status">${esc(T("pulse.loading"))}</p>`);
       const p = erasePeople().find(x => x.uid === uid) || { uid };
       try {
         const email = p.email || ((await data.whoAre([uid]))[uid] || {}).email || "";

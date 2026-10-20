@@ -496,3 +496,16 @@ h2.side-h { font-size: 1.17rem; margin: 0 0 6px; font-weight: 700; letter-spacin
 
 /* status chip used on the schedule, event pages and the organizers' lists */
 .chip.chip-cancelled { background: #f8ddd6; color: #8c1d18; border-color: #8c1d18; font-weight: 700; }
+
+/* ---------- waiting for the server: one look everywhere ----------
+   .loading-line: "Loading…" text with a small spinner. Buttons with aria-busy="true" keep their colour and show the spinner
+   (i18n.js adds it to any button that turns disabled right after it was tapped). */
+.loading-line { display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 0; color: var(--ink-soft, #57504a); font-weight: 600; }
+.loading-line::before, .btn[aria-busy="true"]::before, button[aria-busy="true"].link-btn::before {
+  content: ""; width: 1em; height: 1em; flex: none; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent;
+  animation: club-spin .8s linear infinite; }
+.btn[aria-busy="true"], button[aria-busy="true"] { cursor: progress; opacity: 1 !important; }
+.btn[aria-busy="true"] { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+button[aria-busy="true"].link-btn { display: inline-flex; align-items: center; gap: 6px; }
+@keyframes club-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .loading-line::before, .btn[aria-busy="true"]::before, button[aria-busy="true"].link-btn::before { animation-duration: 2.4s; } }

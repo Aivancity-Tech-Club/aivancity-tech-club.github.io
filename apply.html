@@ -20,12 +20,14 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Tech Club">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=20261020a">
-  <script src="assets/i18n.js?v=20261020a"></script>
-  <script src="assets/halloween.js?v=20261020a"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261020e">
+  <script src="assets/i18n.js?v=20261020e"></script>
+  <script src="assets/halloween.js?v=20261020e"></script>
 </head>
 <body data-i18n-title="apply.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -66,7 +68,7 @@
         <div class="form-card" aria-live="polite">
           <p class="notice info" id="demoNote" hidden data-i18n="apply.demo"></p>
 
-          <div id="vLoading"><p class="help">…</p></div>
+          <div id="vLoading" role="status"><p class="loading-line" data-i18n="apply.loading">Loading your account…</p></div>
 
           <!-- 1. join (account + answers in one form), or sign in; then waiting for approval -->
           <div id="vSignin" class="form-grid" hidden>
@@ -78,6 +80,7 @@
           <form id="vForm" class="form-grid" hidden novalidate>
             <p class="help" style="font-size:.95rem"><span id="who"></span> · <a href="#" class="js-other" data-i18n="apply.other">Use another email</a></p>
             <p class="notice info" id="alreadyNote" hidden data-i18n="apply.already"></p>
+            <p class="notice info" id="finishNote" hidden data-i18n="apply.finish.p"></p>
             <div class="field">
               <label for="name" data-i18n="apply.name">Full name</label>
               <input class="input" id="name" autocomplete="name" maxlength="60" required>
@@ -150,9 +153,9 @@
     </div>
   </footer>
 
-  <script src="assets/platform/config.js?v=20261020a"></script>
-  <script src="assets/platform/signin.js?v=20261020a"></script>
-  <script src="assets/platform/data.js?v=20261020a"></script>
+  <script src="assets/platform/config.js?v=20261020e"></script>
+  <script src="assets/platform/signin.js?v=20261020e"></script>
+  <script src="assets/platform/data.js?v=20261020e"></script>
   <script>
   (async () => {
     const $ = id => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -166,7 +169,7 @@
     function page(mode) {
       const m = mode === "forgot" ? "forgot" : mode === "signin" || mode === "link" ? "signin" : "join";
       if (m === pageMode) return; pageMode = m;
-      const keys = { join: ["eb.apply", "apply.h1", "apply.lede", "apply.title"], signin: ["eb.signin", "apply.h1.signin", "apply.lede.signin", "apply.title.signin"],
+      const keys = { join: ["eb.apply", "apply.h1", ClubData.INSTANT ? "apply.lede.instant" : "apply.lede", "apply.title"], signin: ["eb.signin", "apply.h1.signin", "apply.lede.signin", "apply.title.signin"],
         forgot: ["eb.signin", "apply.h1.forgot", "apply.lede.forgot", "apply.title.forgot"] }[m];
       $("pEyebrow").dataset.i18n = keys[0]; $("pH1").dataset.i18n = keys[1]; $("pLede").dataset.i18n = keys[2];
       document.body.dataset.i18nTitle = keys[3];
@@ -178,16 +181,28 @@
     function show(v, waiting) {
       if (v !== "vSignin") page("join");
       views.forEach(x => $(x).hidden = x !== v);
-      const step = waiting ? 1 : { vLoading: 0, vSignin: 0, vForm: 0, vDone: 2 }[v];
+      const step = waiting ? 1 : { vLoading: 0, vSignin: 0, vForm: 0, vDone: ClubData.INSTANT ? 1 : 2 }[v];
       [...$("steps").children].forEach((li, i) => { li.className = i < step ? "done" : i === step ? "on" : ""; });
     }
     const msg = (el, text, kind) => { el.className = "notice form-msg " + (kind || ""); el.innerHTML = text || ""; };
     const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     show("vLoading");
 
-    const data = ClubData.create();
-    try { await data.init(); } catch (e) { show("vLoading"); $("vLoading").textContent = T("err.generic") + " (" + (e.message || "?") + ")"; return; }
-    const siBox = ClubSignIn.mount($("siBox"), data, { onMode: page });
+    // joining without waiting (CONFIRM "none" in config.js): no approval step in the 1-2-3
+    if (ClubData.INSTANT) {
+      $("steps").children[1].dataset.i18n = "apply.step2.instant"; $("steps").children[2].dataset.i18n = "apply.step3.instant";
+      $("pLede").dataset.i18n = "apply.lede.instant"; I18N.apply(document.querySelector(".page-head"));
+    }
+    const data = ClubData.create(), ready = data.init();
+    // The Join form shows straight away for people who aren't signed in on this device (no waiting for the club database):
+    // anything the form sends waits for the database to be ready first.
+    const later = new Proxy(data, { get(t, k) { const v = t[k];
+      return typeof v === "function" && k !== "onAuth" ? async (...a) => { await ready; return v.apply(t, a); } : v; } });
+    const siBox = ClubSignIn.mount($("siBox"), later, { onMode: page });
+    let fastJoin = false;
+    try { fastJoin = data.mode !== "demo" && !localStorage.getItem("nw-signed"); } catch (e) {}
+    if (fastJoin) { show("vSignin"); siBox.join(); }
+    try { await ready; } catch (e) { show("vLoading"); $("vLoading").textContent = T("m.dberror", { e: e.code || e.message || "?" }); return; }
     if (data.mode === "demo") $("demoNote").hidden = false;
 
     let user = null, req = null;
@@ -221,12 +236,19 @@
     data.onAuth(async u => {
       user = u;
       // signed out: the Join form first (people who tap Join are almost always new); "Already have an account? Sign in" is right below it
-      if (!u) { show("vSignin"); if (data.linkError) siBox.signin(data.linkError); else siBox.join(); return; }
+      if (!u) {
+        show("vSignin");
+        if (data.linkError) siBox.signin(data.linkError);
+        else if (!fastJoin) siBox.join();   // already showing (and maybe being filled in): don't redraw it
+        fastJoin = false; return;
+      }
+      fastJoin = false;
       if (!u.verified) { show("vSignin", true); siBox.verify(u.email); scrollTo({ top: 0, behavior: "smooth" }); return; }
       renderWho();
       const [r, onRoster] = await Promise.all([data.requestStatus(), data.onRoster()]);
       req = r; fill(r);
       $("alreadyNote").hidden = !(onRoster && data.mode !== "demo");
+      $("finishNote").hidden = onRoster;   // signed in, but never finished joining: say why this form is here
       if (r && r.consent && r.phone) showDone(); else show("vForm");
     });
 

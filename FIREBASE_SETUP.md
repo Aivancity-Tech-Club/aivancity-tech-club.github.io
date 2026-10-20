@@ -137,7 +137,14 @@ Nothing to set up: it uses the `board` collection (comments live under each post
   can hide it from the camp page.
 - **Feedback:** the `/feedback` form has a "Why I stopped coming" topic; the drifting-away message links to it.
 
-## 7d. Approving new accounts (no confirmation email for now)
+## 7d. Joining without waiting (current setting)
+`CONFIRM: "none"` in `assets/platform/config.js` together with `instantJoin()` returning `true` in `firestore.rules`:
+sending the Join form makes the person a member straight away (ninja on the Mountain, WhatsApp invite), with no approval step.
+Spots for sessions are confirmed straight away too, unless an event has **Confirm spots automatically** switched off in the
+editor (then an organizer confirms each spot). To go back to approving accounts, set `CONFIRM: "organizer"` and
+`instantJoin()` to `false`, publish the rules, then push.
+
+## 7d-bis. Approving new accounts (when CONFIRM is "organizer")
 The school's Microsoft email blocks our confirmation emails, so for now (`CONFIRM: "organizer"` in
 `assets/platform/config.js`) nobody gets an email. A student creates an account (name, school email, password) and sees
 "Waiting for approval". They appear at the top of **/pulse** under "New accounts to approve": **Approve** the people you know

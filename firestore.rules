@@ -12,9 +12,13 @@ service cloud.firestore {
     function schoolEmail() { return signedIn() && request.auth.token.email.matches('.*@aivancity[.]education$'); }
     // A school account counts once its email is confirmed, OR (while the school's email blocks our confirmation emails)
     // once an organizer has approved it on /pulse (confirmed/{uid}). An organizer can also refuse an account (blocked/{uid}).
+    // Joining without waiting: true = any @aivancity.education account counts straight away (organizers can still refuse an
+    // account on /pulse, which blocks it). false = wait for the confirmation email or an organizer's approval.
+    // Keep it in step with CONFIRM in assets/platform/config.js ("none" = true; "organizer" or "email" = false).
+    function instantJoin() { return true; }
     function school() {
       return schoolEmail() && !exists(/databases/$(db)/documents/blocked/$(request.auth.uid))
-        && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'microsoft.com'
+        && (instantJoin() || request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'microsoft.com'
             || exists(/databases/$(db)/documents/confirmed/$(request.auth.uid)));
     }
     function email() { return request.auth.token.email.lower(); }
@@ -293,7 +297,7 @@ service cloud.firestore {
     function eventOk(d) {
       return d.keys().hasOnly(['title', 'title_fr', 'date', 'time', 'time_fr', 'room', 'type', 'type_fr', 'format', 'level', 'lang', 'track',
           'description', 'description_fr', 'details', 'details_fr', 'speaker', 'link', 'linkText', 'registration', 'capacity', 'deadline', 'published',
-          'cancelled', 'hidden', 'deleted',
+          'cancelled', 'hidden', 'deleted', 'autoConfirm',
           'createdBy', 'createdAt', 'updatedAt'])
         && d.title is string && d.title.size() > 0 && d.title.size() <= 120
         && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
@@ -301,7 +305,7 @@ service cloud.firestore {
         && d.details is string && d.details.size() <= 5000 && d.details_fr is string && d.details_fr.size() <= 5000
         && d.registration is bool && d.published is bool
         && (d.get('deadline', '') == '' || (d.deadline is string && d.deadline.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
-        && d.get('cancelled', false) is bool && d.get('hidden', false) is bool && d.get('deleted', false) is bool
+        && d.get('cancelled', false) is bool && d.get('hidden', false) is bool && d.get('deleted', false) is bool && d.get('autoConfirm', true) is bool
         && d.capacity is int && d.capacity >= 0 && d.capacity <= 1000;
     }
     match /events/{id} {

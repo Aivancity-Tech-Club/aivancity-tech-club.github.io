@@ -275,7 +275,7 @@ en: {
   "ee.capacity.help": "Leave empty for no limit. When it's full, people join a waiting list.",
   "ee.deadline": "Registration closes on",
   "ee.deadline.help": "Optional. Registration stays open until the end of that day.",
-  "ee.reg.help": "Students who aren't members yet create an account and join the club while registering. You confirm their spot on the event page.",
+  'ee.reg.help': "Students who aren't members yet join the club right there while registering.",
   "ee.sec.pub": "Visibility",
   "ee.published": "Show this event on the site (untick to keep it as a draft)",
   "ee.save": "Save changes",
@@ -427,6 +427,20 @@ en: {
   "slow.app.h": "Open this page in your browser",
   "slow.app.p": "The browser inside this app can block signing in. Tap ⋯ or the share button, then “Open in Safari” or “Open in Chrome”.",
   "slow.reload": "Reload",
+  "apply.loading": "Loading your account…",
+  "apply.finish.p": "Almost there: your account exists, but you haven't finished joining the club. Add these few details and you're in.",
+  "join.settling": "Creating your account…",
+  "join.settling.p": "Saving your answers and sending your request to the organizers. This takes a few seconds.",
+  "nav.join.wait": "Waiting for approval",
+  "me.wait": "See my request",
+  "me.pending": "Waiting for approval",
+  "ee.auto": "Confirm spots automatically",
+  "ee.auto.help": "On: everyone who taps “I'm going” gets their spot straight away. Off: each spot waits until an organizer confirms it (useful when places are limited).",
+  "join.hint.instant": "You're in as soon as you send this: you get the WhatsApp invite and your own ninja on the Mountain.",
+  "apply.step2.instant": "Get the WhatsApp invite",
+  "apply.step3.instant": "Meet your ninja on the Mountain",
+  "apply.lede.instant": "One short form and you're in straight away: you get the invite to the WhatsApp group and your own ninja on the Mountain to track your bandana and badges.",
+  "join.settling.instant": "Saving your answers and setting up your ninja. This takes a few seconds.",
   'vb.loading': 'Loading the board…',
   'vb.form.as': 'Post as',
   'vb.form.as.help': 'Elders only. A team or council post shows the club as the author; the details panel still says who posted it, so people know who to message.',
@@ -984,7 +998,7 @@ fr: {
   "ee.capacity.help": "Laissez vide pour ne pas limiter. Une fois complet, les gens rejoignent une liste d'attente.",
   "ee.deadline": "Fin des inscriptions le",
   "ee.deadline.help": "Facultatif. Les inscriptions restent ouvertes jusqu'à la fin de ce jour.",
-  "ee.reg.help": "Les étudiants qui ne sont pas encore membres créent un compte et rejoignent le club en s'inscrivant. Vous confirmez leur place sur la page de l'événement.",
+  'ee.reg.help': "Les étudiants qui ne sont pas encore membres rejoignent le club directement en s'inscrivant.",
   "ee.sec.pub": "Visibilité",
   "ee.published": "Afficher cet événement sur le site (décochez pour le garder en brouillon)",
   "ee.save": "Enregistrer",
@@ -1136,6 +1150,20 @@ fr: {
   "slow.app.h": "Ouvrez cette page dans votre navigateur",
   "slow.app.p": "Le navigateur intégré à cette appli peut bloquer la connexion. Touchez ⋯ ou le bouton de partage, puis « Ouvrir dans Safari » ou « Ouvrir dans Chrome ».",
   "slow.reload": "Recharger",
+  "apply.loading": "Chargement de votre compte…",
+  "apply.finish.p": "Presque fini : votre compte existe, mais vous n'avez pas terminé votre adhésion au club. Ajoutez ces quelques informations et c'est bon.",
+  "join.settling": "Création de votre compte…",
+  "join.settling.p": "Nous enregistrons vos réponses et envoyons votre demande aux organisateurs. Cela prend quelques secondes.",
+  "nav.join.wait": "En attente de validation",
+  "me.wait": "Voir ma demande",
+  "me.pending": "En attente de validation",
+  "ee.auto": "Confirmer les places automatiquement",
+  "ee.auto.help": "Activé : toute personne qui touche « J'y vais » a sa place tout de suite. Désactivé : chaque place attend la confirmation d'un organisateur (utile quand les places sont limitées).",
+  "join.hint.instant": "Vous êtes membre dès l'envoi : vous recevez l'invitation WhatsApp et votre propre ninja sur la Montagne.",
+  "apply.step2.instant": "Recevez l'invitation WhatsApp",
+  "apply.step3.instant": "Découvrez votre ninja sur la Montagne",
+  "apply.lede.instant": "Un court formulaire et c'est parti tout de suite : vous recevez l'invitation au groupe WhatsApp et votre propre ninja sur la Montagne pour suivre votre bandana et vos badges.",
+  "join.settling.instant": "Nous enregistrons vos réponses et préparons votre ninja. Cela prend quelques secondes.",
   'vb.loading': 'Chargement du tableau…',
   'vb.form.as': 'Publier en tant que',
   'vb.form.as.help': 'Réservé aux anciens. Une publication de l\'équipe ou du conseil affiche le club comme auteur ; le détail indique toujours qui l\'a publiée, pour savoir à qui écrire.',
@@ -1505,14 +1533,14 @@ function addProfile() {
 /* signed in with a school account but not a club member yet: a small account menu, and "Join" becomes "Finish joining" */
 function addAccount() {
   const nav = document.querySelector('.site-header .nav'); if (!nav || nav.querySelector('.me-wrap')) return;
-  let email = ''; try { email = localStorage.getItem('nw-signed') || ''; } catch (e) {}
+  let email = '', pending = false; try { email = localStorage.getItem('nw-signed') || ''; pending = localStorage.getItem('nw-pending') === '1'; } catch (e) {}
   const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const w = document.createElement('div'); w.className = 'me-wrap';
   w.innerHTML = `<button type="button" class="me-pill" aria-haspopup="true" aria-expanded="false" aria-controls="meMenu">
       <img src="/assets/ninjas/ninja-white.svg" alt=""><span class="me-name" data-i18n="me.account">Account</span></button>
     <div class="me-menu" id="meMenu" hidden>
-      <div class="me-head"><img src="/assets/ninjas/ninja-white.svg" alt=""><div><b data-i18n="me.notyet">Not a member yet</b><span>${esc(email)}</span></div></div>
-      <a href="/apply" data-i18n="me.finish">Finish joining the club</a>
+      <div class="me-head"><img src="/assets/ninjas/ninja-white.svg" alt=""><div><b data-i18n="${pending ? 'me.pending' : 'me.notyet'}">Not a member yet</b><span>${esc(email)}</span></div></div>
+      <a href="/apply" data-i18n="${pending ? 'me.wait' : 'me.finish'}">Finish joining the club</a>
       <a href="/mountain#signout" data-i18n="m.signout">Sign out</a>
     </div>`;
   const btn = w.querySelector('.me-pill'), menu = w.querySelector('.me-menu');
@@ -1522,7 +1550,8 @@ function addAccount() {
   w.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { open(false); btn.focus(); } });
   w.addEventListener('focusout', (e) => { if (!w.contains(e.relatedTarget)) open(false); });
   nav.insertBefore(w, nav.querySelector('.lang-toggle'));
-  nav.querySelectorAll('.nav-join').forEach(a => a.setAttribute('data-i18n', 'nav.join.finish'));
+  // waiting for an organizer's approval, or never finished joining: say which
+  nav.querySelectorAll('.nav-join').forEach(a => a.setAttribute('data-i18n', pending ? 'nav.join.wait' : 'nav.join.finish'));
   apply();
 }
 function saveMe(name, rank, role) { try { localStorage.setItem('nw-me', JSON.stringify({ name, rank, org: role === 'organizer' })); } catch (e) {}
@@ -1533,6 +1562,19 @@ function refreshMe() {
   addProfile(); apply();
 }
 window.ClubMe = { save: saveMe, refresh: refreshMe };
+/* A button that turns disabled right after it was tapped is waiting for the server: show the spinner on it until it's enabled again
+   (styles in styles.css, [aria-busy="true"]). Pages that redraw their buttons set aria-busy themselves. */
+(function busyButtons() {
+  let last = null, at = 0;
+  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('button'); if (b) { last = b; at = performance.now(); } }, true);
+  new MutationObserver((ms) => {
+    for (const m of ms) {
+      const b = m.target; if (b.tagName !== 'BUTTON') continue;
+      if (b.disabled && b === last && performance.now() - at < 600) b.setAttribute('aria-busy', 'true');
+      else if (!b.disabled && b.getAttribute('aria-busy') === 'true') b.removeAttribute('aria-busy');
+    }
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['disabled'], subtree: true });
+})();
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addProfile); else addProfile();
 
 /* ---------- installable app (PWA) ---------- */

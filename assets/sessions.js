@@ -46,8 +46,8 @@ function regOpen(s) { const t = today0(); return s.track !== "break" && s._d >= 
 function regHTML(s) {
   return `<p class="reg-row" data-going-row="${esc(regKey(s))}"><a class="btn btn-primary" data-reg-open href="${esc(eventHref(s))}#register">${esc(L("rsvp.btn"))}</a></p>`;
 }
-// what a member's "I'm going" asks for: confirmed straight away, unless places are limited (then an organizer confirms)
-const goingStatus = (s) => (s && s.capacity ? "pending" : "confirmed");
+// what a member's "I'm going" asks for: confirmed straight away, unless the organizers confirm each spot for this session
+const goingStatus = (s) => (s && s.autoConfirm === false ? "pending" : "confirmed");
 function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
 function sessionHTML(s, { next = false, past = false } = {}) {

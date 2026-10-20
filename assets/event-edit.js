@@ -16,7 +16,7 @@
 
   const blank = () => ({ title: "", title_fr: "", date: "", time: CLUB.defaultTime, time_fr: "13 h – 14 h", room: CLUB.defaultRoom, type: "", type_fr: "",
     format: "workshop", level: "all", lang: "en", track: "event", description: "", description_fr: "", details: "", details_fr: "",
-    speaker: "", link: "", linkText: "", registration: true, capacity: 0, deadline: "", published: true });
+    speaker: "", link: "", linkText: "", registration: true, capacity: 0, deadline: "", published: true, autoConfirm: true });
 
   const opt = (v, label, cur) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(label)}</option>`;
   const fld = (id, label, val, attrs = "", help = "") => `<div class="field"><label for="${id}">${esc(T(label))}</label>
@@ -58,6 +58,8 @@
           ${fld("capacity", "ee.capacity", e.capacity || "", 'type="number" min="0" max="1000" inputmode="numeric"', "ee.capacity.help")}
           ${fld("deadline", "ee.deadline", e.deadline, 'type="date"', "ee.deadline.help")}
         </div>
+        <label class="check"><input type="checkbox" id="autoConfirm"${e.autoConfirm !== false ? " checked" : ""}><span>${esc(T("ee.auto"))}</span></label>
+        <p class="help">${esc(T("ee.auto.help"))}</p>
         <p class="help">${esc(T("ee.reg.help"))}</p>
       </fieldset>
       <fieldset class="ee-sec"${editId ? " hidden" : ""}><legend>${esc(T("ee.sec.pub"))}</legend>
@@ -65,9 +67,9 @@
       </fieldset>
       ${msg ? `<p class="notice ${msg.ok ? "ok" : "bad"} form-msg" role="${msg.ok ? "status" : "alert"}">${msg.html || esc(msg.text)}</p>` : ""}
       <div class="ee-actions">
-        <button class="btn btn-primary" type="submit" ${busy ? "disabled" : ""}>${esc(T(editId ? "ee.save" : "ee.create"))}</button>
+        <button class="btn btn-primary" type="submit" ${busy ? "disabled aria-busy=\"true\"" : ""}>${esc(T(editId ? "ee.save" : "ee.create"))}</button>
         ${editId ? `<a class="btn btn-ghost" href="${fileDate ? "/event?d=" + encodeURIComponent(fileDate) : "/event?id=" + encodeURIComponent(editId)}">${esc(T("ee.view"))}</a>` : ""}
-        ${fileDate && hasSaved ? `<button type="button" class="link-btn danger" id="del" ${busy ? "disabled" : ""}>${esc(T(confirmDelete ? "ee.del.sure" : "ee.reset"))}</button>` : ""}
+        ${fileDate && hasSaved ? `<button type="button" class="link-btn danger" id="del" ${busy ? "disabled aria-busy=\"true\"" : ""}>${esc(T(confirmDelete ? "ee.del.sure" : "ee.reset"))}</button>` : ""}
       </div>`;
   }
   const read = () => {
@@ -75,7 +77,7 @@
     return { id: editId || undefined, title: v("title"), title_fr: v("title_fr"), type: v("type"), type_fr: v("type_fr"), format: v("format"), level: v("level"), lang: v("lang"), track: v("track"),
       date: v("date"), time: v("time"), time_fr: v("time_fr"), room: v("room"), description: v("description"), description_fr: v("description_fr"),
       details: v("details"), details_fr: v("details_fr"), speaker: v("speaker"), link: v("link"), linkText: v("linkText"),
-      registration: $("registration").checked, capacity: v("capacity"), deadline: v("deadline"),
+      registration: $("registration").checked, capacity: v("capacity"), deadline: v("deadline"), autoConfirm: $("autoConfirm").checked,
       // visibility and status are managed from the event's Manage menu; editing details keeps them as they are
       published: editId ? (fileDate ? true : !!ev.published) : $("published").checked, cancelled: !!ev.cancelled, hidden: !!ev.hidden, deleted: !!ev.deleted };
   };

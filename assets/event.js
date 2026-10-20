@@ -217,15 +217,15 @@ async function mount(root, opts) {
     const r = mine();
     if (deadlinePassed() && !(r && r.status !== 'cancelled')) { box.innerHTML = `${intro()}<p class="help">${esc(T('ev.reg.closed', { d: fmtDay(ev.deadline) }))}</p>`; return; }
     if (err) { box.innerHTML = `${intro()}<p class="notice bad">${esc(T('m.dberror', { e: err.code || err.message || '?' }))}</p>`; return; }
-    if (user === undefined) { box.innerHTML = `${intro()}<p class="help">${esc(T('ev.loading'))}</p>`; return; }
+    if (user === undefined) { box.innerHTML = `${intro()}<p class="loading-line" role="status">${esc(T('ev.loading'))}</p>`; return; }
     // the Join form was just sent: the new account signs in before its answers are saved, so wait instead of flashing another form
-    if (joining && w.me) { box.innerHTML = `${intro()}<p class="help">${esc(T('join.saving'))}</p>`; return; }
+    if (joining && w.me) { box.innerHTML = `${intro()}<p class="loading-line" role="status">${esc(T('join.saving'))}</p>`; return; }
     if (!w.me) {
       if (!q('.reg-auth')) {   // keep what the person is typing when the page redraws
         box.innerHTML = `${intro()}<p class="help">${esc(T('ev.reg.account'))}</p><div class="reg-auth"></div>`;
         // the one Join form; once it's sent, save the spot straight away (no second tap)
         siBox = ClubSignIn.mount(q('.reg-auth'), data, { onStart: () => { joining = true; }, onFail: () => { joining = false; drawReg(); }, onJoined: () => {
-          joining = false; if (who) who.hasReq = true;
+          joining = false; if (who) { who.hasReq = true; if (ClubData.INSTANT) who.member = true; }   // joining makes them a member straight away
           act(async () => { const r = await signUpForSpot(); if (!r.ok) msg = { text: T(r.code || 'err.generic') }; });
         } });
         siBox.join();
@@ -236,7 +236,7 @@ async function mount(root, opts) {
     if (r && r.status !== 'cancelled') {
       const k = { confirmed: 'ev.st.confirmed', pending: 'ev.st.pending', waitlist: 'ev.st.waitlist' }[r.status] || 'ev.st.pending';
       box.innerHTML = `<${H2} class="reg-h">${esc(T(k + '.h'))}</${H2}><p class="ev-status st-${esc(r.status)}">${esc(T(k))}</p>${msgHTML()}
-        <p style="margin:0"><button type="button" class="link-btn" data-act="cancel" ${busy ? 'disabled' : ''}>${esc(T('ev.cancel'))}</button></p>`;
+        <p style="margin:0"><button type="button" class="link-btn" data-act="cancel" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T('ev.cancel'))}</button></p>`;
       return;
     }
     if (!w.member && !w.hasReq) {
@@ -252,20 +252,20 @@ async function mount(root, opts) {
             ${['new', 'some', 'solid'].map(l => `<label class="choice"><input type="radio" name="jLevel" value="${l}"><span>${esc(T('apply.level.' + l))}</span></label>`).join('')}</div></fieldset>
           <label class="check"><input type="checkbox" id="jConsent"><span>${esc(T('apply.consent'))}</span></label>
           ${msgHTML()}
-          <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled' : ''}>${esc(T(full() ? 'ev.join.btn.wait' : 'ev.join.btn'))}</button></div>
+          <div><button class="btn btn-primary" type="submit" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T(full() ? 'ev.join.btn.wait' : 'ev.join.btn'))}</button></div>
         </form>`;
       return;
     }
     box.innerHTML = `${intro()}${!w.member ? `<p class="help">${esc(T('ev.reg.review'))}</p>` : ''}${msgHTML()}
-      <p style="margin:0"><button type="button" class="btn btn-primary" data-act="go" ${busy ? 'disabled' : ''}>${esc(T(full() ? 'ev.waitlist.btn' : 'rsvp.btn'))}</button></p>`;
+      <p style="margin:0"><button type="button" class="btn btn-primary" data-act="go" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T(full() ? 'ev.waitlist.btn' : 'rsvp.btn'))}</button></p>`;
   }
   async function reloadRegs() {
     if (past || err) return;
     try { regs = W().isOrg ? await data.loadRegistrations(key) : W().me ? await data.myRegistration(key).then(r => (r ? [r] : [])) : []; } catch (e) { regs = []; }
   }
   async function signUpForSpot() {
-    // members are confirmed straight away, unless places are limited: then an organizer confirms (or puts them on the waiting list)
-    const status = full() ? 'waitlist' : W().member && !ev.capacity ? 'confirmed' : 'pending';
+    // members are confirmed straight away, unless the organizers chose to confirm each spot for this event (autoConfirm off)
+    const status = full() ? 'waitlist' : W().member && ev.autoConfirm !== false ? 'confirmed' : 'pending';
     let r = await data.register(key, status);
     if (!r.ok && status === 'confirmed') r = await data.register(key, 'pending');   // profile not finished yet: an organizer confirms
     return r;

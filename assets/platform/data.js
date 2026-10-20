@@ -17,6 +17,7 @@ async function loadFirebaseDirect(parts) {
 }
 const DOMAIN = (CFG.EMAIL_DOMAIN || 'aivancity.education').toLowerCase();
 const ORG_CONFIRM = CFG.CONFIRM === 'organizer';   // no confirmation email: organizers review new accounts
+const INSTANT = CFG.CONFIRM === 'none';             // joining makes you a member straight away (no approval step)
 const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
@@ -41,6 +42,8 @@ function cleanEvent(e) {
     registration: !!e.registration, capacity: Math.max(0, Math.min(1000, parseInt(e.capacity, 10) || 0)), deadline: day(e.deadline), published: !!e.published,
     // lifecycle: cancelled = stays on the site, marked Cancelled; hidden = only organizers see it; deleted = gone (file sessions keep a marker)
     cancelled: !!e.cancelled, hidden: !!e.hidden, deleted: !!e.deleted,
+    // spots are confirmed straight away (default); off = an organizer confirms each one
+    autoConfirm: e.autoConfirm !== false,
   };
 }
 const validEmail = (e) => new RegExp('^[^@\\s]+@' + DOMAIN.replace(/\./g, '\\.') + '$', 'i').test(String(e || '').trim());
@@ -284,7 +287,9 @@ function watchSlow() {
   }, 9000);
 }
 function slowDone() { clearTimeout(slowTimer); slowTimer = null; const n = document.getElementById('club-slow'); if (n) n.remove(); }
-function markSigned(email) { try { email ? localStorage.setItem('nw-signed', email) : localStorage.removeItem('nw-signed'); } catch (e) {} document.documentElement.classList.toggle('is-signed', !!email); if (window.ClubMe) ClubMe.refresh(); }
+// pending: signed in, but the account isn't approved yet (the top bar then says "Waiting for approval")
+function markSigned(email, pending) { try { email ? localStorage.setItem('nw-signed', email) : localStorage.removeItem('nw-signed');
+  pending ? localStorage.setItem('nw-pending', '1') : localStorage.removeItem('nw-pending'); } catch (e) {} document.documentElement.classList.toggle('is-signed', !!email); if (window.ClubMe) ClubMe.refresh(); }
 function markMember(on) { try { on ? localStorage.setItem('nw-member', '1') : (localStorage.removeItem('nw-member'), localStorage.removeItem('nw-me')); } catch (e) {} document.documentElement.classList.toggle('is-member', !!on); if (window.ClubMe) ClubMe.refresh(); }
 /* Village Board helpers shared by both backends */
 const MISSION_RULE = { help: 'mentoring', build: 'collab', club: 'club_quest' };
@@ -346,7 +351,7 @@ function firebaseBackend() {
       await ref.set({ email: (u.email || '').toLowerCase(), name: String(name || (cur.exists && cur.data().name) || u.email.split('@')[0]).trim().slice(0, 60), at: FV().serverTimestamp() });
     } catch (e) {}
   };
-  let lastVerified = false;
+  let lastVerified = false, justCreated = null, joinWait = null;
   const isBlocked = async (uid) => { try { const d = await db.collection('blocked').doc(uid).get(); return d.exists; } catch (e) { return false; } };
   const manuallyConfirmed = async (uid) => { try { const d = await db.collection('confirmed').doc(uid).get(); return d.exists; } catch (e) { return false; } };
   return {
@@ -411,11 +416,15 @@ function firebaseBackend() {
       auth.onAuthStateChanged(async u => {
         slowDone();
         if (!u) markMember(false);
-        markSigned(u ? u.email : null);
         const ms = u && (u.providerData || []).some(p => p.providerId === 'microsoft.com');
-        let verified = !!(u && (u.emailVerified || ms));
-        if (u && !verified) verified = await manuallyConfirmed(u.uid);
-        if (u && !verified && ORG_CONFIRM && validEmail(u.email)) reviewQueue(u);   // waits for an organizer
+        // the Join form was just sent on this page: wait until the answers (and the profile) are saved, so every page sees the finished account
+        if (joinWait) await joinWait;
+        let verified = !!(u && (u.emailVerified || ms || (INSTANT && validEmail(u.email))));
+        // an account made a moment ago on this page can't be approved yet: skip the check (and the joining code writes the review entry)
+        const fresh = u && u.uid === justCreated;
+        if (u && !verified && !fresh) verified = await manuallyConfirmed(u.uid);
+        if (u && !verified && !fresh && ORG_CONFIRM && validEmail(u.email)) reviewQueue(u);   // waits for an organizer
+        markSigned(u ? u.email : null, u && !verified);
         lastVerified = verified;
         // confirmed another way (the confirmation email from the quarantine, or Microsoft): leave the organizers' review list
         if (u && verified && ORG_CONFIRM) db.collection('confirmPending').doc(u.uid).delete().catch(() => {});
@@ -441,14 +450,35 @@ function firebaseBackend() {
     /* Joining the club is one form: the account, then the answers (the request), in one go.
        An organizer then approves the account; after that, the first sign-in creates the Mountain profile by itself (ensureMember). */
     async joinClub(f) {
-      const r = await this.signUp(f.email, f.pw, f.name);
-      if (!r.ok) return r;
-      return this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program || '', interests: f.interests || [], heard: '', lang: f.lang });
+      if (!validEmail(f.email)) return { ok: false, message: tr('err.email', 'Use your school email address.') };
+      let done; joinWait = new Promise(r => { done = r; });
+      try { return await this.joinSteps(f); } finally { joinWait = null; done(); }
+    },
+    async joinSteps(f) {
+      let cred;
+      try { cred = await auth.createUserWithEmailAndPassword(f.email.trim(), f.pw); }
+      catch (e) { return { ok: false, message: pwErrorText(e), code: (e && e.code) || '' }; }
+      justCreated = cred.user.uid;
+      if (INSTANT) {
+        // members straight away: the answers first (they make the account a member), then the Mountain profile
+        const r = await this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program || '', interests: f.interests || [], heard: '', lang: f.lang });
+        if (!r.ok) return r;
+        try { await this.saveProfile({ name: String(f.name).trim().slice(0, 40), github: f.github || '' }); store.set('nw-fresh', '1'); } catch (e) { /* made on the first Mountain visit instead */ }
+        markMember(true);
+        return { ok: true, member: true };
+      }
+      // the answers and the organizers' review entry are saved together (one round trip instead of several)
+      const answers = this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program || '', interests: f.interests || [], heard: '', lang: f.lang });
+      const review = ORG_CONFIRM
+        ? db.collection('confirmPending').doc(cred.user.uid).set({ email: f.email.trim().toLowerCase(), name: String(f.name).trim().slice(0, 60), at: FV().serverTimestamp() }).catch(() => {})
+        : cred.user.sendEmailVerification({ url: location.origin + location.pathname }).catch(() => {});
+      const [r] = await Promise.all([answers, review]);
+      return r;
     },
     // approved and in the club, but no Mountain profile yet: make it from the join answers (no second form)
     async ensureMember() {
       const uid = auth.currentUser.uid, mine = await this.getProfile(uid);
-      if (mine) return mine;
+      if (mine) { if (store.get('nw-fresh')) { store.del('nw-fresh'); return { ...mine, fresh: true }; } return mine; }   // first visit: say hello
       const req = await this.requestStatus();
       if (!req || !req.consent || !String(req.name || '').trim()) return null;
       try { await this.saveProfile({ name: String(req.name).trim().slice(0, 40), github: req.github || '' }); } catch (e) { return null; }
@@ -522,9 +552,8 @@ function firebaseBackend() {
     async onRoster() {
       const u = auth.currentUser, em = (u.email || '').toLowerCase();
       const read = async (ref) => { try { return await ref.get({ source: 'server' }); } catch (e) { try { return await ref.get(); } catch (e2) { return null; } } };
-      const r = await read(db.collection('roster').doc(em));
+      const [r, q] = await Promise.all([read(db.collection('roster').doc(em)), read(db.collection('requests').doc(u.uid))]);   // both at once: faster
       if (r && r.exists) { markMember(true); return true; }
-      const q = await read(db.collection('requests').doc(u.uid));
       const yes = !!(q && q.exists && q.data().status !== 'removed'); markMember(yes); return yes;
     },
     async requestStatus() { try { const d = await db.collection('requests').doc(auth.currentUser.uid).get(); return d.exists ? d.data() : null; } catch (e) { return null; } },
@@ -825,5 +854,5 @@ function firebaseBackend() {
   };
 }
 
-window.ClubData = { EVENT_FORMATS, cleanEvent, ORG_CONFIRM, CAMP_COLORS, cleanCamp, create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
+window.ClubData = { EVENT_FORMATS, cleanEvent, ORG_CONFIRM, INSTANT, CAMP_COLORS, cleanCamp, create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
 })();
