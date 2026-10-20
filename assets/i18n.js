@@ -1566,6 +1566,27 @@ function refreshMe() {
 window.ClubMe = { save: saveMe, refresh: refreshMe };
 /* A button that turns disabled right after it was tapped is waiting for the server: show the spinner on it until it's enabled again
    (styles in styles.css, [aria-busy="true"]). Pages that redraw their buttons set aria-busy themselves. */
+/* Tapping a link to another page: a thin bar runs along the top at once, so the tap clearly worked while the next page loads. */
+(function pageBar() {
+  const css = '#club-nav-bar{position:fixed;z-index:1000;top:0;left:0;height:3px;width:0;background:var(--cyan,#55c9ea);box-shadow:0 0 6px rgba(85,201,234,.6);'
+    + 'transition:width 8s cubic-bezier(.1,.7,.2,1),opacity .2s;pointer-events:none}#club-nav-bar.go{width:85%}'
+    + '@media (prefers-reduced-motion:reduce){#club-nav-bar{transition:opacity .2s}#club-nav-bar.go{width:100%;opacity:.7}}';
+  const bar = () => {
+    let b = document.getElementById('club-nav-bar');
+    if (!b) { const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+      b = document.createElement('div'); b.id = 'club-nav-bar'; b.setAttribute('aria-hidden', 'true'); document.body.appendChild(b); }
+    return b;
+  };
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target.closest && e.target.closest('a[href]'); if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+    const u = new URL(a.href, location.href);
+    if (u.origin !== location.origin || (u.pathname === location.pathname && u.search === location.search)) return;   // other sites, or a link within this page
+    setTimeout(() => { if (!e.defaultPrevented) { const b = bar(); void b.offsetWidth; b.classList.add('go'); } }, 0);   // pages that open a panel instead cancel the click
+  });
+  // coming back with the Back button (page restored from memory): no bar left over
+  addEventListener('pageshow', () => { const b = document.getElementById('club-nav-bar'); if (b) b.remove(); });
+})();
 (function busyButtons() {
   let last = null, at = 0;
   document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('button'); if (b) { last = b; at = performance.now(); } }, true);
