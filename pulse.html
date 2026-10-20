@@ -16,11 +16,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261020h">
-  <link rel="stylesheet" href="assets/village.css?v=20261020h">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261020h">
-  <script src="assets/i18n.js?v=20261020h"></script>
-  <script src="assets/halloween.js?v=20261020h" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261020i">
+  <link rel="stylesheet" href="assets/village.css?v=20261020i">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261020i">
+  <script src="assets/i18n.js?v=20261020i"></script>
+  <script src="assets/halloween.js?v=20261020i" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -84,12 +84,12 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261020h"></script>
+  <script src="assets/schedule.js?v=20261020i"></script>
 
-  <script src="assets/sessions.js?v=20261020h"></script>
-  <script src="assets/platform/config.js?v=20261020h"></script>
-  <script src="assets/platform/signin.js?v=20261020h"></script>
-  <script src="assets/platform/data.js?v=20261020h"></script>
+  <script src="assets/sessions.js?v=20261020i"></script>
+  <script src="assets/platform/config.js?v=20261020i"></script>
+  <script src="assets/platform/signin.js?v=20261020i"></script>
+  <script src="assets/platform/data.js?v=20261020i"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -241,13 +241,13 @@
       show("pulse"); $("dataCheck").hidden = false; drawErasePicker();
     }
 
-    // who said "I'm going" to the next Thursday session (registrations; organizers can read them all)
-    const nextGoing = () => (nextSession ? data.loadRegistrations("d-" + fileKey(nextSession)).then(rs => rs.filter(r => r.status === "pending" || r.status === "confirmed")).catch(() => []) : Promise.resolve([]));
     async function load() {
-      const [members, facts, requests, pulse, going, votes, board, pending] = await Promise.all([data.loadMembers(), data.loadFacts(), data.loadRequests(), data.loadPulse(), nextGoing(), data.loadVotes(today), data.loadBoard(true), data.loadPendingConfirms().catch(() => [])]);
-      const events = await data.loadEvents(true).catch(() => []);
-      await Promise.all(events.map(async e => { e.regs = e.registration ? await data.loadRegistrations(e.id).catch(() => []) : []; }));
-      const pendingRegs = await data.loadPendingRegistrations().catch(() => []);
+      // everything in one round: the sessions' registrations come from a single query and are grouped here
+      const [members, facts, requests, pulse, votes, board, pending, events, allRegs] = await Promise.all([data.loadMembers(), data.loadFacts(), data.loadRequests(), data.loadPulse(),
+        data.loadVotes(today), data.loadBoard(true), data.loadPendingConfirms().catch(() => []), data.loadEvents(true).catch(() => []), data.loadAllRegistrations().catch(() => [])]);
+      events.forEach(e => { e.regs = e.registration ? allRegs.filter(r => r.event === e.id) : []; });
+      const pendingRegs = allRegs.filter(r => r.status === "pending");
+      const going = nextSession ? allRegs.filter(r => r.event === "d-" + fileKey(nextSession) && (r.status === "pending" || r.status === "confirmed")) : [];
       S = { members, facts, requests, pulse, going, votes, board, pending, events, pendingRegs }; render();
     }
 
@@ -384,8 +384,8 @@
       try {
         if (!u) { show("gSignin"); siBox.signin(data.linkError); return; }
         if (!u.verified) { show("gSignin"); siBox.verify(u.email); return; }
-        if (!(await data.onRoster())) { show("gNo"); return; }
-        const profile = await data.getProfile(u.uid);
+        const [isIn, profile] = await Promise.all([data.onRoster(), data.getProfile(u.uid).catch(() => null)]);   // both at once
+        if (!isIn) { show("gNo"); return; }
         const isOrg = profile && (profile.role === "organizer" || (data.mode === "demo" && new URLSearchParams(location.search).has("elder")));
         if (!isOrg) { show("gNo"); return; }
         me = { uid: u.uid, name: profile.name };

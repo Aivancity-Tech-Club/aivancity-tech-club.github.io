@@ -29,10 +29,12 @@ async function moveOldRsvps(data, from) {
       if (!user || !user.verified) return;
       try {
         const from = today();
-        const [votes, members] = await Promise.all([data.loadVotes(from), data.loadMembers()]);
-        await moveOldRsvps(data, from);
-        const regs = await data.myRegistrations();
-        window.CLUB_LIVE = { data, uid: data.currentUid(), regs, votes, names: Object.fromEntries(members.map(m => [m.uid, m.name])) };
+        // the old "I'm going" list is moved over once per device, in the background (it never holds the page up)
+        let moved = false; try { moved = localStorage.getItem('nw-rsvp-moved') === user.uid; } catch (e) {}
+        if (!moved) moveOldRsvps(data, from).then(() => { try { localStorage.setItem('nw-rsvp-moved', user.uid); } catch (e) {} });
+        // only what these pages show: your own spots and the session votes (no list of all members)
+        const [votes, regs] = await Promise.all([data.loadVotes(from), data.myRegistrations()]);
+        window.CLUB_LIVE = { data, uid: data.currentUid(), regs, votes };
         dispatchEvent(new CustomEvent('club:live'));
       } catch (e) { /* not a member after all, or offline: the public page still works */ }
     });

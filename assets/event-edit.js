@@ -108,8 +108,8 @@
     try {
       if (!u) { show("eeSignin"); siBox.signin(data.linkError); return; }
       if (!u.verified) { show("eeSignin"); siBox.verify(u.email); return; }
-      if (!(await data.onRoster())) { show("eeNo"); return; }
-      const p = await data.getProfile(u.uid);
+      const [isIn, p] = await Promise.all([data.onRoster(), data.getProfile(u.uid).catch(() => null)]);   // both at once
+      if (!isIn) { show("eeNo"); return; }
       const isOrg = p && (p.role === "organizer" || (data.mode === "demo" && new URLSearchParams(location.search).has("elder")) || data.mode === "demo");
       if (!isOrg) { show("eeNo"); return; }
       if (editId) {

@@ -16,13 +16,12 @@ function platform() {
         const w = { me: u, member: false, hasReq: false, refused: false, isOrg: false };
         if (u) {
           try {
-            if (data.accountRefused) w.refused = await data.accountRefused();
-            const req = await data.requestStatus(); w.hasReq = !!(req && req.phone);
-            if (u.verified) {
-              w.member = await data.onRoster();
-              const p = w.member ? await data.getProfile(u.uid) : null;
-              w.isOrg = !!(p && (p.role === 'organizer' || (data.mode === 'demo' && new URLSearchParams(location.search).has('elder'))));
-            }
+            // everything about this account at once (one wait instead of four)
+            const [refused, req, member, p] = await Promise.all([
+              data.accountRefused ? data.accountRefused() : false, data.requestStatus(),
+              u.verified ? data.onRoster() : false, u.verified ? data.getProfile(u.uid).catch(() => null) : null]);
+            w.refused = refused; w.hasReq = !!(req && req.phone); w.member = !!member;
+            w.isOrg = !!(member && p && (p.role === 'organizer' || (data.mode === 'demo' && new URLSearchParams(location.search).has('elder'))));
           } catch (e) { /* not in the club yet */ }
         }
         user = u; who = w; listeners.forEach(fn => fn());

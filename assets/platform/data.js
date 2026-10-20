@@ -223,6 +223,7 @@ function demoBackend() {
     },
     async deleteEvent(id) { const X = extra(); X.events = (X.events || demoEvents()).filter(e => e.id !== id); saveExtra(X); return { ok: true }; },
     async loadRegistrations(eventId) { return (extra().regs || demoRegs()).filter(r => r.event === eventId); },
+    async loadAllRegistrations() { return (extra().regs || demoRegs()).slice(); },
     async myRegistrations() { return (extra().regs || demoRegs()).filter(r => r.uid === 'you'); },
     async myRegistration(eventId) { return (extra().regs || demoRegs()).find(r => r.event === eventId && r.uid === 'you') || null; },
     async myRsvps() { return extra().rsvps.filter(r => r.uid === 'you'); },
@@ -353,6 +354,19 @@ function firebaseBackend() {
     } catch (e) {}
   };
   let lastVerified = false, justCreated = null, joinWait = null;
+  // your own join answers (requests/{uid}): read once and shared by onRoster() and requestStatus(); forgotten when they change
+  let reqRead = null, reqUid = null;
+  const myRequest = () => {
+    const u = auth.currentUser; if (!u) return Promise.resolve(null);
+    if (reqUid !== u.uid || !reqRead) {
+      reqUid = u.uid;
+      reqRead = (async () => { const ref = db.collection('requests').doc(u.uid);
+        try { return await ref.get({ source: 'server' }); } catch (e) { try { return await ref.get(); } catch (e2) { return null; } } })();
+      reqRead.then(d => { if (!d) reqRead = null; });   // a failed read is tried again next time
+    }
+    return reqRead;
+  };
+  const forgetRequest = () => { reqRead = null; };
   const isBlocked = async (uid) => { try { const d = await db.collection('blocked').doc(uid).get(); return d.exists; } catch (e) { return false; } };
   const manuallyConfirmed = async (uid) => { try { const d = await db.collection('confirmed').doc(uid).get(); return d.exists; } catch (e) { return false; } };
   return {
@@ -558,23 +572,23 @@ function firebaseBackend() {
       store.set('nw-email', email.trim());
       return { ok: true, message: tr('m.signin.sent', 'Check your inbox: we sent a sign-in link to ' + email.trim() + '.', { email: email.trim() }) };
     },
-    async signOut() { markMember(false); markSigned(null); await auth.signOut(); },
+    async signOut() { markMember(false); markSigned(null); forgetRequest(); await auth.signOut(); },
     /* Member = on the roster (added by an organizer) OR sent the /apply form, unless an organizer set status "removed". */
     async onRoster() {
       const u = auth.currentUser, em = (u.email || '').toLowerCase();
       const read = async (ref) => { try { return await ref.get({ source: 'server' }); } catch (e) { try { return await ref.get(); } catch (e2) { return null; } } };
-      const [r, q] = await Promise.all([read(db.collection('roster').doc(em)), read(db.collection('requests').doc(u.uid))]);   // both at once: faster
+      const [r, q] = await Promise.all([read(db.collection('roster').doc(em)), myRequest()]);   // both at once; the join answers are read once per page
       if (r && r.exists) { markMember(true); return true; }
       const yes = !!(q && q.exists && q.data().status !== 'removed'); markMember(yes); return yes;
     },
-    async requestStatus() { try { const d = await db.collection('requests').doc(auth.currentUser.uid).get(); return d.exists ? d.data() : null; } catch (e) { return null; } },
+    async requestStatus() { const d = await myRequest(); return d && d.exists ? d.data() : null; },
     /* Application to join the club (and its WhatsApp group). Only the person and organizers can read it. */
     async apply(d) {
       const u = auth.currentUser;
       const doc = { email: u.email.toLowerCase(), name: d.name, program: d.program || '', phone: d.phone, interests: d.interests || [],
         level: d.level, heard: d.heard || '', consent: true, lang: d.lang === 'fr' ? 'fr' : 'en', at: firebase.firestore.FieldValue.serverTimestamp() };
       if (d.github) doc.github = String(d.github).slice(0, 39);
-      try { await db.collection('requests').doc(u.uid).set(doc, { merge: true }); if (lastVerified) markMember(true); return { ok: true }; }
+      try { await db.collection('requests').doc(u.uid).set(doc, { merge: true }); forgetRequest(); if (lastVerified) markMember(true); return { ok: true }; }
       catch (e) { return { ok: false, message: tr('err.generic', 'Something went wrong. Try again in a moment.') + ' (' + (e.code || e.message) + ')' }; }
     },
     /* The WhatsApp invite link lives in Firestore (invites/whatsapp), not in this public repository.
@@ -783,6 +797,11 @@ function firebaseBackend() {
       const [requests, members, priv, roster, blocked, confirmed, pending, registrations, events] = await Promise.all(
         ['requests', 'members', 'private', 'roster', 'blocked', 'confirmed', 'confirmPending', 'registrations', 'events'].map(c => all(c).catch(() => [])));
       return { requests, members, priv, roster, blocked, confirmed, pending, registrations, events };
+    },
+    // organizers: every registration in one query (pulse groups them by session)
+    async loadAllRegistrations() {
+      const s = await db.collection('registrations').get();
+      return s.docs.map(d => { const x = d.data(); return { id: d.id, event: x.event, uid: x.uid, status: x.status, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; });
     },
     async loadRegistrations(eventId) {
       const s = await db.collection('registrations').where('event', '==', eventId).get();
