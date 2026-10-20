@@ -36,11 +36,26 @@
 
   // the only text this adds (kept here so removing the theme touches nothing else)
   const TEXT = {
-    en: { label: 'Pause the Halloween animations (tap three times for a surprise)', presents: 'aivancity Tech Club presents', title: 'A Night on the Mountain', skip: 'Tap to skip' },
-    fr: { label: 'Mettre en pause les animations d’Halloween (touchez trois fois pour une surprise)', presents: 'L’aivancity Tech Club présente', title: 'Une nuit sur la Montagne', skip: 'Touchez pour passer' },
+    en: { label: 'Pause the Halloween animations (tap three times for a surprise)', presents: 'aivancity Tech Club presents', title: 'A Night on the Mountain', skip: 'Tap to skip', skipKey: 'Click or press any key to skip' },
+    fr: { label: 'Mettre en pause les animations d’Halloween (touchez trois fois pour une surprise)', presents: 'L’aivancity Tech Club présente', title: 'Une nuit sur la Montagne', skip: 'Touchez pour passer', skipKey: 'Cliquez ou appuyez sur une touche pour passer' },
   };
   const tx = (k) => TEXT[root.lang === 'fr' ? 'fr' : 'en'][k];
   const label = () => tx('label');
+
+  /* the opening scene is decided right away (this file is not deferred on the home page), so a dark curtain covers the
+     page from its first frame instead of the page flashing up and then being covered. It only plays on the home page,
+     once per device, in a visible tab, without a #link, and never with "less motion", high contrast or paused animations. */
+  const mq = (m) => matchMedia(m).matches;
+  let introSeen = false; try { introSeen = localStorage.getItem('hw-intro') === '1'; } catch (e) {}
+  const playIntro = /^\/(index(\.html)?)?$/.test(location.pathname) && !location.hash && !introSeen && !document.hidden
+    && !root.classList.contains('hw-calm') && !mq('(prefers-reduced-motion: reduce)') && !mq('(forced-colors: active)');
+  if (playIntro) {
+    root.classList.add('hw-pre');
+    const st = document.createElement('style');
+    st.textContent = 'html.hw-pre{overflow:hidden}html.hw-pre::after{content:"";position:fixed;inset:0;z-index:399;background:#0d0912}';
+    document.head.appendChild(st);
+    setTimeout(() => root.classList.remove('hw-pre'), 4000);   // safety: never leave the curtain up if something fails
+  }
 
   /* ---------- artwork (hand-drawn style: flat fills, dark outline) ---------- */
   // a bat seen from the side, flying to the right: the near wing flaps around the shoulder, the far wing follows
@@ -184,19 +199,31 @@
       s.addEventListener('click', end, { once: true });
     }
 
-    /* ---------- the opening scene: once per device, home page only, skippable, never with "less motion" ---------- */
-    const home = /^\/(index(\.html)?)?$/.test(location.pathname);
-    let seen = false; try { seen = localStorage.getItem('hw-intro') === '1'; } catch (e) {}
-    if (home && !seen && !still.matches && !root.classList.contains('hw-calm')) {
+    /* ---------- the opening scene: a 3.5 s title card (moon, credit, title, hold, fade), skippable at any moment ---------- */
+    if (playIntro) {
       try { localStorage.setItem('hw-intro', '1'); } catch (e) {}
+      const touch = mq('(hover: none)');
       const intro = el('hw-intro', `<div class="hw-intro-fog"></div><div class="hw-intro-moon"></div>
-        <div class="hw-intro-text"><small>${tx('presents')}</small><b>${tx('title')}</b></div><span class="hw-intro-skip">${tx('skip')}</span>`);
+        <div class="hw-intro-text"><small>${tx('presents')}</small><b>${tx('title')}</b></div><span class="hw-intro-skip">${tx(touch ? 'skip' : 'skipKey')}</span>`);
       intro.setAttribute('aria-hidden', 'true');
       document.body.append(intro);
-      const done = () => { if (intro.classList.contains('out')) return; intro.classList.add('out'); setTimeout(() => intro.remove(), 700);
-        removeEventListener('keydown', done); };
-      intro.addEventListener('click', done); addEventListener('keydown', done);
-      setTimeout(done, 2600);
+      root.classList.add('hw-intro-on');
+      root.classList.remove('hw-pre');
+      const evs = ['keydown', 'wheel', 'touchmove'];
+      let timer;
+      const done = () => {
+        if (intro.classList.contains('out')) return;
+        clearTimeout(timer); intro.classList.add('out'); root.classList.remove('hw-intro-on');
+        evs.forEach(t => removeEventListener(t, done)); setTimeout(() => intro.remove(), 700);
+      };
+      intro.addEventListener('click', done); evs.forEach(t => addEventListener(t, done, { passive: true }));
+      // start once the title font is ready (at most 0.5 s), so the title never changes typeface mid-animation
+      const font = document.fonts && document.fonts.load ? document.fonts.load('italic 60px "Instrument Serif"').catch(() => {}) : null;
+      Promise.race([font, new Promise(r => setTimeout(r, 500))]).then(() => {
+        intro.classList.add('go');
+        timer = setTimeout(done, 3100);
+      });
+      document.addEventListener('visibilitychange', () => { if (document.hidden) done(); }, { once: true });
     }
   };
 
