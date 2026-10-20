@@ -127,7 +127,8 @@ function demoBackend() {
     async sendLink() { return { ok: true }; }, async signOut() { store.del('nw-demo-v1'); state = demoSeed(); },
     async onRoster() { return true; }, async requestStatus() { return store.get('nw-demo-req'); },
     async apply(d) { store.set('nw-demo-req', { ...d, consent: true, email: user.email }); return { ok: true }; },
-    async joinClub(f) { return this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program, interests: f.interests, lang: f.lang }); },
+    async joinClub(f) { await this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program, interests: f.interests, lang: f.lang });
+      if (f.spot) await this.register(f.spot.event, f.spot.status); return { ok: true, member: true, spot: f.spot ? f.spot.status : null }; },
     async ensureMember() { return this.getProfile('you'); },
     async inviteLink() { return null; },
     async sendFeedback() { return { ok: true, demo: true }; },
@@ -463,17 +464,27 @@ function firebaseBackend() {
         // members straight away: the answers first (they make the account a member), then the Mountain profile
         const r = await this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program || '', interests: f.interests || [], heard: '', lang: f.lang });
         if (!r.ok) return r;
-        try { await this.saveProfile({ name: String(f.name).trim().slice(0, 40), github: f.github || '' }); store.set('nw-fresh', '1'); } catch (e) { /* made on the first Mountain visit instead */ }
+        // profile and private email in one write (a brand-new account has none yet)
+        try {
+          const uid = cred.user.uid, b = db.batch();
+          b.set(db.collection('members').doc(uid), { name: String(f.name).trim().slice(0, 40), github: f.github || '', accessories: [], consent: true, joined: FV().serverTimestamp() });
+          b.set(db.collection('private').doc(uid), { email: cred.user.email });
+          await b.commit(); store.set('nw-fresh', '1');
+        } catch (e) { /* made on the first Mountain visit instead */ }
         markMember(true);
-        return { ok: true, member: true };
+        // joining from an event: save the spot in the same go (no waiting for the page to catch up)
+        let spot = null;
+        if (f.spot) { const s = await this.register(f.spot.event, f.spot.status); if (s.ok) spot = f.spot.status; }
+        return { ok: true, member: true, spot };
       }
       // the answers and the organizers' review entry are saved together (one round trip instead of several)
       const answers = this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program || '', interests: f.interests || [], heard: '', lang: f.lang });
       const review = ORG_CONFIRM
         ? db.collection('confirmPending').doc(cred.user.uid).set({ email: f.email.trim().toLowerCase(), name: String(f.name).trim().slice(0, 60), at: FV().serverTimestamp() }).catch(() => {})
         : cred.user.sendEmailVerification({ url: location.origin + location.pathname }).catch(() => {});
-      const [r] = await Promise.all([answers, review]);
-      return r;
+      const spot = f.spot ? this.register(f.spot.event, 'pending').then(s => (s.ok ? 'pending' : null)) : null;   // not a member yet: an organizer confirms
+      const [r, , sp] = await Promise.all([answers, review, spot]);
+      return r.ok ? { ...r, spot: sp || null } : r;
     },
     // approved and in the club, but no Mountain profile yet: make it from the join answers (no second form)
     async ensureMember() {

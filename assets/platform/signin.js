@@ -6,7 +6,8 @@
    box.signin()          show the sign-in form ("New here? Join the club" switches to the join form in place)
    box.join()            show the join form (box.create() does the same)
    box.verify(email)     signed in but not approved / not confirmed yet
-   onJoined()            called once the account and the join answers are saved
+   onJoined(result)      called once the account and the join answers are saved (result.spot: an event spot saved with it)
+   joinExtra()           more to send with the Join form, e.g. { spot: { event, status } } on an event
    Clicking "I've confirmed it" reloads the page once the email is confirmed, so each page's normal flow runs. */
 (function () {
 'use strict';
@@ -278,8 +279,9 @@ function mount(el, data, opts = {}) {
     if (opts.onStart) opts.onStart();
     settling = true;   // from the tap on: a clear "setting up your account" screen instead of a frozen form
     await run(async () => {
-      const r = await data.joinClub({ email, pw: kept.pw, name, phone, level: kept.level, github, program: kept.program, interests: kept.interests, lang: window.I18N ? I18N.lang : 'en' });
-      if (r.ok) { kept.pw = ''; kept.pw2 = ''; msg = null; settling = true; if (opts.onJoined) opts.onJoined(); return; }
+      const r = await data.joinClub({ email, pw: kept.pw, name, phone, level: kept.level, github, program: kept.program, interests: kept.interests,
+        lang: window.I18N ? I18N.lang : 'en', ...(opts.joinExtra ? opts.joinExtra() : {}) });
+      if (r.ok) { kept.pw = ''; kept.pw2 = ''; msg = null; settling = true; if (opts.onJoined) opts.onJoined(r); return; }
       settling = false;
       if (opts.onFail) opts.onFail();
       if (/email-already-in-use/.test(r.code || '')) { mode = 'signin'; msg = { text: T('join.exists') }; return; }

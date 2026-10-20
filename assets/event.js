@@ -240,10 +240,23 @@ async function mount(root, opts) {
       if (!q('.reg-auth')) {   // keep what the person is typing when the page redraws
         box.innerHTML = `${intro()}<p class="help">${esc(T('ev.reg.account'))}</p><div class="reg-auth"></div>`;
         // the one Join form; once it's sent, save the spot straight away (no second tap)
-        siBox = ClubSignIn.mount(q('.reg-auth'), laterData, { onStart: () => { joining = true; }, onFail: () => { joining = false; drawReg(); }, onJoined: () => {
-          joining = false; if (who) { who.hasReq = true; if (ClubData.INSTANT) who.member = true; }   // joining makes them a member straight away
-          act(async () => { const r = await signUpForSpot(); if (!r.ok) msg = { text: T(r.code || 'err.generic') }; });
-        } });
+        siBox = ClubSignIn.mount(q('.reg-auth'), laterData, {
+          onStart: () => { joining = true; }, onFail: () => { joining = false; drawReg(); },
+          // the spot is saved together with the account (one go, no second wait)
+          joinExtra: () => ({ spot: { event: key, status: ClubData.INSTANT && ev.autoConfirm !== false ? 'confirmed' : 'pending' } }),
+          onJoined: (r) => {
+            joining = false; if (who) { who.hasReq = true; if (ClubData.INSTANT) who.member = true; }   // joining makes them a member straight away
+            if (r && r.spot) {   // done: show "You're in" right away
+              const uid = data.currentUid();
+              // the page hears about the new account a moment later: know it now
+              if (!who || !who.me) { who = { ...(who || W()), me: { uid, email: '', verified: !!ClubData.INSTANT } }; user = who.me; }
+              regs = [{ id: key + '_' + uid, event: key, uid, status: r.spot, at: Date.now() }];
+              msg = null; syncCards(); q('.ev-reg').innerHTML = ''; draw();
+              const b = q('.ev-reg'); if (b) { b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); b.focus({ preventScroll: true }); }
+              return;
+            }
+            act(async () => { const s = await signUpForSpot(); if (!s.ok) msg = { text: T(s.code || 'err.generic') }; });
+          } });
         siBox.join();
       }
       return;
@@ -385,7 +398,17 @@ async function mount(root, opts) {
     await reloadRegs(); resetReg(); draw();
     if (who) onWho();
   });
-  return () => { listeners.delete(onWho); removeEventListener('langchange', onLang); };
+  /* On the event's own page (opened from a link or a QR code), the top bar's "Join" leads to this event's sign-up box:
+     joining there also saves the spot, so nobody ends up on the Join page and misses the event. */
+  const onTopJoin = (e) => {
+    const a = e.target.closest && e.target.closest('.site-header a.nav-join'); if (!a || !root.isConnected) return;
+    const box = q('.ev-reg'); if (!box || box.hidden || W().member) return;   // past, cancelled, or already a member: the normal link
+    e.preventDefault();
+    box.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    const first = box.querySelector('input, button'); (first || box).focus({ preventScroll: true });
+  };
+  if (H === 'h1') document.addEventListener('click', onTopJoin);
+  return () => { listeners.delete(onWho); removeEventListener('langchange', onLang); document.removeEventListener('click', onTopJoin); };
 }
 
 /* ---------- the side panel (schedule and home page), like the Village board's ---------- */
