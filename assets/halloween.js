@@ -34,12 +34,13 @@
   css.href = me ? me.replace(/halloween\.js/, 'halloween.css') : 'assets/halloween.css';
   document.head.appendChild(css);
 
-  // the only text this adds: the pumpkin button's label (kept here so removing the theme touches nothing else)
+  // the only text this adds (kept here so removing the theme touches nothing else)
   const TEXT = {
-    en: 'Pause the Halloween animations',
-    fr: 'Mettre en pause les animations d’Halloween',
+    en: { label: 'Pause the Halloween animations (tap three times for a surprise)', presents: 'aivancity Tech Club presents', title: 'A Night on the Mountain', skip: 'Tap to skip' },
+    fr: { label: 'Mettre en pause les animations d’Halloween (touchez trois fois pour une surprise)', presents: 'L’aivancity Tech Club présente', title: 'Une nuit sur la Montagne', skip: 'Touchez pour passer' },
   };
-  const label = () => TEXT[root.lang === 'fr' ? 'fr' : 'en'];
+  const tx = (k) => TEXT[root.lang === 'fr' ? 'fr' : 'en'][k];
+  const label = () => tx('label');
 
   /* ---------- artwork (hand-drawn style: flat fills, dark outline) ---------- */
   // a bat seen from the side, flying to the right: the near wing flaps around the shoulder, the far wing follows
@@ -77,6 +78,8 @@
     scene.setAttribute('aria-hidden', 'true');
 
     scene.append(el('hw-haze'));
+    // slow fog along the bottom, like a film poster (two layers drifting at different speeds)
+    scene.append(el('hw-fog hw-fog-a'), el('hw-fog hw-fog-b'));
     scene.append(el('hw-moon', MOON));
     scene.append(el('hw-web hw-web-bl', web()));
 
@@ -116,7 +119,14 @@
       btn.setAttribute('aria-label', label());
       btn.title = label();
     };
-    btn.addEventListener('click', () => { const calm = root.classList.toggle('hw-calm'); store.set(calm); sync(); });
+    // one tap: pause / play. Three quick taps: the surprise (and the pause setting stays as it was)
+    let taps = 0, firstState = false, tapTimer = null;
+    btn.addEventListener('click', () => {
+      if (!taps) firstState = root.classList.contains('hw-calm');
+      taps++; clearTimeout(tapTimer); tapTimer = setTimeout(() => { taps = 0; }, 700);
+      if (taps >= 3) { taps = 0; root.classList.toggle('hw-calm', firstState); store.set(firstState); sync(); scare(); return; }
+      const calm = root.classList.toggle('hw-calm'); store.set(calm); sync();
+    });
     addEventListener('langchange', sync);
     sync();
     document.body.append(btn);
@@ -130,6 +140,64 @@
       next();
     }, rand(25000, 45000));
     next();
+
+    /* ---------- the dripping edge comes alive: now and then a drop swells under the edge and falls ---------- */
+    const header = document.querySelector('.site-header');
+    if (header) {
+      const drops = el('hw-drops'); drops.setAttribute('aria-hidden', 'true'); header.append(drops);
+      const drip = () => {
+        if (moving() && drops.childElementCount < 3) {
+          const d = el('hw-drop', '', `left:${rand(2, 97).toFixed(1)}%;--fall:${rand(50, 110).toFixed(0)}px;--t:${rand(2.6, 4.2).toFixed(1)}s`);
+          d.addEventListener('animationend', () => d.remove());
+          drops.append(d);
+        }
+        setTimeout(drip, rand(1800, 4200));
+      };
+      setTimeout(drip, 1200);
+    }
+
+    /* ---------- the pumpkin surprise: the lights dim, two eyes open in the dark, a low growl ---------- */
+    let scaring = false;
+    function growl() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        const ac = new AC(), o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(70, ac.currentTime); o.frequency.linearRampToValueAtTime(48, ac.currentTime + 1.2);
+        o2.type = 'sine'; o2.frequency.setValueAtTime(6, ac.currentTime);   // a slow wobble
+        const wob = ac.createGain(); wob.gain.value = 12; o2.connect(wob); wob.connect(o.frequency);
+        f.type = 'lowpass'; f.frequency.value = 260;
+        g.gain.setValueAtTime(0.0001, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.12, ac.currentTime + 0.25); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 1.3);
+        o.connect(f); f.connect(g); g.connect(ac.destination);
+        o.start(); o2.start(); o.stop(ac.currentTime + 1.35); o2.stop(ac.currentTime + 1.35);
+        setTimeout(() => ac.close && ac.close(), 1600);
+      } catch (e) { /* no sound: the picture is enough */ }
+    }
+    function scare() {
+      if (scaring) return; scaring = true;
+      const calm = still.matches;
+      const s = el('hw-scare' + (calm ? ' hw-still' : ''), '<div class="hw-eyes"><i></i><i></i></div>');
+      s.setAttribute('aria-hidden', 'true');
+      document.body.append(s);
+      if (!calm) growl();
+      const end = () => { s.classList.add('out'); setTimeout(() => { s.remove(); scaring = false; }, 600); };
+      setTimeout(end, calm ? 1200 : 2600);
+      s.addEventListener('click', end, { once: true });
+    }
+
+    /* ---------- the opening scene: once per device, home page only, skippable, never with "less motion" ---------- */
+    const home = /^\/(index(\.html)?)?$/.test(location.pathname);
+    let seen = false; try { seen = localStorage.getItem('hw-intro') === '1'; } catch (e) {}
+    if (home && !seen && !still.matches && !root.classList.contains('hw-calm')) {
+      try { localStorage.setItem('hw-intro', '1'); } catch (e) {}
+      const intro = el('hw-intro', `<div class="hw-intro-fog"></div><div class="hw-intro-moon"></div>
+        <div class="hw-intro-text"><small>${tx('presents')}</small><b>${tx('title')}</b></div><span class="hw-intro-skip">${tx('skip')}</span>`);
+      intro.setAttribute('aria-hidden', 'true');
+      document.body.append(intro);
+      const done = () => { if (intro.classList.contains('out')) return; intro.classList.add('out'); setTimeout(() => intro.remove(), 700);
+        removeEventListener('keydown', done); };
+      intro.addEventListener('click', done); addEventListener('keydown', done);
+      setTimeout(done, 2600);
+    }
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
