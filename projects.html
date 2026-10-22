@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Projects · aivancity Tech Club</title>
+  <meta name="description" content="Projects built by the aivancity Tech Club, including NOX: The Deadline, our Halloween escape game.">
+  <meta name="theme-color" content="#fbf6ee">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="aivancity Tech Club">
+  <meta property="og:title" content="Projects · aivancity Tech Club">
+  <meta property="og:description" content="Projects built by the aivancity Tech Club, including NOX: The Deadline, our Halloween escape game.">
+  <meta property="og:image" content="https://aivancity-tech-club.github.io/assets/tech-club-logo.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Tech Club">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
+  <link rel="stylesheet" href="assets/styles.css?v=20261022a">
+  <script src="assets/i18n.js?v=20261022a"></script>
+  <script src="assets/halloween.js?v=20261022a" defer></script>
+  <style>
+    .proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 24px; }
+    .proj { background: var(--surface); border: var(--stroke) solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+    .proj-cover { position: relative; min-height: 190px; padding: 26px 28px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
+      background: radial-gradient(ellipse at 50% 120%, rgba(225, 38, 44, .35), transparent 60%), repeating-linear-gradient(to bottom, rgba(255, 255, 255, .03) 0 1px, transparent 1px 3px), #0c090a; color: #e1262c; }
+    .proj-cover .repo, .proj-cover .sub { font-family: var(--mono); font-size: .85rem; color: #9fd6d3; }
+    .proj-cover .time { position: absolute; top: 24px; right: 26px; font-family: var(--mono); font-size: .9rem; color: #ff6b70; }
+    .proj-cover .name { font-family: var(--mono); font-weight: 700; font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1; letter-spacing: .02em; text-shadow: 0 0 24px rgba(225, 38, 44, .5); }
+    .proj-body { padding: 22px 26px 26px; display: grid; gap: 12px; }
+    .proj-body h2 { margin: 0; font-size: 1.5rem; }
+    .proj-body p { margin: 0; color: var(--ink-soft); }
+    .proj-tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+    .proj-tags li { font-family: var(--mono); font-size: .8rem; border: 1.5px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+    .proj-meta { font-family: var(--mono); font-size: .85rem; color: var(--ink-soft); }
+    .proj-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+    .proj-more { margin: 28px 0 0; color: var(--ink-soft); }
+  </style>
+</head>
+<body data-i18n-title="nav.projects">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="aivancity Tech Club, home">
+        <img src="assets/tech-club-logo.svg" alt="">
+        <span>aivancity Tech Club</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="/about" data-i18n="nav.about">About</a>
+        <a href="/schedule" data-i18n="nav.schedule">Schedule</a>
+        <a href="/village" data-member data-i18n="nav.board">Village</a>
+        <a href="/mountain" class="nav-signin" data-join data-i18n="nav.signin">Sign in</a>
+        <a href="/apply" class="nav-cta nav-join" data-join data-i18n="nav.join">Join</a>
+        <a class="nav-cta" href="/mountain" data-member data-i18n="nav.mountain">Mountain</a>
+        <button type="button" class="lang-toggle" aria-label="FR: afficher le site en français" lang="fr">FR</button>
+      </nav>
+    </div>
+  </header>
+
+    <main id="main">
+    <section class="page-head">
+      <div class="wrap">
+        <p class="eyebrow" data-i18n="eb.projects">Things we built</p>
+        <h1 data-i18n="projects.h1">What we <b>built</b></h1>
+        <p class="lede" data-i18n="projects.lede">Projects the club made together, from Thursday sessions to one-night events. Open them, play them, and borrow the ideas.</p>
+      </div>
+    </section>
+
+    <section style="padding-top:24px">
+      <div class="wrap">
+        <div class="proj-grid">
+          <article class="proj" aria-labelledby="noxH">
+            <div class="proj-cover" aria-hidden="true">
+              <span class="time">03:13 AM</span>
+              <span class="repo">lea-marchand / nox</span>
+              <span class="name">THE DEADLINE</span>
+              <span class="sub">Halloween 2026</span>
+            </div>
+            <div class="proj-body">
+              <h2 id="noxH" data-i18n="projects.nox.title">NOX: The Deadline</h2>
+              <p data-i18n="projects.nox.p">Our Halloween 2026 escape game. Teams open the repository of a student who vanished while coding and restore five locked commits using Linux, Python, Excel, SQL and Git. Then everyone pushes the final commit together on the big screen.</p>
+              <ul class="proj-tags" aria-label="Skills">
+                <li>Linux</li><li>Python</li><li>Excel</li><li>SQL</li><li>Git</li>
+              </ul>
+              <p class="proj-meta" data-i18n="projects.nox.meta">Halloween 2026 · teams of 5–6 · runs in the browser · in English</p>
+              <p class="proj-actions">
+                <a class="btn btn-primary" href="/nox" data-i18n="projects.nox.play">Play NOX →</a>
+                <a class="btn btn-ghost" href="/nox#final" data-i18n="projects.nox.screen">Projector screen</a>
+              </p>
+            </div>
+          </article>
+        </div>
+        <p class="proj-more" data-i18n="projects.more">Built something with the club? Tell us on Thursday and it goes here.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span class="copy">© <span id="yr"></span> aivancity Tech Club · GDG on Campus aivancity</span>
+      <a class="mono" href="https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/" target="_blank" rel="noopener" data-i18n="footer.gdg">GDG on Campus chapter ↗</a> <a class="mono" href="/projects" data-i18n="footer.projects">Projects</a> <a class="mono" href="/rules" data-i18n="footer.rules">Rules</a> <a class="mono" href="/feedback" data-i18n="footer.feedback">Give feedback</a>
+      <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
+    </div>
+  </footer>
+
+  <script>document.getElementById("yr").textContent = new Date().getFullYear();</script>
+</body>
+</html>
