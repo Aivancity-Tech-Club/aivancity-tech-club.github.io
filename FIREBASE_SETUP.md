@@ -128,6 +128,9 @@ Nothing to set up: it uses the `board` collection (comments live under each post
   (the two uids in alphabetical order) with `a` (who asked), `b` (who was asked), `users`, `status` (`pending` or
   `paired`) and `msg` (why they should connect). A pending request can be withdrawn or declined. Ending a pair takes both:
   one asks (`endBy`), the other agrees (the pair is deleted) or keeps it. Organizers can also "Undo this pair" on `/pulse`. Pulse also lists newcomers without a buddy, so you can nudge them on Thursday.
+- **Buddy emails (free):** a Google Apps Script emails people about buddy requests, acceptances and "end the pair"
+  requests. Setup and details: [`tools/buddy-emails/README.md`](tools/buddy-emails/README.md). It marks what it sent in
+  `buddies/{id}.mailed`.
 - **Student list (collection `directory`):** organizers paste or upload the school's student addresses on `/pulse`
   ("Student list"). Each address is a document `directory/{email}`; `directory/__settings` holds `on` and `count`. With the
   check on, a new sign-up whose address isn't on the list (or on the roster) is refused and the account just made is
