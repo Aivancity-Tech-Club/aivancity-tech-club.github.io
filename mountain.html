@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261024g"></script>
+<script src="assets/i18n.js?v=20261024i"></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
@@ -302,7 +302,7 @@ label { font-weight: 700; font-size: 14px; }
 @keyframes st-tick { 50% { transform: scale(1.15); } }
 .steps li.next::after { content: "→"; margin-left: auto; font-weight: 800; animation: st-nudge 1.1s ease-in-out infinite; }
 @keyframes st-nudge { 50% { transform: translateX(-4px); } }
-.steps .tick.pop { animation: st-pop .6s cubic-bezier(.2, 1.8, .4, 1); }
+.steps .tick.tick-pop { animation: st-pop .6s cubic-bezier(.2, 1.8, .4, 1); }
 @keyframes st-pop { 0% { transform: scale(.2); } 60% { transform: scale(1.4); } 100% { transform: none; } }
 .steps { position: relative; }
 .confetti { position: absolute; width: 7px; height: 11px; border-radius: 2px; pointer-events: none; animation: cf 1s cubic-bezier(.2, .7, .4, 1) forwards; }
@@ -312,7 +312,7 @@ label { font-weight: 700; font-size: 14px; }
 .me-btn.has-steps { animation: me-wiggle 7s ease-in-out 3s infinite; }
 @keyframes me-wiggle { 0%, 90%, 100% { transform: none; } 92% { transform: rotate(-6deg) scale(1.05); } 94% { transform: rotate(5deg) scale(1.05); } 96% { transform: rotate(-3deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .nm, .nm img, .nm .nm-go::after, .steps li, .steps.enter li, .steps li.next, .steps li.next::after, .steps li.next .tick, .steps .bar-fill::after, .steps .tick.pop, .me-btn.has-steps { animation: none !important; }
+  .nm, .nm img, .nm .nm-go::after, .steps li, .steps.enter li, .steps li.next, .steps li.next::after, .steps li.next .tick, .steps .bar-fill::after, .steps .tick.tick-pop, .me-btn.has-steps { animation: none !important; }
   .confetti { display: none; }
 }
 </style>
@@ -431,15 +431,15 @@ label { font-weight: 700; font-size: 14px; }
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261024g"></script>
-<script src="assets/world/world.js?v=20261024g"></script>
-<script src="assets/js-yaml.min.js?v=20261024g"></script>
-<script src="assets/schedule.js?v=20261024g"></script>
-<script src="assets/sessions.js?v=20261024g"></script>
-<script src="assets/platform/config.js?v=20261024g"></script>
-<script src="assets/platform/engine.js?v=20261024g"></script>
-<script src="assets/platform/signin.js?v=20261024g"></script>
-<script src="assets/platform/data.js?v=20261024g"></script>
+<script src="assets/world/world-data.js?v=20261024i"></script>
+<script src="assets/world/world.js?v=20261024i"></script>
+<script src="assets/js-yaml.min.js?v=20261024i"></script>
+<script src="assets/schedule.js?v=20261024i"></script>
+<script src="assets/sessions.js?v=20261024i"></script>
+<script src="assets/platform/config.js?v=20261024i"></script>
+<script src="assets/platform/engine.js?v=20261024i"></script>
+<script src="assets/platform/signin.js?v=20261024i"></script>
+<script src="assets/platform/data.js?v=20261024i"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -586,7 +586,7 @@ label { font-weight: 700; font-size: 14px; }
     box.classList.toggle('enter', first);
     box.innerHTML = `<h3>${esc(T('steps.h'))} <small>${esc(T('steps.count', { n, total: steps.length }))}</small></h3>
       <div class="bar-track" role="progressbar" aria-label="${esc(T('steps.h'))}" aria-valuemin="0" aria-valuemax="${steps.length}" aria-valuenow="${n}"><div class="bar-fill" style="width:${prevW}%"></div></div>
-      <ol>${steps.map((x, i) => `<li class="${x.done ? 'done' : ''}${i === nextI ? ' next' : ''}" style="--i:${i}"><span class="tick${x.done ? ' done' : ''}${fresh.includes(i) ? ' pop' : ''}">${x.done ? '✓' : ''}</span><span>${x.html || esc(x.text)}</span></li>`).join('')}</ol>
+      <ol>${steps.map((x, i) => `<li class="${x.done ? 'done' : ''}${i === nextI ? ' next' : ''}" style="--i:${i}"><span class="tick${x.done ? ' done' : ''}${fresh.includes(i) ? ' tick-pop' : ''}">${x.done ? '✓' : ''}</span><span>${x.html || esc(x.text)}</span></li>`).join('')}</ol>
       <button type="button" class="hide-steps" id="hideSteps">${esc(T('steps.hide'))}</button>`;
     const w = Math.round(n * 100 / steps.length); box.dataset.w = w;
     requestAnimationFrame(() => requestAnimationFrame(() => { const f = box.querySelector('.bar-fill'); if (f) f.style.width = w + '%'; }));

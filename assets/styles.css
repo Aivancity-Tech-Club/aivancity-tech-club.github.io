@@ -509,3 +509,22 @@ h2.side-h { font-size: 1.17rem; margin: 0 0 6px; font-weight: 700; letter-spacin
 button[aria-busy="true"].link-btn { display: inline-flex; align-items: center; gap: 6px; }
 @keyframes club-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .loading-line::before, .btn[aria-busy="true"]::before, button[aria-busy="true"].link-btn::before { animation-duration: 2.4s; } }
+
+/* projects (the Projects page and the About page) */
+.proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 24px; }
+.proj { background: var(--surface); border: var(--stroke) solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+.proj-cover { position: relative; min-height: 190px; padding: 26px 28px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
+  background: radial-gradient(ellipse at 50% 120%, rgba(225, 38, 44, .35), transparent 60%), repeating-linear-gradient(to bottom, rgba(255, 255, 255, .03) 0 1px, transparent 1px 3px), #0c090a; color: #e1262c; }
+.proj-cover .repo, .proj-cover .sub { font-family: var(--mono); font-size: .85rem; color: #9fd6d3; }
+.proj-cover .time { position: absolute; top: 24px; right: 26px; font-family: var(--mono); font-size: .9rem; color: #ff6b70; }
+.proj-cover .name { font-family: var(--mono); font-weight: 700; font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1; letter-spacing: .02em; text-shadow: 0 0 24px rgba(225, 38, 44, .5); }
+.proj-body { padding: 22px 26px 26px; display: grid; gap: 12px; }
+.proj-body h2 { margin: 0; font-size: 1.5rem; }
+.proj-body p { margin: 0; color: var(--ink-soft); }
+.proj-tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.proj-tags li { font-family: var(--mono); font-size: .8rem; border: 1.5px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+.proj-meta { font-family: var(--mono); font-size: .85rem; color: var(--ink-soft); }
+.proj-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.proj-more { margin: 28px 0 0; color: var(--ink-soft); }
+.proj-body h3 { margin: 0; font-size: 1.5rem; }
+.about-projects .lede { margin: 0 0 20px; }

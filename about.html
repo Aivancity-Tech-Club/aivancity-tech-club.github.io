@@ -23,9 +23,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261024g">
-  <script src="assets/i18n.js?v=20261024g"></script>
-  <script src="assets/halloween.js?v=20261024g" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261024i">
+  <script src="assets/i18n.js?v=20261024i"></script>
+  <script src="assets/halloween.js?v=20261024i" defer></script>
 </head>
 <body data-i18n-title="nav.about">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -106,6 +106,35 @@
             <picture><source srcset="assets/team/chris.webp" type="image/webp"><img src="assets/team/chris.jpg" alt="Chris Tahan" width="640" height="640" loading="lazy" decoding="async"></picture>
             <figcaption><b>Chris Tahan</b><span data-i18n="team.org">Organizer</span></figcaption>
           </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-projects" style="padding-top:24px" aria-labelledby="aboutProjH">
+      <div class="wrap">
+        <div class="section-head"><h2 id="aboutProjH" data-i18n="projects.h1">What we <b>built</b></h2><a class="btn btn-ghost" href="/projects" data-i18n="about.proj.all">All projects →</a></div>
+        <p class="lede" data-i18n="projects.lede">Projects the club made together, from Thursday sessions to one-night events. Open them, play them, and borrow the ideas.</p>
+        <div class="proj-grid">
+          <article class="proj" aria-labelledby="aboutNoxH">
+            <div class="proj-cover" aria-hidden="true">
+              <span class="time">03:13 AM</span>
+              <span class="repo">lea-marchand / nox</span>
+              <span class="name">THE DEADLINE</span>
+              <span class="sub">Halloween 2026</span>
+            </div>
+            <div class="proj-body">
+              <h3 id="aboutNoxH" data-i18n="projects.nox.title">NOX: The Deadline</h3>
+              <p data-i18n="projects.nox.p">Our Halloween 2026 escape game. Teams open the repository of a student who vanished while coding and restore five locked commits using Linux, Python, Excel, SQL and Git. Then everyone pushes the final commit together on the big screen.</p>
+              <ul class="proj-tags" aria-label="Skills">
+                <li>Linux</li><li>Python</li><li>Excel</li><li>SQL</li><li>Git</li>
+              </ul>
+              <p class="proj-meta" data-i18n="projects.nox.meta">Halloween 2026 · teams of 5–6 · runs in the browser · in English</p>
+              <p class="proj-actions">
+                <a class="btn btn-primary" href="/nox" data-i18n="projects.nox.play">Play NOX →</a>
+                <a class="btn btn-ghost" href="/nox#final" data-i18n="projects.nox.screen">Projector screen</a>
+              </p>
+            </div>
+          </article>
         </div>
       </div>
     </section>
