@@ -19,11 +19,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261024c">
-  <link rel="stylesheet" href="assets/village.css?v=20261024c">
-  <link rel="stylesheet" href="assets/camp.css?v=20261024c">
-  <script src="assets/i18n.js?v=20261024c"></script>
-  <script src="assets/halloween.js?v=20261024c" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261024g">
+  <link rel="stylesheet" href="assets/village.css?v=20261024g">
+  <link rel="stylesheet" href="assets/camp.css?v=20261024g">
+  <script src="assets/i18n.js?v=20261024g"></script>
+  <script src="assets/halloween.js?v=20261024g" defer></script>
 </head>
 <body data-i18n-title="camp.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -115,13 +115,13 @@
     </div>
   </footer>
 
-  <script src="assets/js-yaml.min.js?v=20261024c"></script>
-  <script src="assets/schedule.js?v=20261024c"></script>
-  <script src="assets/sessions.js?v=20261024c"></script>
-  <script src="assets/platform/config.js?v=20261024c"></script>
-  <script src="assets/platform/engine.js?v=20261024c"></script>
-  <script src="assets/platform/signin.js?v=20261024c"></script>
-  <script src="assets/platform/data.js?v=20261024c"></script>
+  <script src="assets/js-yaml.min.js?v=20261024g"></script>
+  <script src="assets/schedule.js?v=20261024g"></script>
+  <script src="assets/sessions.js?v=20261024g"></script>
+  <script src="assets/platform/config.js?v=20261024g"></script>
+  <script src="assets/platform/engine.js?v=20261024g"></script>
+  <script src="assets/platform/signin.js?v=20261024g"></script>
+  <script src="assets/platform/data.js?v=20261024g"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -157,7 +157,7 @@
     if (err) { gate("cLoading"); $("cLoading").textContent = T("m.dberror", { e: err.code || err.message || "?" }); return; }
     const siBox = ClubSignIn.mount($("siBox"), data);
 
-    let me = null, isOrg = false, who = null, member = null, stats = null, camp = null, editing = [], buddies = [], names = {};
+    let asking = false, endSure = false, me = null, isOrg = false, who = null, member = null, stats = null, camp = null, editing = [], buddies = [], names = {};
 
     /* ---------- songs: only known players are embedded, and only after a tap ---------- */
     function songEmbed(url) {
@@ -182,10 +182,19 @@
     // visiting someone else's camp: ask them to be your buddy, or answer their request
     function buddyAction(first) {
       const rel = buddies.find(b => b.users.includes(me.uid));
-      if (!rel) return `<button type="button" class="btn" data-act="bd-ask">${esc(T("bd.ask", { name: first }))}</button>`;
-      if (rel.status === "paired") return `<span class="camp-bd">🤝 ${esc(T("bd.yours"))}</span>`;
+      if (!rel && !asking) return `<button type="button" class="btn" data-act="bd-open">${esc(T("bd.ask", { name: first }))}</button>`;
+      if (!rel) return `<form class="camp-ask" data-ask novalidate><label for="askNote">${esc(T("bd.why"))}</label>
+        <textarea id="askNote" rows="3" maxlength="200" placeholder="${esc(T("bd.why.ph"))}" aria-describedby="askHelp"></textarea>
+        <small id="askHelp">${esc(T("bd.why.help"))}</small>
+        <div class="camp-ask-act"><button type="submit" class="btn btn-primary">${esc(T("bd.ask.short"))}</button><button type="button" class="btn btn-ghost" data-act="bd-close">${esc(T("vb.cancel"))}</button></div></form>`;
+      if (rel.status === "paired") {
+        if (rel.endBy && rel.endBy !== me.uid) return `<span class="camp-bd">🤝 ${esc(T("bd.end.in", { name: first }))}</span>
+          <button type="button" class="btn" data-act="bd-keep">${esc(T("bd.end.keep"))}</button><button type="button" class="btn btn-ghost" data-act="bd-agree">${esc(T("bd.end.agree"))}</button>`;
+        if (rel.endBy === me.uid) return `<span class="camp-bd">🤝 ${esc(T("bd.end.mine", { name: first }))} <button type="button" class="linkbtn" data-act="bd-keep">${esc(T("bd.end.undo"))}</button></span>`;
+        return `<span class="camp-bd">🤝 ${esc(T("bd.yours"))} <button type="button" class="linkbtn" data-act="bd-end">${esc(T(endSure ? "bd.end.sure" : "bd.end", { name: first }))}</button></span>`;
+      }
       if (rel.a === me.uid) return `<span class="camp-bd">${esc(T("bd.sent"))} <button type="button" class="linkbtn" data-act="bd-cancel">${esc(T("bd.cancel"))}</button></span>`;
-      return `<span class="camp-bd">${esc(T("bd.in", { name: first }))}</span>
+      return `<span class="camp-bd">${esc(T("bd.in", { name: first }))}</span>${rel.msg ? `<blockquote class="camp-note">${esc(rel.msg)}</blockquote>` : ""}
         <button type="button" class="btn" data-act="bd-yes">${esc(T("bd.accept"))}</button><button type="button" class="btn btn-ghost" data-act="bd-no">${esc(T("bd.decline"))}</button>`;
     }
     function render() {
@@ -291,14 +300,27 @@
       camp = await data.getCamp(me.uid); render(); $("camp").querySelector("h1").focus && $("camp").querySelector("h1").setAttribute("tabindex", "-1"); $("camp").querySelector("h1").focus();
     });
 
+    $("camp").addEventListener("submit", async (e) => {
+      if (!e.target.closest("[data-ask]")) return;
+      e.preventDefault();
+      const note = $("askNote").value.trim(), b = e.target.querySelector("[type=submit]"), m = $("bdErr");
+      if (note.length < 10) { if (m) { m.hidden = false; m.textContent = T("bd.why.short"); } $("askNote").focus(); return; }
+      b.disabled = true; b.setAttribute("aria-busy", "true");
+      const r = await data.requestBuddy(who, note);
+      if (r.ok) { asking = false; buddies = await data.loadBuddies(who).catch(() => buddies); render(); }
+      else { b.disabled = false; b.removeAttribute("aria-busy"); if (m) { m.hidden = false; m.textContent = T(r.code || "err.generic"); } }
+    });
     $("camp").addEventListener("click", async (e) => {
       const b = e.target.closest("[data-act]"); if (!b) return;
       const act = b.dataset.act;
       if (act === "edit") openEdit();
+      if (act === "bd-open" || act === "bd-close") { asking = act === "bd-open"; render(); const f = asking ? $("askNote") : document.querySelector('[data-act="bd-open"]'); if (f) f.focus(); return; }
       if (act && act.startsWith("bd-")) {
         const rel = buddies.find(x => x.users.includes(me.uid));
         b.disabled = true; b.setAttribute("aria-busy", "true");
-        const r = act === "bd-ask" ? await data.requestBuddy(who) : act === "bd-yes" ? await data.answerBuddy(rel.id, true)
+        if (act === "bd-end" && !endSure) { endSure = true; b.disabled = false; b.removeAttribute("aria-busy"); render(); const again = document.querySelector('[data-act="bd-end"]'); if (again) again.focus(); return; }
+        endSure = false;
+        const r = act === "bd-end" ? await data.askEndBuddy(rel.id) : act === "bd-keep" ? await data.keepBuddy(rel.id) : act === "bd-agree" ? await data.agreeEndBuddy(rel.id) : act === "bd-yes" ? await data.answerBuddy(rel.id, true)
           : act === "bd-no" ? await data.answerBuddy(rel.id, false) : await data.cancelBuddy(rel.id);
         if (r.ok) { buddies = await data.loadBuddies(who).catch(() => buddies); render(); }
         else { b.disabled = false; b.removeAttribute("aria-busy"); const m = $("bdErr"); if (m) { m.hidden = false; m.textContent = T(r.code || "err.generic"); } }

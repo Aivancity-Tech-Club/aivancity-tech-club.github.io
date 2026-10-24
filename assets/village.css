@@ -224,3 +224,13 @@ details.elder-tools > p, details.elder-tools > button { margin: 0 0 10px; }
 .card.is-new { animation: new-glow 2.4s ease-out; }
 @keyframes new-glow { 0%, 40% { box-shadow: 0 0 0 4px var(--cyan, #55c9ea); } 100% { box-shadow: 0 0 0 0 transparent; } }
 @media (prefers-reduced-motion: reduce) { .new-pill, .card.is-new { animation: none; } }
+
+/* "step done" toast for the getting-started list */
+.tour-toast { position: fixed; z-index: 60; left: 50%; width: max-content; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100% - 32px);
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; padding: 10px 16px; border-radius: 999px; border: 2px solid #1e1e1e;
+  background: var(--p-green); color: #1e1e1e; font-weight: 700; box-shadow: 4px 4px 0 #1e1e1e; animation: tt-in .5s cubic-bezier(.2, 1.4, .4, 1); }
+.tour-toast span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #1e1e1e; color: var(--p-green); font-size: 13px; }
+.tour-toast a { color: #1e1e1e; }
+.tour-toast.out { opacity: 0; transform: translate(-50%, 20px); transition: opacity .4s, transform .4s; }
+@keyframes tt-in { from { opacity: 0; transform: translate(-50%, 30px) scale(.9); } }
+@media (prefers-reduced-motion: reduce) { .tour-toast { animation: none; } .tour-toast.out { transition: none; } }

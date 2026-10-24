@@ -294,8 +294,8 @@ buddies:
     text_fr: "Personne n'est mis en binôme de force : une demande ne compte que si l'autre personne l'accepte."
   - text: "Until it is accepted, a request can be withdrawn by the sender or declined by the other person."
     text_fr: "Tant qu'elle n'est pas acceptée, une demande peut être retirée par celui ou celle qui l'a envoyée, ou refusée par l'autre personne."
-  - text: "Once accepted, the two members are tied together. Only the organizers can undo a pair: ask them."
-    text_fr: "Une fois acceptée, les deux membres sont liés. Seuls les organisateurs peuvent défaire un binôme : demandez-leur."
+  - text: "Once accepted, the two members are tied together. Ending a pair takes both: one asks, the other agrees. Organizers can also undo a pair."
+    text_fr: "Une fois acceptée, les deux membres sont liés. Défaire un binôme demande l'accord des deux : l'un le demande, l'autre accepte. Les organisateurs peuvent aussi défaire un binôme."
   - text: "You can have more than one buddy. Every pair is shown on both members' camps."
     text_fr: "Vous pouvez avoir plusieurs binômes. Chaque binôme apparaît sur le camp des deux membres."
 

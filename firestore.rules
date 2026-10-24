@@ -92,11 +92,23 @@ service cloud.firestore {
         && d.lang in ['en', 'fr']
         && d.at == request.time;
     }
+    // The school's student list (directory/{school email, lower case}), uploaded by organizers on /pulse. Nobody else can read it.
+    // directory/__settings { on: true } turns the check on: joining then needs an address on the list
+    // (or on the roster, which organizers manage). It only checks new sign-ups; members who already joined stay.
+    function studentListOk() {
+      return !exists(/databases/$(db)/documents/directory/__settings)
+        || get(/databases/$(db)/documents/directory/__settings).data.get('on', false) != true
+        || exists(/databases/$(db)/documents/directory/$(email()))
+        || exists(/databases/$(db)/documents/roster/$(email()));
+    }
+    match /directory/{em} {
+      allow get, list, write: if isOrganizer();
+    }
     match /requests/{uid} {
       // a new account can send it before an organizer has reviewed it (when registering for an event);
       // it only counts as membership once the account is confirmed (see school() / onRoster())
       allow create: if schoolEmail() && notBlocked() && request.auth.uid == uid && validRequest(request.resource.data)
-        && !('status' in request.resource.data) && !('note' in request.resource.data);
+        && !('status' in request.resource.data) && !('note' in request.resource.data) && studentListOk();
       // The person can edit their answers; only organizers set status ('invited', 'added') and notes.
       allow update: if schoolEmail() && notBlocked() && request.auth.uid == uid && validRequest(request.resource.data)
         && request.resource.data.get('status', null) == resource.data.get('status', null)
@@ -292,10 +304,11 @@ service cloud.firestore {
 
     // ---------- Renkei buddies (buddies/{a_b}): two members who chose each other ----------
     // One document per pair (the two uids, in alphabetical order, joined by "_"), so a pair can't be asked twice.
-    // a = who asked, b = who was asked. While pending, either of them can delete it (withdraw or decline).
-    // Once b accepts, the two are tied together: only an organizer can undo it.
+    // a = who asked, b = who was asked, msg = why they should connect (up to 200 characters). While pending, either of them can delete it (withdraw or decline).
+    // Once b accepts, the two are tied together: undoing it takes both of them (or an organizer).
     function buddyNew(d, id) {
-      return d.keys().hasOnly(['a', 'b', 'users', 'status', 'createdAt'])
+      return d.keys().hasOnly(['a', 'b', 'users', 'status', 'createdAt', 'msg'])
+        && d.get('msg', '') is string && d.get('msg', '').size() <= 200
         && d.a == request.auth.uid && d.b is string && d.b != d.a
         && (id == d.a + '_' + d.b || id == d.b + '_' + d.a)
         && d.users == [d.a, d.b] && d.status == 'pending' && d.createdAt == request.time
@@ -306,8 +319,16 @@ service cloud.firestore {
       allow create: if isMember() && buddyNew(request.resource.data, id);
       allow update: if isMember() && resource.data.b == request.auth.uid && resource.data.status == 'pending'
         && onlyKeys(['status', 'acceptedAt']) && request.resource.data.status == 'paired' && request.resource.data.acceptedAt == request.time;
+      // ending a pair takes both of them: one asks (endBy = their uid), the other agrees (deletes it) or keeps it (clears endBy);
+      // the one who asked can also take it back
+      allow update: if isMember() && resource.data.status == 'paired' && request.auth.uid in [resource.data.a, resource.data.b]
+        && onlyKeys(['endBy', 'endAt'])
+        && ((resource.data.get('endBy', null) == null && request.resource.data.get('endBy', null) == request.auth.uid && request.resource.data.get('endAt', null) == request.time)
+            || (resource.data.get('endBy', null) != null && !('endBy' in request.resource.data) && !('endAt' in request.resource.data)));
       allow delete: if isOrganizer()
-        || (isMember() && resource.data.status == 'pending' && request.auth.uid in [resource.data.a, resource.data.b]);
+        || (isMember() && resource.data.status == 'pending' && request.auth.uid in [resource.data.a, resource.data.b])
+        || (isMember() && resource.data.status == 'paired' && request.auth.uid in [resource.data.a, resource.data.b]
+            && resource.data.get('endBy', null) != null && resource.data.endBy != request.auth.uid);
     }
 
     // Organizers only: who has been contacted after drifting away (pulse/{uid} { contactedAt, by }).

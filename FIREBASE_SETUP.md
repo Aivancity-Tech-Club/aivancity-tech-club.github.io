@@ -126,8 +126,13 @@ Nothing to set up: it uses the `board` collection (comments live under each post
 - **Renkei buddies (collection `buddies`):** members choose their own buddies. One sends a request (from someone's camp,
   or "Find a buddy" in My climb on the Mountain), the other accepts or declines. One document per pair: `buddies/{a_b}`
   (the two uids in alphabetical order) with `a` (who asked), `b` (who was asked), `users`, `status` (`pending` or
-  `paired`). A pending request can be withdrawn or declined; once accepted, only an organizer can undo the pair, with
-  "Undo this pair" on `/pulse`. Pulse also lists newcomers without a buddy, so you can nudge them on Thursday.
+  `paired`) and `msg` (why they should connect). A pending request can be withdrawn or declined. Ending a pair takes both:
+  one asks (`endBy`), the other agrees (the pair is deleted) or keeps it. Organizers can also "Undo this pair" on `/pulse`. Pulse also lists newcomers without a buddy, so you can nudge them on Thursday.
+- **Student list (collection `directory`):** organizers paste or upload the school's student addresses on `/pulse`
+  ("Student list"). Each address is a document `directory/{email}`; `directory/__settings` holds `on` and `count`. With the
+  check on, a new sign-up whose address isn't on the list (or on the roster) is refused and the account just made is
+  removed, so the person can fix a typo and try again. Members who already joined are not affected. Only organizers can
+  read the list. Keep the file itself out of this repository.
 - **Getting started:** new members see "Your first steps" in My climb: check in once, fill in their camp, look around the
   Village board, open a mission, send a buddy request. The two Village steps are saved on their profile as
   `members/{uid}.tour` (`village`, `mission`).

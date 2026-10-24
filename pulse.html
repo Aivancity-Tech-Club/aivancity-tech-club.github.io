@@ -16,11 +16,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261024c">
-  <link rel="stylesheet" href="assets/village.css?v=20261024c">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261024c">
-  <script src="assets/i18n.js?v=20261024c"></script>
-  <script src="assets/halloween.js?v=20261024c" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261024g">
+  <link rel="stylesheet" href="assets/village.css?v=20261024g">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261024g">
+  <script src="assets/i18n.js?v=20261024g"></script>
+  <script src="assets/halloween.js?v=20261024g" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -64,6 +64,24 @@
           <p><button type="button" class="btn btn-ghost" id="dcRun" data-i18n="dc.run">Run the check</button></p>
           <div id="dcOut" aria-live="polite"></div>
         </section>
+        <section class="p-card dc" id="dir" hidden aria-labelledby="dirH">
+          <h2 id="dirH" data-i18n="dir.h">Student list</h2>
+          <p class="help" data-i18n="dir.p">With the check on, only addresses on this list (or on the roster) can join. It's stored in the club's database, never in the code, and only organizers can see it.</p>
+          <div id="dirState" aria-live="polite"></div>
+          <form id="dirForm" class="dir-form" novalidate>
+            <div class="field"><label for="dirText" data-i18n="dir.paste">Paste addresses, or pick a file (CSV, TXT)</label>
+              <textarea class="textarea" id="dirText" rows="5" placeholder="j.dupont@aivancity.education&#10;a.martin@aivancity.education"></textarea>
+              <input type="file" id="dirFile" accept=".csv,.txt,text/csv,text/plain">
+              <p class="help" id="dirFound"></p></div>
+            <div class="row-actions"><button type="submit" class="btn btn-primary" data-dir="add" data-i18n="dir.add">Add to the list</button><button type="button" class="btn btn-ghost" data-dir="remove" data-i18n="dir.remove">Remove these</button></div>
+          </form>
+          <form id="dirCheck" class="dir-form" novalidate>
+            <div class="field"><label for="dirOne" data-i18n="dir.check">Is someone on the list?</label>
+              <div class="dir-row"><input class="input" id="dirOne" type="email" placeholder="name@aivancity.education"><button type="submit" class="btn btn-ghost" data-i18n="dir.check.btn">Check</button></div>
+              <p class="help" id="dirOneOut" aria-live="polite"></p></div>
+          </form>
+          <p class="help" id="dirMsg" role="status"></p>
+        </section>
         <section class="p-card dc" id="erase" hidden aria-labelledby="erH">
           <h2 id="erH" data-i18n="er.h">Delete someone's data</h2>
           <p class="help" data-i18n="er.p">When someone asks the club to delete their data (their right under the GDPR). Pick the person, check what will go, then confirm.</p>
@@ -84,12 +102,12 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261024c"></script>
+  <script src="assets/schedule.js?v=20261024g"></script>
 
-  <script src="assets/sessions.js?v=20261024c"></script>
-  <script src="assets/platform/config.js?v=20261024c"></script>
-  <script src="assets/platform/signin.js?v=20261024c"></script>
-  <script src="assets/platform/data.js?v=20261024c"></script>
+  <script src="assets/sessions.js?v=20261024g"></script>
+  <script src="assets/platform/config.js?v=20261024g"></script>
+  <script src="assets/platform/signin.js?v=20261024g"></script>
+  <script src="assets/platform/data.js?v=20261024g"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -220,7 +238,7 @@
           ${list(newcomers, T("pulse.buddy.none"), p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.buddy.row", { n: p.n }))}</small></div>
             <div class="row-actions"><span class="chip${p.buddies.length ? " st-done" : ""}">${esc(p.buddies.length ? T("pulse.buddy.is", { name: p.buddies.map(name).join(", ") }) : T("pulse.buddy.no"))}</span></div></li>`)}
           <h3 class="p-sub">${esc(T("pulse.buddy.pairs", { n: pairs.length }))}</h3>
-          ${list(pairs, T("pulse.buddy.nopairs"), b => `<li><div><b>${esc(name(b.a))} 🤝 ${esc(name(b.b))}</b>${b.acceptedAt ? `<small>${esc(fmt(new Date(b.acceptedAt).toISOString().slice(0, 10)))}</small>` : ""}</div>
+          ${list(pairs, T("pulse.buddy.nopairs"), b => `<li><div><b>${esc(name(b.a))} 🤝 ${esc(name(b.b))}</b>${b.acceptedAt ? `<small>${esc(fmt(new Date(b.acceptedAt).toISOString().slice(0, 10)))}</small>` : ""}${b.endBy ? ` <span class="chip st-stale">${esc(T("pulse.buddy.ending"))}</span>` : ""}</div>
             <div class="row-actions"><button type="button" class="btn btn-ghost${undoSure === b.id ? " btn-danger" : ""}" data-undo="${esc(b.id)}">${esc(T(undoSure === b.id ? "pulse.buddy.sure" : "pulse.buddy.remove"))}</button></div></li>`)}
         </section>
 
@@ -302,8 +320,39 @@
     function drawErasePicker() {
       const sel = $("erWho"), cur = sel.value;
       sel.innerHTML = `<option value="">${esc(T("er.pick"))}</option>` + erasePeople().map(p => `<option value="${esc(p.uid)}"${p.uid === cur ? " selected" : ""}>${esc((p.name || "—") + (p.email ? " · " + p.email : ""))}</option>`).join("");
-      $("erase").hidden = false;
+      $("erase").hidden = false; drawDir();
     }
+    /* ---------- the school's student list ---------- */
+    const DIR_RE = /[a-z0-9._%+-]+@aivancity\.education/gi;
+    const dirEmails = () => [...new Set((($("dirText").value || "").match(DIR_RE) || []).map(e => e.toLowerCase()))];
+    async function drawDir() {
+      $("dir").hidden = false;
+      let info; try { info = await data.directoryInfo(); } catch (e) { info = { on: false, count: 0 }; }
+      $("dirState").innerHTML = `<p class="dir-state"><b>${esc(T("dir.count", { n: info.count || 0 }))}</b> · ${esc(T(info.on ? "dir.on" : "dir.off"))}</p>
+        <label class="check"><input type="checkbox" id="dirOn"${info.on ? " checked" : ""}${!info.count && !info.on ? " disabled" : ""}><span>${esc(T("dir.switch"))}</span></label>
+        ${!info.count ? `<p class="help">${esc(T("dir.empty"))}</p>` : ""}`;
+    }
+    $("dir").addEventListener("change", async (e) => {
+      if (e.target.id === "dirOn") { e.target.disabled = true; const r = await data.directorySwitch(e.target.checked); $("dirMsg").textContent = r.ok ? T(e.target.checked ? "dir.on.done" : "dir.off.done") : T(r.code || "err.generic"); drawDir(); }
+      if (e.target.id === "dirFile" && e.target.files[0]) { const t = await e.target.files[0].text(); $("dirText").value = t; $("dirText").dispatchEvent(new Event("input")); }
+    });
+    $("dirText").addEventListener("input", () => { const n = dirEmails().length; $("dirFound").textContent = n ? T("dir.found", { n }) : ""; });
+    async function dirEdit(add, btn) {
+      const list = dirEmails(); if (!list.length) { $("dirMsg").textContent = T("dir.none"); $("dirText").focus(); return; }
+      btn.disabled = true; btn.setAttribute("aria-busy", "true"); $("dirMsg").textContent = T("dir.saving", { n: list.length });
+      const r = await data.directoryEdit(list, add);
+      btn.disabled = false; btn.removeAttribute("aria-busy");
+      $("dirMsg").textContent = r.ok ? T(add ? "dir.added" : "dir.removed", { n: list.length, total: r.count }) : T(r.code || "err.generic");
+      if (r.ok) { $("dirText").value = ""; $("dirFound").textContent = ""; $("dirFile").value = ""; drawDir(); }
+    }
+    $("dirForm").addEventListener("submit", (e) => { e.preventDefault(); dirEdit(true, e.submitter || e.target.querySelector('[data-dir="add"]')); });
+    $("dirForm").addEventListener("click", (e) => { const b = e.target.closest('[data-dir="remove"]'); if (b) dirEdit(false, b); });
+    $("dirCheck").addEventListener("submit", async (e) => {
+      e.preventDefault(); const em = $("dirOne").value.trim().toLowerCase(); if (!em) return;
+      let yes = false; try { yes = await data.directoryHas(em); } catch (x) {}
+      $("dirOneOut").textContent = T(yes ? "dir.yes" : "dir.no", { email: em });
+    });
+
     function drawErase(msg) {
       const out = $("erOut");
       if (msg) { out.innerHTML = msg; return; }

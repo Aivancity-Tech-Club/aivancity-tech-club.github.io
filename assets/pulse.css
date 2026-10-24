@@ -48,3 +48,10 @@
 @media (prefers-color-scheme: dark) { #erOut .ev-confirm { border-color: #f2b8b5; } }
 
 .p-sub { margin: 14px 0 6px; font-size: 1rem; }
+
+.dir-form { margin-top: 12px; }
+.dir-form textarea { font-family: var(--mono); font-size: .85rem; }
+.dir-form input[type=file] { margin-top: 8px; font-size: .9rem; }
+.dir-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.dir-row .input { flex: 1 1 220px; min-width: 0; }
+.dir-state { margin: 0 0 8px; }

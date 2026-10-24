@@ -268,7 +268,8 @@ Points are **never stored**. The database stores *facts* (attendance, proofs, mi
 | `board/{id}` (+ `comments`) | Village posts and comments |
 | `votes` | session votes (`rsvps` is the old "I'm going": no longer written, moved into `registrations`) |
 | `camps/{uid}` | members' camp pages |
-| `buddies/{a_b}` | Renkei buddies: `a` asked `b`; `status` pending → paired (only organizers delete a pair) |
+| `directory/{email}` | the school's student list (organizers only); `__settings` { on, count } turns the join check on |
+| `buddies/{a_b}` | Renkei buddies: `a` asked `b`; `status` pending → paired; `endBy` = one asked to end it, the other agrees (or an organizer undoes it) |
 | `pulse/{uid}` | "contacted" marks on `/pulse` |
 | `feedback/{id}` | feedback form entries; organizers read only |
 | `confirmPending`, `confirmed`, `blocked` | new-account approval queue and decisions |

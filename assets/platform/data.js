@@ -52,7 +52,7 @@ const validEmail = (e) => new RegExp('^[^@\\s]+@' + DOMAIN.replace(/\./g, '\\.')
 // one document per pair, whoever asked first: the two ids in alphabetical order
 function normBuddy(d) {
   const x = d.data(), ms = (t) => (t && t.toMillis ? t.toMillis() : t || 0);
-  return { id: d.id, a: x.a, b: x.b, users: x.users || [x.a, x.b], status: x.status, at: ms(x.createdAt), acceptedAt: ms(x.acceptedAt) };
+  return { id: d.id, a: x.a, b: x.b, users: x.users || [x.a, x.b], status: x.status, msg: x.msg || '', endBy: x.endBy || null, at: ms(x.createdAt), acceptedAt: ms(x.acceptedAt) };
 }
 function pairId(x, y) { return x < y ? x + '_' + y : y + '_' + x; }
 function demoSeed() {
@@ -115,7 +115,8 @@ function demoBackend() {
   const extra = () => store.get('nw-demo-extra-v1') || extraSeed();
   const demoBuddies = (X) => X.buddies || [
     { id: pairId('lucas', 'sofia'), a: 'lucas', b: 'sofia', users: ['lucas', 'sofia'], status: 'paired', at: now - 20 * day, acceptedAt: now - 19 * day },
-    { id: pairId('noah', 'you'), a: 'noah', b: 'you', users: ['noah', 'you'], status: 'pending', at: now - day }];
+    { id: pairId('noah', 'you'), a: 'noah', b: 'you', users: ['noah', 'you'], status: 'pending', at: now - day,
+      msg: "Hey! I'm in PGE 2 and I build Flutter apps. You said you want to get into mobile: want to prep for the next hackathon together?" }];
   const saveExtra = (X) => store.set('nw-demo-extra-v1', X);
   const inDays = (n) => { const d = new Date(Date.now() + n * day); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   const demoEvents = () => [{ id: 'demo-build-night', ...cleanEvent({ title: 'Build night: ship a tiny app', title_fr: 'Soirée build : publiez une mini-app', date: inDays(9),
@@ -199,14 +200,22 @@ function demoBackend() {
     async loadVotes() { return extra().votes; },
     async vote(date, choice) { const X = extra(); X.votes = X.votes.filter(v => !(v.date === date && v.uid === 'you')); if (choice) X.votes.push({ date, uid: 'you', choice }); saveExtra(X); return { ok: true }; },
     async getCamp(uid) { const c = extra().camps[uid]; return c ? { uid, ...c } : null; },
+    async directoryInfo() { const D = extra().directory || {}; return { on: !!D.on, count: (D.list || []).length }; },
+    async directoryHas(email) { return ((extra().directory || {}).list || []).includes(String(email).trim().toLowerCase()); },
+    async directoryEdit(emails, add) { const X = extra(), D = X.directory = X.directory || { on: false, list: [] }; const set = new Set(D.list);
+      emails.forEach(e => (add ? set.add(e) : set.delete(e))); D.list = [...set]; saveExtra(X); return { ok: true, count: D.list.length }; },
+    async directorySwitch(on) { const X = extra(); X.directory = { ...(X.directory || { list: [] }), on: !!on }; saveExtra(X); return { ok: true }; },
     // ---------- Renkei buddies (demo): Noah has asked you; Lucas and Sofia are already buddies ----------
     async loadBuddies(uid) { return demoBuddies(extra()).filter(x => x.users.includes(uid)); },
     async loadAllBuddies() { return demoBuddies(extra()); },
-    async requestBuddy(to) { const X = extra(), B = demoBuddies(X), id = pairId('you', to);
+    async requestBuddy(to, msg) { const X = extra(), B = demoBuddies(X), id = pairId('you', to);
       if (to === 'you' || B.some(x => x.id === id)) return { ok: false, code: 'err.generic' };
-      X.buddies = [...B, { id, a: 'you', b: to, users: ['you', to], status: 'pending', at: Date.now() }]; saveExtra(X); return { ok: true }; },
+      X.buddies = [...B, { id, a: 'you', b: to, users: ['you', to], status: 'pending', msg: String(msg || '').trim().slice(0, 200), at: Date.now() }]; saveExtra(X); return { ok: true }; },
     async answerBuddy(id, yes) { const X = extra(); X.buddies = demoBuddies(X).flatMap(x => x.id !== id ? [x] : yes ? [{ ...x, status: 'paired', acceptedAt: Date.now() }] : []); saveExtra(X); return { ok: true }; },
     async cancelBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
+    async askEndBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).map(x => (x.id === id ? { ...x, endBy: 'you' } : x)); saveExtra(X); return { ok: true }; },
+    async keepBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).map(x => (x.id === id ? { ...x, endBy: null } : x)); saveExtra(X); return { ok: true }; },
+    async agreeEndBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
     async removeBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
     async markTour(key) { const m = state.members.find(x => x.uid === 'you'); m.tour = { ...(m.tour || {}), [key]: true }; save(); return { ok: true }; },
     async saveCamp(c) { const X = extra(), old = X.camps.you || { hidden: false, reports: {} }; X.camps.you = { ...old, ...cleanCamp(c), updatedAt: Date.now() }; saveExtra(X); return { ok: true }; },
@@ -496,6 +505,8 @@ function firebaseBackend() {
       if (INSTANT) {
         // members straight away: the answers first (they make the account a member), then the Mountain profile
         const r = await this.apply({ name: f.name, phone: f.phone, level: f.level, github: f.github, program: f.program || '', interests: f.interests || [], heard: '', lang: f.lang });
+        // not on the student list: remove the account that was just made, so the address can be corrected and tried again
+        if (!r.ok && r.code === 'join.notstudent') { justCreated = null; try { await cred.user.delete(); } catch (e) { try { await auth.signOut(); } catch (x) {} } return r; }
         if (!r.ok) return r;
         // profile and private email in one write (a brand-new account has none yet)
         try {
@@ -608,8 +619,28 @@ function firebaseBackend() {
         level: d.level, heard: d.heard || '', consent: true, lang: d.lang === 'fr' ? 'fr' : 'en', at: firebase.firestore.FieldValue.serverTimestamp() };
       if (d.github) doc.github = String(d.github).slice(0, 39);
       try { await db.collection('requests').doc(u.uid).set(doc, { merge: true }); forgetRequest(); if (lastVerified) markMember(true); return { ok: true }; }
-      catch (e) { return { ok: false, message: tr('err.generic', 'Something went wrong. Try again in a moment.') + ' (' + (e.code || e.message) + ')' }; }
+      catch (e) {
+        // the address isn't on the school's student list (when organizers have turned the check on)
+        if (e && e.code === 'permission-denied') return { ok: false, code: 'join.notstudent', message: tr('join.notstudent', "This address isn't on aivancity's student list. Check the spelling, or ask an organizer to add you.") };
+        return { ok: false, message: tr('err.generic', 'Something went wrong. Try again in a moment.') + ' (' + (e.code || e.message) + ')' };
+      }
     },
+    /* ---------- the school's student list (organizers): directory/{email}, directory/__settings { on, count } ---------- */
+    async directoryInfo() { const d = await db.collection('directory').doc('__settings').get(); return d.exists ? d.data() : { on: false, count: 0 }; },
+    async directoryHas(email) { const d = await db.collection('directory').doc(String(email).trim().toLowerCase()).get(); return d.exists; },
+    async directoryEdit(emails, add) {
+      try {
+        for (let i = 0; i < emails.length; i += 450) {
+          const b = db.batch();
+          emails.slice(i, i + 450).forEach(em => { const r = db.collection('directory').doc(em); if (add) b.set(r, { at: FV().serverTimestamp() }); else b.delete(r); });
+          await b.commit();
+        }
+        const all = await db.collection('directory').get(), count = all.docs.filter(d => d.id !== '__settings').length;
+        await db.collection('directory').doc('__settings').set({ count, updatedAt: FV().serverTimestamp() }, { merge: true });
+        return { ok: true, count };
+      } catch (e) { return fail(e); }
+    },
+    async directorySwitch(on) { try { await db.collection('directory').doc('__settings').set({ on: !!on, updatedAt: FV().serverTimestamp() }, { merge: true }); return { ok: true }; } catch (e) { return fail(e); } },
     /* The WhatsApp invite link lives in Firestore (invites/whatsapp), not in this public repository.
        The rules only let people who applied, or who are on the roster, read it. */
     async inviteLink() {
@@ -748,9 +779,9 @@ function firebaseBackend() {
       return s.docs.map(normBuddy);
     },
     async loadAllBuddies() { const s = await db.collection('buddies').get(); return s.docs.map(normBuddy); },
-    async requestBuddy(to) {
+    async requestBuddy(to, msg) {
       const a = auth.currentUser.uid;
-      try { await db.collection('buddies').doc(pairId(a, to)).set({ a, b: to, users: [a, to], status: 'pending', createdAt: FV().serverTimestamp() }); return { ok: true }; }
+      try { await db.collection('buddies').doc(pairId(a, to)).set({ a, b: to, users: [a, to], status: 'pending', msg: String(msg || '').trim().slice(0, 200), createdAt: FV().serverTimestamp() }); return { ok: true }; }
       catch (e) { return fail(e); }
     },
     async answerBuddy(id, yes) {
@@ -759,6 +790,10 @@ function firebaseBackend() {
       catch (e) { return fail(e); }
     },
     async cancelBuddy(id) { try { await db.collection('buddies').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    // ending a pair takes both: one asks (endBy), the other agrees (the pair is deleted) or keeps it (endBy cleared)
+    async askEndBuddy(id) { try { await db.collection('buddies').doc(id).update({ endBy: auth.currentUser.uid, endAt: FV().serverTimestamp() }); return { ok: true }; } catch (e) { return fail(e); } },
+    async keepBuddy(id) { try { await db.collection('buddies').doc(id).update({ endBy: FV().delete(), endAt: FV().delete() }); return { ok: true }; } catch (e) { return fail(e); } },
+    async agreeEndBuddy(id) { try { await db.collection('buddies').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
     async removeBuddy(id) { try { await db.collection('buddies').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
     // getting-started steps that leave no other trace (looked at the Village board, opened a mission): saved on the profile
     async markTour(key) {

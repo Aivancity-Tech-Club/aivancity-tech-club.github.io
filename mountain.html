@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261024c"></script>
+<script src="assets/i18n.js?v=20261024g"></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
@@ -185,9 +185,38 @@ label { font-weight: 700; font-size: 14px; }
 .bd-act .btn, .bd-row .btn { min-height: 38px; padding: 0 14px; font-size: 13.5px; }
 .bd-in .btn.ghost { color: #1e1e1e; background: #fff; }
 .linkish { border: 0; background: none; padding: 4px 0; font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; color: var(--ink-soft); }
-.bd-find label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-.bd-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.bd-row select { flex: 1 1 180px; min-width: 0; min-height: 40px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); padding: 0 10px; }
+.bd-find { display: grid; gap: 8px; }
+.bd-find > label:not(:first-child) { margin-top: 4px; }
+.bd-find > .btn { justify-self: start; }
+.bd-note-in { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); padding: 10px 12px; font-size: 16px; resize: vertical; min-height: 76px; }
+.bd-note-in:focus { outline: 3px solid color-mix(in srgb, var(--navy) 35%, transparent); outline-offset: 1px; }
+.bd-note-foot { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--ink-soft); margin-top: -4px; }
+.bd-list li.bd-in { display: grid; gap: 8px; justify-content: stretch; }
+.bd-list li.bd-in > b { font-size: 14px; }
+.bd-who { display: flex; gap: 10px; align-items: center; }
+.bd-who img { width: 40px; height: auto; flex: none; }
+.bd-who b { display: block; font-size: 14px; }
+.bd-who small { color: #4a4440; font-size: 12px; }
+.bd-note { margin: 0; padding: 8px 12px; border-left: 4px solid #1e1e1e; background: rgba(255, 255, 255, .6); border-radius: 0 10px 10px 0; font-size: 14px; font-style: italic; }
+.bd-find label { display: block; font-size: 13px; font-weight: 700; }
+.bd-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+/* the buddy picker: type a name, pick from the list */
+.cb { position: relative; flex: 1 1 190px; min-width: 0; }
+.cb input { width: 100%; box-sizing: border-box; min-height: 42px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); padding: 0 36px 0 12px; font-size: 16px; }
+.cb input:focus { outline: 3px solid color-mix(in srgb, var(--navy) 35%, transparent); outline-offset: 1px; }
+.cb::after { content: ""; position: absolute; right: 14px; top: 17px; width: 8px; height: 8px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+  transform: rotate(45deg); pointer-events: none; transition: transform .2s; }
+.cb.open::after { transform: translate(0, 4px) rotate(-135deg); }
+.cb-list { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none; max-height: 248px; overflow-y: auto;
+  background: var(--paper); border: 2px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink); animation: cb-in .16s ease-out; }
+@keyframes cb-in { from { opacity: 0; transform: translateY(-4px); } }
+.cb-list li { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; cursor: pointer; font-size: 14.5px; }
+.cb-list li img { width: 30px; height: auto; flex: none; }
+.cb-list li small { margin-left: auto; color: var(--ink-soft); font-size: 12px; white-space: nowrap; }
+.cb-list li[aria-selected="true"], .cb-list li:hover { background: color-mix(in srgb, var(--navy) 12%, transparent); }
+.cb-list li mark { background: color-mix(in srgb, var(--yellow, #ffd36b) 70%, transparent); color: inherit; border-radius: 3px; }
+.cb-list .cb-none { cursor: default; color: var(--ink-soft); }
+.cb-list .cb-none:hover { background: none; }
 .steps.steps-mini { padding: 10px 16px; }
 .steps.steps-mini .hide-steps { font-size: 14px; font-weight: 700; color: var(--ink); }
 .me-btn.has-steps { position: relative; }
@@ -402,15 +431,15 @@ label { font-weight: 700; font-size: 14px; }
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261024c"></script>
-<script src="assets/world/world.js?v=20261024c"></script>
-<script src="assets/js-yaml.min.js?v=20261024c"></script>
-<script src="assets/schedule.js?v=20261024c"></script>
-<script src="assets/sessions.js?v=20261024c"></script>
-<script src="assets/platform/config.js?v=20261024c"></script>
-<script src="assets/platform/engine.js?v=20261024c"></script>
-<script src="assets/platform/signin.js?v=20261024c"></script>
-<script src="assets/platform/data.js?v=20261024c"></script>
+<script src="assets/world/world-data.js?v=20261024g"></script>
+<script src="assets/world/world.js?v=20261024g"></script>
+<script src="assets/js-yaml.min.js?v=20261024g"></script>
+<script src="assets/schedule.js?v=20261024g"></script>
+<script src="assets/sessions.js?v=20261024g"></script>
+<script src="assets/platform/config.js?v=20261024g"></script>
+<script src="assets/platform/engine.js?v=20261024g"></script>
+<script src="assets/platform/signin.js?v=20261024g"></script>
+<script src="assets/platform/data.js?v=20261024g"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -511,7 +540,7 @@ label { font-weight: 700; font-size: 14px; }
   }
 
   /* ---------- your first steps: a short checklist for new members ---------- */
-  let extras = { buddies: [], camp: null }, extrasReady = false;
+  let extras = { buddies: [], camp: null }, extrasReady = false, endSure = null;
   async function loadExtras() {
     const [buddies, camp] = await Promise.all([data.loadBuddies(me.uid).catch(() => []), data.getCamp(me.uid).catch(() => null)]);
     extras = { buddies, camp }; extrasReady = true; renderSteps(); renderBuddies(); showNextMove();
@@ -581,6 +610,8 @@ label { font-weight: 700; font-size: 14px; }
   function nextMove() {
     const s = result.byUid[me.uid], incoming = extras.buddies.find(b => b.status === 'pending' && b.b === me.uid);
     const nm = (uid) => (members.find(m => m.uid === uid) || {}).name || '';
+    const ending = extras.buddies.find(b => b.status === 'paired' && b.endBy && b.endBy !== me.uid);
+    if (ending) return { text: T('nm.end', { name: nm(ending.endBy) }), cta: T('nm.buddy.go'), go: () => { setDrawer(true); setTimeout(() => $('buddyBox').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300); } };
     if (incoming) return { text: T('nm.buddy', { name: nm(incoming.a) }), cta: T('nm.buddy.go'), go: () => { setDrawer(true); setTimeout(() => $('buddyBox').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300); } };
     const steps = $('stepsBox'), todo = steps && !steps.hidden && !steps.classList.contains('steps-mini') && !steps.classList.contains('all-done');
     if (todo) { const li = steps.querySelector('li.next'); if (li) return { text: T('nm.step', { step: li.textContent.trim() }), cta: T('nm.step.go'), go: () => { setDrawer(true); setTimeout(() => steps.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300); } }; }
@@ -598,7 +629,7 @@ label { font-weight: 700; font-size: 14px; }
     }
   }
   let nmShown = false;
-  function showNextMove() {
+  function showNextMove(now) {
     let off = false; try { off = sessionStorage.getItem('nm-off') === '1'; } catch (e) {}
     if (off || nmShown || !result || !me) return;
     const m = nextMove(); if (!m) return;
@@ -609,7 +640,7 @@ label { font-weight: 700; font-size: 14px; }
     const close = () => { try { sessionStorage.setItem('nm-off', '1'); } catch (e) {} box.classList.add('out'); setTimeout(() => { box.hidden = true; box.classList.remove('out'); }, 350); };
     box.querySelector('.x').onclick = close;
     box.querySelector('.nm-go').onclick = () => { close(); m.go(); };
-    setTimeout(() => { box.hidden = false; }, 1400);
+    if (now) box.hidden = false; else setTimeout(() => { box.hidden = false; }, 1400);
   }
 
   /* ---------- Renkei buddies: ask someone, they accept, you're tied together (only organizers can undo it) ---------- */
@@ -624,22 +655,83 @@ label { font-weight: 700; font-size: 14px; }
     const choices = members.filter(m => m.uid !== me.uid && !taken.has(m.uid) && m.name).sort((x, y) => x.name.localeCompare(y.name));
     box.hidden = false;
     box.innerHTML = `<h3>${esc(T('bd.h'))}</h3><p class="help">${esc(T('bd.p'))}</p>
-      ${incoming.length ? `<ul class="bd-list">${incoming.map(b => `<li class="bd-in"><span>${T('bd.in', { name: camp(b.a) })}</span>
-        <span class="bd-act"><button type="button" class="btn" data-bd-yes="${esc(b.id)}">${esc(T('bd.accept'))}</button><button type="button" class="btn ghost" data-bd-no="${esc(b.id)}">${esc(T('bd.decline'))}</button></span></li>`).join('')}</ul>` : ''}
-      ${paired.length || outgoing.length ? `<ul class="bd-list">${paired.map(b => `<li><span>🤝 ${camp(other(b))}</span></li>`).join('')}
+      ${incoming.length ? `<ul class="bd-list">${incoming.map(b => { const st = result.byUid[b.a] || {}, m = members.find(x => x.uid === b.a) || {};
+        return `<li class="bd-in"><div class="bd-who"><img src="${ninjaURI(st.isMember ? st.rank : 'white', m.accessories)}" alt=""><div><b>${T('bd.in', { name: camp(b.a) })}</b>
+          <small>${esc(T('bd.sessions', { rank: RANK(st.isMember ? st.rank : 'white'), n: (st.counts && st.counts.attend) || 0 }))} · <a href="/camp?u=${encodeURIComponent(b.a)}">${esc(T('bd.seecamp'))}</a></small></div></div>
+        ${b.msg ? `<blockquote class="bd-note">${esc(b.msg)}</blockquote>` : ''}
+        <span class="bd-act"><button type="button" class="btn" data-bd-yes="${esc(b.id)}">${esc(T('bd.accept'))}</button><button type="button" class="btn ghost" data-bd-no="${esc(b.id)}">${esc(T('bd.decline'))}</button></span></li>`; }).join('')}</ul>` : ''}
+      ${paired.length || outgoing.length ? `<ul class="bd-list">${paired.map(b => { const o = other(b), first = esc(nm(o).split(' ')[0]);
+        if (b.endBy && b.endBy !== me.uid) return `<li class="bd-in"><span>🤝 ${camp(o)}</span><b>${T('bd.end.in', { name: first })}</b>
+          <span class="bd-act"><button type="button" class="btn" data-bd-keep="${esc(b.id)}">${esc(T('bd.end.keep'))}</button><button type="button" class="btn ghost" data-bd-agree="${esc(b.id)}">${esc(T('bd.end.agree'))}</button></span></li>`;
+        if (b.endBy === me.uid) return `<li><span>🤝 ${camp(o)}</span><small>${T('bd.end.mine', { name: first })}</small><button type="button" class="linkish" data-bd-keep="${esc(b.id)}">${esc(T('bd.end.undo'))}</button></li>`;
+        return `<li><span>🤝 ${camp(o)}</span><button type="button" class="linkish" data-bd-end="${esc(b.id)}">${esc(endSure === b.id ? T('bd.end.sure', { name: nm(o).split(' ')[0] }) : T('bd.end'))}</button></li>`; }).join('')}
         ${outgoing.map(b => `<li><small>${T('bd.out', { name: camp(b.b) })}</small><button type="button" class="linkish" data-bd-cancel="${esc(b.id)}">${esc(T('bd.cancel'))}</button></li>`).join('')}</ul>`
         : incoming.length ? '' : `<p class="help" style="color:inherit">${esc(T('bd.none'))}</p>`}
-      ${choices.length ? `<div class="bd-find"><label for="bdPick">${esc(T('bd.find'))}</label><div class="bd-row">
-        <select id="bdPick"><option value="">${esc(T('bd.pick'))}</option>${choices.map(m => `<option value="${esc(m.uid)}">${esc(m.name)}</option>`).join('')}</select>
-        <button type="button" class="btn" id="bdAsk">${esc(T('bd.ask.short'))}</button></div></div>` : ''}
+      ${choices.length ? `<div class="bd-find"><label for="bdPick" id="bdPickL">${esc(T('bd.find'))}</label><div class="bd-row">
+        <div class="cb"><input id="bdPick" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="bdList" autocomplete="off" spellcheck="false"
+          placeholder="${esc(T('bd.type'))}"><ul class="cb-list" id="bdList" role="listbox" aria-labelledby="bdPickL" hidden></ul></div></div>
+        <label for="bdNote">${esc(T('bd.why'))}</label>
+        <textarea id="bdNote" class="bd-note-in" rows="3" maxlength="200" aria-describedby="bdNoteH" placeholder="${esc(T('bd.why.ph'))}"></textarea>
+        <div class="bd-note-foot"><small id="bdNoteH">${esc(T('bd.why.help'))}</small><small id="bdCount" aria-hidden="true">${esc(T('bd.count', { n: 0 }))}</small></div>
+        <button type="button" class="btn" id="bdAsk">${esc(T('bd.ask.short'))}</button></div>` : ''}
       <div class="msg" id="bdMsg" role="status" hidden></div>`;
-    $('meBtn').classList.toggle('has-steps', $('meBtn').classList.contains('has-steps') || incoming.length > 0);
+    $('meBtn').classList.toggle('has-steps', $('meBtn').classList.contains('has-steps') || incoming.length > 0 || paired.some(b => b.endBy && b.endBy !== me.uid));
+    if (choices.length) { picker(choices); $('bdNote').addEventListener('input', () => { $('bdCount').textContent = T('bd.count', { n: $('bdNote').value.length }); }); }
+  }
+  // type a name, the list narrows (accents and case don't matter); arrows, Enter and Escape work like a native list
+  function picker(choices) {
+    const input = $('bdPick'), list = $('bdList'), wrap = input.parentElement;
+    const norm = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    let shown = [], active = -1;
+    input.dataset.uid = '';
+    const mark = (name, q) => { const i = norm(name).indexOf(q); return i < 0 || !q ? esc(name) : esc(name.slice(0, i)) + '<mark>' + esc(name.slice(i, i + q.length)) + '</mark>' + esc(name.slice(i + q.length)); };
+    const draw = () => {
+      const q = norm(input.value.trim());
+      shown = choices.filter(m => !q || norm(m.name).split(/\s+/).some(w => w.startsWith(q)) || norm(m.name).includes(q)).slice(0, 40);
+      active = shown.length ? Math.min(Math.max(active, 0), shown.length - 1) : -1;
+      list.innerHTML = shown.length ? shown.map((m, i) => { const st = result.byUid[m.uid];
+        return `<li role="option" id="bdOpt${i}" data-i="${i}" aria-selected="${i === active}"><img src="${ninjaURI(st ? st.rank : 'white', m.accessories)}" alt="">${mark(m.name, q)}<small>${esc(st ? RANK(st.rank) : '')}</small></li>`; }).join('')
+        : `<li class="cb-none" role="option" aria-disabled="true">${esc(T('bd.nomatch'))}</li>`;
+      input.setAttribute('aria-activedescendant', active >= 0 ? 'bdOpt' + active : '');
+      const a = list.querySelector('[aria-selected="true"]'); if (a) a.scrollIntoView({ block: 'nearest' });
+    };
+    const open = (on) => { list.hidden = !on; wrap.classList.toggle('open', on); input.setAttribute('aria-expanded', String(on)); if (on) draw(); };
+    const pick = (i) => { const m = shown[i]; if (!m) return; input.value = m.name; input.dataset.uid = m.uid; open(false); $('bdNote').focus(); };
+    input.addEventListener('focus', () => open(true));
+    input.addEventListener('click', () => open(true));
+    input.addEventListener('input', () => { input.dataset.uid = ''; active = 0; open(true); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (list.hidden) open(true); else { active = (active + (e.key === 'ArrowDown' ? 1 : -1) + shown.length) % Math.max(shown.length, 1); draw(); } }
+      else if (e.key === 'Enter') { if (!list.hidden && active >= 0) { e.preventDefault(); pick(active); } }
+      else if (e.key === 'Escape') { if (!list.hidden) { e.preventDefault(); open(false); } }
+      else if (e.key === 'Tab' && !list.hidden && active >= 0 && input.value.trim()) pick(active);
+    });
+    list.addEventListener('mousedown', (e) => e.preventDefault());   // keep focus in the field
+    list.addEventListener('click', (e) => { const li = e.target.closest('[data-i]'); if (li) pick(+li.dataset.i); });
+    input.addEventListener('blur', () => setTimeout(() => open(false), 120));
   }
   $('buddyBox').addEventListener('click', async (e) => {
     const yes = e.target.closest('[data-bd-yes]'), no = e.target.closest('[data-bd-no]'), cancel = e.target.closest('[data-bd-cancel]'), ask = e.target.closest('#bdAsk');
-    const b = yes || no || cancel || ask; if (!b) return;
+    const end = e.target.closest('[data-bd-end]'), keep = e.target.closest('[data-bd-keep]'), agree = e.target.closest('[data-bd-agree]');
+    if (end && endSure !== end.dataset.bdEnd) { endSure = end.dataset.bdEnd; renderBuddies(); const again = document.querySelector(`[data-bd-end="${CSS.escape(endSure)}"]`); if (again) again.focus(); return; }
+    const b = yes || no || cancel || ask || end || keep || agree; if (!b) return;
     let r;
-    if (ask) { const to = $('bdPick').value; if (!to) { $('bdPick').focus(); return; } b.disabled = true; b.setAttribute('aria-busy', 'true'); r = await data.requestBuddy(to); }
+    if (end || keep || agree) {
+      b.disabled = true; endSure = null;
+      const id = (end || keep || agree).dataset[end ? 'bdEnd' : keep ? 'bdKeep' : 'bdAgree'];
+      r = end ? await data.askEndBuddy(id) : keep ? await data.keepBuddy(id) : await data.agreeEndBuddy(id);
+      if (!r.ok) { b.disabled = false; show($('bdMsg'), T(r.code || 'err.generic'), false); return; }
+      const pair = extras.buddies.find(x => x.id === id), o = pair ? (pair.a === me.uid ? pair.b : pair.a) : '';
+      extras.buddies = await data.loadBuddies(me.uid).catch(() => extras.buddies); renderSteps(); renderBuddies();
+      if (end) show($('bdMsg'), T('bd.end.sent', { name: ((members.find(m => m.uid === o) || {}).name || '').split(' ')[0] }), true);
+      return;
+    }
+    if (ask) {
+      const to = $('bdPick').dataset.uid, note = $('bdNote').value.trim();
+      if (!to) { show($('bdMsg'), T('bd.pickfirst'), false); $('bdPick').focus(); return; }
+      if (note.length < 10) { show($('bdMsg'), T('bd.why.short'), false); $('bdNote').focus(); return; }
+      b.disabled = true; b.setAttribute('aria-busy', 'true'); r = await data.requestBuddy(to, note);
+    }
     else { b.disabled = true; r = yes ? await data.answerBuddy(yes.dataset.bdYes, true) : no ? await data.answerBuddy(no.dataset.bdNo, false) : await data.cancelBuddy(cancel.dataset.bdCancel); }
     if (!r.ok) { b.disabled = false; b.removeAttribute('aria-busy'); show($('bdMsg'), T(r.code || 'err.generic'), false); return; }
     extras.buddies = await data.loadBuddies(me.uid).catch(() => extras.buddies);
@@ -781,7 +873,7 @@ label { font-weight: 700; font-size: 14px; }
   let notlistedEmail = '';
   addEventListener('langchange', () => {
     if (notlistedEmail) $('notlistedP1').textContent = T('m.notlisted.p1', { email: notlistedEmail });
-    if (result && me) { renderDrawer(); renderStrip(); renderSteps(); if (!$('peakPanel').hidden && $('winsBtn').getAttribute('aria-expanded') === 'true') showWins(); if ($('peakPanel').dataset.peak && !$('peakPanel').hidden) showPeak($('peakPanel').dataset.peak); }
+    if (result && me) { renderDrawer(); renderStrip(); renderSteps(); renderBuddies(); if (!$('nextMove').hidden) { nmShown = false; showNextMove(true); } if (!$('peakPanel').hidden && $('winsBtn').getAttribute('aria-expanded') === 'true') showWins(); if ($('peakPanel').dataset.peak && !$('peakPanel').hidden) showPeak($('peakPanel').dataset.peak); }
     world && world.refreshText && world.refreshText();
   });
 
