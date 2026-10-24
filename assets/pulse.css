@@ -46,3 +46,5 @@
 #erOut .ev-confirm .ev-confirm-h { font-weight: 800; font-size: 1.05rem; margin-bottom: 6px; }
 #erOut .ev-confirm-act { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (prefers-color-scheme: dark) { #erOut .ev-confirm { border-color: #f2b8b5; } }
+
+.p-sub { margin: 14px 0 6px; font-size: 1rem; }

@@ -46,6 +46,8 @@ service cloud.firestore {
     }
 
     // Public profile inside the club: name, GitHub username, accessories. Roles are set by an owner in the console.
+    // getting-started steps with no other trace: looked at the Village board, opened a mission
+    function tourOk(t) { return t is map && t.keys().hasOnly(['village', 'mission']) && t.get('village', true) == true && t.get('mission', true) == true; }
     match /members/{uid} {
       allow read: if isMember();
       // anyone signed in can check their own profile, even before it exists (first visit)
@@ -55,7 +57,8 @@ service cloud.firestore {
         && !('role' in request.resource.data)
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40;
       allow update: if isMember() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'github', 'accessories', 'activeMission'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'github', 'accessories', 'activeMission', 'tour'])
+        && tourOk(request.resource.data.get('tour', {}))
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40
         && request.resource.data.get('github', '') is string && request.resource.data.get('github', '').size() <= 39
         && request.resource.data.accessories.size() <= 2
@@ -285,6 +288,26 @@ service cloud.firestore {
       allow update: if isMember() && request.auth.uid != uid && reportOnly();
       allow update: if isOrganizer() && onlyKeys(['hidden']);
       allow delete: if isOrganizer();
+    }
+
+    // ---------- Renkei buddies (buddies/{a_b}): two members who chose each other ----------
+    // One document per pair (the two uids, in alphabetical order, joined by "_"), so a pair can't be asked twice.
+    // a = who asked, b = who was asked. While pending, either of them can delete it (withdraw or decline).
+    // Once b accepts, the two are tied together: only an organizer can undo it.
+    function buddyNew(d, id) {
+      return d.keys().hasOnly(['a', 'b', 'users', 'status', 'createdAt'])
+        && d.a == request.auth.uid && d.b is string && d.b != d.a
+        && (id == d.a + '_' + d.b || id == d.b + '_' + d.a)
+        && d.users == [d.a, d.b] && d.status == 'pending' && d.createdAt == request.time
+        && exists(/databases/$(db)/documents/members/$(d.b));
+    }
+    match /buddies/{id} {
+      allow read: if isMember();
+      allow create: if isMember() && buddyNew(request.resource.data, id);
+      allow update: if isMember() && resource.data.b == request.auth.uid && resource.data.status == 'pending'
+        && onlyKeys(['status', 'acceptedAt']) && request.resource.data.status == 'paired' && request.resource.data.acceptedAt == request.time;
+      allow delete: if isOrganizer()
+        || (isMember() && resource.data.status == 'pending' && request.auth.uid in [resource.data.a, resource.data.b]);
     }
 
     // Organizers only: who has been contacted after drifting away (pulse/{uid} { contactedAt, by }).

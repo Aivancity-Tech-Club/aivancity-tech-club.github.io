@@ -156,17 +156,165 @@
     }, rand(25000, 45000));
     next();
 
-    /* ---------- the dripping edge comes alive: now and then a drop swells under the edge and falls ---------- */
+    /* ---------- blood: drops swell under the dripping edge, fall, and land on what's below ----------
+       A drop lands on the top edge of the first card, button or picture under it and leaves a pool. More drops make the
+       pool grow; a full pool creeps to the nearest corner and runs down the side, and the run drips onto what's below.
+       So the longer someone stays, the bloodier the page gets. Limits: blood only sits on edges (never across text),
+       takes no clicks, keeps off forms, has a ceiling, and old blood dries and fades away. */
     const header = document.querySelector('.site-header');
     if (header) {
       const drops = el('hw-drops'); drops.setAttribute('aria-hidden', 'true'); header.append(drops);
+      const gore = el('hw-gore'); gore.setAttribute('aria-hidden', 'true'); document.body.append(gore);
+      // the "goo" filter: blurs the blood shapes together, then sharpens the edge again, so pools, beads and runs look liquid
+      gore.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute" focusable="false"><filter id="hw-goo" x="-30%" y="-60%" width="160%" height="220%">'
+        + '<feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="b"/><feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" result="g"/>'
+        + '<feComposite in="SourceGraphic" in2="g" operator="atop"/></filter></svg>');
+      const SURF = 'button, .btn, img, .card, .box, .p-card, .session, .notice, .post, .camp-card, .proud, .rule, .callout, .acc, .peak, '
+        + '.ev-reg, .wl-grid a, .group, .chip, .tile, .team-card, .person, .steps li, .cat, .project, article, figure, .hero-card, .schedule-card, .pill';
+      const KEEP_OFF = 'form, .reg-auth, .site-header, .site-footer, footer, dialog, [role="dialog"], .hw-pumpkin, [data-no-blood], .drawer, .modal, .panel';
+      const fixedish = new WeakMap();
+      const pinned = (n) => {   // fixed or sticky things move with the screen: blood can't stay on them
+        if (fixedish.has(n)) return fixedish.get(n);
+        let x = n, r = false;
+        for (let i = 0; x && x !== document.body && i < 8; i++, x = x.parentElement) { const p = getComputedStyle(x).position; if (p === 'fixed' || p === 'sticky') { r = true; break; } }
+        fixedish.set(n, r); return r;
+      };
+      const origin = () => gore.getBoundingClientRect();
+      // what blood can land on: things with a visible edge (cards, buttons, pictures, chips). Found again every few seconds.
+      const alpha = (c) => { const m = /rgba?\(([^)]+)\)/.exec(c || ''); if (!m) return 0; const v = m[1].split(/[ ,/]+/).filter(Boolean); return v.length > 3 ? parseFloat(v[3]) : 1; };
+      let surf = [], scannedAt = 0;
+      function scan() {
+        scannedAt = Date.now(); const full = document.documentElement.clientWidth - 4;
+        surf = [...document.body.querySelectorAll('*')].filter(n => {
+          if (n.closest('svg') && n.tagName.toLowerCase() !== 'svg') return false;
+          if (/^(SCRIPT|STYLE|LINK|META|BR|HTML|BODY|MAIN|OPTION)$/.test(n.tagName) || n.className && String(n.className).startsWith('hw-')) return false;
+          if (n.closest(KEEP_OFF) || n.closest('.hw-scene, .hw-gore')) return false;
+          const r = n.getBoundingClientRect(); if (r.width < 36 || r.height < 18 || r.width >= full) return false;
+          const cs = getComputedStyle(n);
+          if (/matrix\((?!1, 0, 0, 1)/.test(cs.transform)) return false;   // tilted cards: their edge isn't where the box is
+          if (/^(IMG|BUTTON|VIDEO|CANVAS)$/.test(n.tagName) || n.matches(SURF)) return true;
+          return (parseFloat(cs.borderTopWidth) >= 1.5 && cs.borderTopStyle !== 'none' && alpha(cs.borderTopColor) > .3)
+            || (alpha(cs.backgroundColor) > .5 && parseFloat(cs.borderTopLeftRadius) > 0);
+        });
+      }
+      // the first surface whose top edge is under (x, y), in page coordinates relative to the gore layer
+      function surfaceBelow(x, y, skip) {
+        if (Date.now() - scannedAt > 5000) scan();
+        const o = origin(); let best = null, top = Infinity;
+        for (const n of surf) {
+          if (n === skip || !n.isConnected) continue;
+          const r = n.getBoundingClientRect(); if (r.width < 36 || r.height < 18) continue;
+          const t = r.top - o.top, l = r.left - o.left;
+          if (x < l + 6 || x > l + r.width - 6 || t < y - 1 || t > y + 1600 || t >= top) continue;
+          if (getComputedStyle(n).visibility === 'hidden' || pinned(n)) continue;
+          best = n; top = t;
+        }
+        return best;
+      }
+      // one record per bloodied element: a box that follows it, holding its pools and runs
+      const recs = new Map();
+      const MAX_ELS = 12, MAX_POOLS = 4;
+      function place(rec) {
+        const r = rec.el.getBoundingClientRect(), o = origin();
+        const gone = !rec.el.isConnected || !r.width;
+        rec.box.hidden = gone; if (gone) return;
+        rec.w = r.width; rec.h = r.height;
+        rec.rad = Math.min(parseFloat(getComputedStyle(rec.el).borderTopLeftRadius) || 0, r.width / 2, r.height / 2);
+        rec.box.style.cssText = `left:${(r.left - o.left).toFixed(1)}px;top:${(r.top - o.top).toFixed(1)}px;width:${r.width.toFixed(1)}px;height:${r.height.toFixed(1)}px;`
+          + '';
+      }
+      const edgeY = (rec, x) => { const R = rec.rad, d = Math.min(x, rec.w - x); return d >= R ? 0 : R - Math.sqrt(Math.max(0, R * R - (R - d) * (R - d))); };
+      function recFor(n) {
+        let rec = recs.get(n); if (rec) return rec;
+        if (recs.size >= MAX_ELS) { const [old] = recs.values(); drop(old); }
+        rec = { el: n, box: el('hw-stain'), pools: [], runs: 0 };
+        gore.append(rec.box); recs.set(n, rec); place(rec); return rec;
+      }
+      function drop(rec) { recs.delete(rec.el); rec.box.classList.add('gone'); setTimeout(() => rec.box.remove(), 1200); }
+      const relayout = () => recs.forEach(place);
+      addEventListener('resize', relayout, { passive: true });
+      setInterval(relayout, 1200);   // cards that move when something above them loads
+
+      function land(n, x) {
+        const rec = recFor(n); place(rec);
+        const o = origin(), dx = Math.min(Math.max(x - (rec.el.getBoundingClientRect().left - o.left), 8), rec.w - 8);
+        let pool = rec.pools.find(p => Math.abs(p.dx - dx) < 22);
+        if (!pool) {
+          if (rec.pools.length >= MAX_POOLS) pool = rec.pools.reduce((a, b) => (Math.abs(a.dx - dx) < Math.abs(b.dx - dx) ? a : b));
+          else {
+            // a puddle with a few beads hanging under it, each its own length; the goo filter melts them into one liquid shape
+            const beads = Array.from({ length: 2 + Math.floor(Math.random() * 2) }, () => `<i style="left:${rand(12, 82).toFixed(0)}%;--b:${rand(.5, 1.3).toFixed(2)};--d:${rand(2.4, 4.6).toFixed(1)}s"></i>`).join('');
+            pool = { dx, a: 0, n: el('hw-pool', beads, `left:${dx.toFixed(1)}px;top:${(edgeY(rec, dx) - 2).toFixed(1)}px`) }; rec.pools.push(pool); rec.box.append(pool.n);
+          }
+        }
+        pool.a++; pool.t = Date.now(); pool.n.classList.remove('dry');
+        pool.n.style.setProperty('--a', Math.min(pool.a, 7));
+        const sp = el('hw-splash', '', `left:${dx.toFixed(1)}px;top:${(edgeY(rec, dx) - 3).toFixed(1)}px`); rec.box.append(sp); setTimeout(() => sp.remove(), 600);
+        if (pool.a >= 3 && !pool.running && rec.runs < 2) run(rec, pool);
+      }
+      // a full pool creeps along the top edge to the nearest corner, then runs down that side
+      function run(rec, pool) {
+        pool.running = true; rec.runs++;
+        const left = pool.dx < rec.w / 2, inset = Math.max(4, rec.rad * 0.3), edge = left ? inset : rec.w - inset - 3.5;
+        const y0 = edgeY(rec, edge + 1.75);   // on a rounded corner, the run starts (and ends) where the curve is
+        const from = Math.min(pool.dx, edge), span = Math.max(Math.abs(pool.dx - edge), 4), creepMs = Math.max(400, span * 18);
+        const creep = el('hw-creep', '', `left:${from.toFixed(1)}px;top:${(Math.min(edgeY(rec, pool.dx), y0) - 1).toFixed(1)}px;width:${(span + 3.5).toFixed(1)}px;transform-origin:${left ? '100%' : '0'} 50%;transform:scaleX(0)`);
+        rec.box.append(creep);
+        requestAnimationFrame(() => requestAnimationFrame(() => { creep.style.transition = `transform ${creepMs}ms ease-out, opacity 1.5s`; creep.style.transform = 'scaleX(1)'; }));
+        const tall = rec.h > 420, length = tall ? rand(90, 260) : Math.max(4, rec.h - 2 * y0 + 2);
+        setTimeout(() => {
+          const r = el('hw-run', '', `left:${edge.toFixed(1)}px;top:${y0.toFixed(1)}px;height:0`); rec.box.append(r);
+          const ms = Math.max(1800, length * 28);
+          requestAnimationFrame(() => requestAnimationFrame(() => { r.style.transition = `height ${ms}ms cubic-bezier(.3, .1, .6, 1)`; r.style.height = length + 'px'; }));
+          setTimeout(() => {
+            pool.a = Math.max(1, pool.a - 2); pool.n.style.setProperty('--a', pool.a); pool.running = false; rec.runs--;
+            if (!tall && moving() && rec.box.isConnected && !rec.box.hidden) {   // it reached the bottom: a drop falls onto what's below
+              const o = origin(), b = rec.el.getBoundingClientRect();
+              fall(b.left - o.left + edge + 1.75, b.top - o.top + y0 + length + 4, rec.el);
+            }
+          }, ms + 200);
+        }, creepMs + 300);
+      }
+      // a drop falling with gravity, in page coordinates (it stays put when the page scrolls)
+      let falling = 0;
+      function fall(x, y, from) {
+        if (falling >= 6) return;
+        const n = surfaceBelow(x, y, from), o = origin();
+        const target = n ? n.getBoundingClientRect().top - o.top : y + Math.max(160, innerHeight * 0.6);
+        const dist = Math.max(8, target - y), ms = Math.max(260, Math.sqrt(2 * dist / 2600) * 1000);
+        const d = el('hw-fall', '', `left:${x.toFixed(1)}px;top:${y.toFixed(1)}px`); gore.append(d); falling++;
+        const anim = d.animate([{ transform: 'translateY(0) scale(.9, 1)', opacity: 1 }, { transform: `translateY(${dist}px) scale(.8, 1.35)`, opacity: n ? 1 : 0 }],
+          { duration: ms, easing: 'cubic-bezier(.45, 0, .95, .55)', fill: 'forwards' });
+        anim.onfinish = () => { d.remove(); falling--; if (n && n.isConnected) land(n, x); };
+      }
+      // old blood dries, then fades away
+      setInterval(() => {
+        const now = Date.now();
+        recs.forEach(rec => {
+          rec.pools = rec.pools.filter(p => {
+            const age = now - p.t;
+            if (age > 240000 && !p.running) { p.n.classList.add('gone'); setTimeout(() => p.n.remove(), 1500); return false; }
+            if (age > 90000) p.n.classList.add('dry');
+            return true;
+          });
+          if (!rec.pools.length && !rec.runs) { rec.box.querySelectorAll('.hw-run, .hw-creep').forEach(x => x.classList.add('gone')); setTimeout(() => { if (!rec.pools.length) drop(rec); }, 1500); }
+        });
+      }, 5000);
+
+      // the edge: a drop swells, hangs on, lets go. More often the longer someone stays.
+      const born = Date.now();
       const drip = () => {
         if (moving() && drops.childElementCount < 3) {
-          const d = el('hw-drop', '', `left:${rand(2, 97).toFixed(1)}%;--fall:${rand(50, 110).toFixed(0)}px;--t:${rand(2.6, 4.2).toFixed(1)}s`);
-          d.addEventListener('animationend', () => d.remove());
+          const t = rand(1.6, 2.6);
+          const d = el('hw-drop', '', `left:${rand(2, 97).toFixed(1)}%;--t:${t.toFixed(2)}s`);
+          d.addEventListener('animationend', () => {
+            const r = d.getBoundingClientRect(), o = origin(); d.remove();
+            if (moving()) fall(r.left + r.width / 2 - o.left, r.bottom - o.top, null);
+          });
           drops.append(d);
         }
-        setTimeout(drip, rand(1800, 4200));
+        const minutes = (Date.now() - born) / 60000;
+        setTimeout(drip, rand(1800, 4200) * Math.max(0.4, 1 - minutes * 0.1));
       };
       setTimeout(drip, 1200);
     }

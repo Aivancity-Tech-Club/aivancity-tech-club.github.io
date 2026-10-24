@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261022a">
+  <link rel="stylesheet" href="assets/styles.css?v=20261024c">
   <style>
     /* Category palette: tint (card ground), ink (accent text), solid (pills) */
     .c-show_up { --tint: #e3f4fb; --acc: #0b57d0; --solid: #1a73e8; }
@@ -132,8 +132,8 @@
       .kv { grid-template-columns: 1fr; gap: 2px; } .kv dd { margin-bottom: 8px; }
     }
   </style>
-  <script src="assets/i18n.js?v=20261022a"></script>
-  <script src="assets/halloween.js?v=20261022a" defer></script>
+  <script src="assets/i18n.js?v=20261024c"></script>
+  <script src="assets/halloween.js?v=20261024c" defer></script>
 </head>
 <body data-i18n-title="nav.rules">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -169,7 +169,7 @@
     <nav class="toc" aria-label="On this page" data-i18n-attr="aria-label:rules.toc.aria">
       <div class="wrap">
         <a href="#bandanas" data-i18n="rules.toc.bandanas">Bandanas</a><a href="#earn" data-i18n="rules.toc.earn">Earn points</a><a href="#double" data-i18n="rules.toc.double">Double points</a>
-        <a href="#verify" data-i18n="rules.toc.verify">Verification</a><a href="#accessories" data-i18n="rules.toc.acc">Accessories</a><a href="#fair" data-i18n="rules.toc.fair">Fair play</a>
+        <a href="#verify" data-i18n="rules.toc.verify">Verification</a><a href="#buddies" data-i18n="rules.toc.buddies">Buddies</a><a href="#accessories" data-i18n="rules.toc.acc">Accessories</a><a href="#fair" data-i18n="rules.toc.fair">Fair play</a>
       </div>
     </nav>
 
@@ -184,7 +184,7 @@
     </div>
   </footer>
 
-  <script src="assets/js-yaml.min.js?v=20261022a"></script>
+  <script src="assets/js-yaml.min.js?v=20261024c"></script>
   <script>
   (() => {
     const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -299,6 +299,8 @@
           <div class="cats">${earn}</div></div></section>
         <section class="block" id="double"><div class="wrap"><h2>${T("rules.double.h")}</h2><p class="sub">${T("rules.double.sub")}</p>${mult}</div></section>
         <section class="block" id="verify"><div class="wrap"><h2>${T("rules.verify.h")}</h2><p class="sub">${T("rules.verify.sub")}</p>${verify}</div></section>
+        ${(R.buddies || []).length ? `<section class="block" id="buddies"><div class="wrap"><h2>${T("rules.buddies.h")}</h2><p class="sub">${T("rules.buddies.sub")}</p>
+          <ul class="fair">${R.buddies.map(b => `<li><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span>${esc(P(b, "text"))}</span></li>`).join("")}</ul></div></section>` : ""}
         <section class="block" id="accessories"><div class="wrap"><h2>${T("rules.acc.h")}</h2><p class="sub">${T("rules.acc.sub", { n: A.max_worn })}</p>${accs}</div></section>
         <section class="block" id="fair" style="padding-bottom:56px"><div class="wrap"><h2>${T("rules.fair.h")}</h2><p class="sub">${T("rules.fair.sub")}</p>${fair}</div></section>`;
     }

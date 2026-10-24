@@ -19,11 +19,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261022a">
-  <link rel="stylesheet" href="assets/village.css?v=20261022a">
-  <link rel="stylesheet" href="assets/camp.css?v=20261022a">
-  <script src="assets/i18n.js?v=20261022a"></script>
-  <script src="assets/halloween.js?v=20261022a" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261024c">
+  <link rel="stylesheet" href="assets/village.css?v=20261024c">
+  <link rel="stylesheet" href="assets/camp.css?v=20261024c">
+  <script src="assets/i18n.js?v=20261024c"></script>
+  <script src="assets/halloween.js?v=20261024c" defer></script>
 </head>
 <body data-i18n-title="camp.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -115,13 +115,13 @@
     </div>
   </footer>
 
-  <script src="assets/js-yaml.min.js?v=20261022a"></script>
-  <script src="assets/schedule.js?v=20261022a"></script>
-  <script src="assets/sessions.js?v=20261022a"></script>
-  <script src="assets/platform/config.js?v=20261022a"></script>
-  <script src="assets/platform/engine.js?v=20261022a"></script>
-  <script src="assets/platform/signin.js?v=20261022a"></script>
-  <script src="assets/platform/data.js?v=20261022a"></script>
+  <script src="assets/js-yaml.min.js?v=20261024c"></script>
+  <script src="assets/schedule.js?v=20261024c"></script>
+  <script src="assets/sessions.js?v=20261024c"></script>
+  <script src="assets/platform/config.js?v=20261024c"></script>
+  <script src="assets/platform/engine.js?v=20261024c"></script>
+  <script src="assets/platform/signin.js?v=20261024c"></script>
+  <script src="assets/platform/data.js?v=20261024c"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -157,7 +157,7 @@
     if (err) { gate("cLoading"); $("cLoading").textContent = T("m.dberror", { e: err.code || err.message || "?" }); return; }
     const siBox = ClubSignIn.mount($("siBox"), data);
 
-    let me = null, isOrg = false, who = null, member = null, stats = null, camp = null, editing = [];
+    let me = null, isOrg = false, who = null, member = null, stats = null, camp = null, editing = [], buddies = [], names = {};
 
     /* ---------- songs: only known players are embedded, and only after a tap ---------- */
     function songEmbed(url) {
@@ -179,6 +179,15 @@
 
     /* ---------- view ---------- */
     function card(label, value) { return value ? `<div class="camp-card"><small>${esc(label)}</small><p>${esc(value)}</p></div>` : ""; }
+    // visiting someone else's camp: ask them to be your buddy, or answer their request
+    function buddyAction(first) {
+      const rel = buddies.find(b => b.users.includes(me.uid));
+      if (!rel) return `<button type="button" class="btn" data-act="bd-ask">${esc(T("bd.ask", { name: first }))}</button>`;
+      if (rel.status === "paired") return `<span class="camp-bd">🤝 ${esc(T("bd.yours"))}</span>`;
+      if (rel.a === me.uid) return `<span class="camp-bd">${esc(T("bd.sent"))} <button type="button" class="linkbtn" data-act="bd-cancel">${esc(T("bd.cancel"))}</button></span>`;
+      return `<span class="camp-bd">${esc(T("bd.in", { name: first }))}</span>
+        <button type="button" class="btn" data-act="bd-yes">${esc(T("bd.accept"))}</button><button type="button" class="btn btn-ghost" data-act="bd-no">${esc(T("bd.decline"))}</button>`;
+    }
     function render() {
       const own = me.uid === who, c = camp || {}, s = stats, color = COLORS.includes(c.color) ? c.color : "sky";
       const first = (member.name || "").split(" ")[0];
@@ -187,6 +196,7 @@
       const wins = s.history.filter(h => h.points > 0 && WIN.includes(h.fact.type) && h.fact.status === "approved").slice(0, 12);
       const missions = (s.counts.mentoring || 0) + (s.counts.collab || 0) + (s.counts.club_quest || 0);
       const song = c.song ? songEmbed(c.song) : null;
+      const paired = buddies.filter(b => b.status === "paired");
       document.title = T("camp.title.of", { name: member.name }) + " · aivancity Tech Club";
       $("camp").innerHTML = `
         ${hidden ? `<p class="notice bad">${esc(T(own ? "camp.hidden.own" : "camp.hidden.org"))}</p>` : ""}
@@ -199,6 +209,7 @@
           </div>
           <div class="camp-actions">
             ${own ? `<button type="button" class="btn btn-primary" data-act="edit">${esc(T(filled ? "camp.edit" : "camp.setup"))}</button>` : ""}
+            ${own ? "" : buddyAction(first) + `<p class="camp-bd-err" id="bdErr" role="alert" hidden></p>`}
             ${song ? `<button type="button" class="btn camp-play" data-act="play" aria-expanded="false">${esc(own ? T("camp.play.own") : T("camp.play", { name: first }))}</button>`
               : c.song ? `<a class="btn camp-play" href="${esc(c.song)}" target="_blank" rel="noopener">${esc(T("camp.listen"))} ↗</a>` : ""}
           </div>
@@ -214,6 +225,14 @@
 
         ${(c.proud || []).length ? `<section class="camp-sec"><h2>${esc(T("camp.proud"))}</h2><div class="proud-grid">${c.proud.map(p => `
           <div class="proud"><h3>${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener ugc">${esc(p.title)} ↗</a>` : esc(p.title)}</h3>${p.text ? `<p>${esc(p.text)}</p>` : ""}</div>`).join("")}</div></section>` : ""}
+
+        <section class="camp-sec">
+          <h2>${esc(T("bd.camp.h"))}</h2>
+          ${paired.length ? `<ul class="camp-buddies">${paired.map(b => { const o = b.a === who ? b.b : b.a;
+            return `<li><a href="/camp?u=${encodeURIComponent(o)}">🤝 ${esc(names[o] || "—")}</a></li>`; }).join("")}</ul>`
+            : `<p class="help">${esc(own ? T("bd.camp.none.own") : T("bd.camp.none", { name: first }))}</p>`}
+          ${own && paired.length ? `<p class="help" style="margin:10px 0 0">${esc(T("bd.tied"))}</p>` : ""}
+        </section>
 
         <section class="camp-sec">
           <h2>${esc(T("camp.record"))}</h2>
@@ -276,6 +295,14 @@
       const b = e.target.closest("[data-act]"); if (!b) return;
       const act = b.dataset.act;
       if (act === "edit") openEdit();
+      if (act && act.startsWith("bd-")) {
+        const rel = buddies.find(x => x.users.includes(me.uid));
+        b.disabled = true; b.setAttribute("aria-busy", "true");
+        const r = act === "bd-ask" ? await data.requestBuddy(who) : act === "bd-yes" ? await data.answerBuddy(rel.id, true)
+          : act === "bd-no" ? await data.answerBuddy(rel.id, false) : await data.cancelBuddy(rel.id);
+        if (r.ok) { buddies = await data.loadBuddies(who).catch(() => buddies); render(); }
+        else { b.disabled = false; b.removeAttribute("aria-busy"); const m = $("bdErr"); if (m) { m.hidden = false; m.textContent = T(r.code || "err.generic"); } }
+      }
       if (act === "play") {
         const s = songEmbed(camp.song), p = $("player"), on = p.hidden;
         p.hidden = !on; b.setAttribute("aria-expanded", String(on));
@@ -305,7 +332,8 @@
         if (!member) { gate("gMissing"); return; }
         const res = PointsEngine.compute(rb, facts, members, regular, today);
         stats = res.byUid[who];
-        camp = await data.getCamp(who);
+        names = Object.fromEntries(members.map(m => [m.uid, m.name]));
+        [camp, buddies] = await Promise.all([data.getCamp(who), data.loadBuddies(who).catch(() => [])]);
         if (camp && camp.hidden && who !== u.uid && !isOrg) camp = null;
         render();
         if (who === u.uid && new URLSearchParams(location.search).has("edit")) openEdit();

@@ -123,8 +123,14 @@ Nothing to set up: it uses the `board` collection (comments live under each post
   last two Thursdays), who signed up but never came, and newcomers without a buddy. "Message on WhatsApp" opens a
   ready-made message using the phone number from their `/apply` form; "Mark as contacted" (collection `pulse`) tells the
   other organizers so nobody gets two messages. Organizers find the page in their profile menu.
-- **Buddies:** "Post a buddy mission" puts a Help mission on the Village board in the name of the organizing team. The
-  first member to take it is the newcomer's buddy; confirm it like any mission once they've met.
+- **Renkei buddies (collection `buddies`):** members choose their own buddies. One sends a request (from someone's camp,
+  or "Find a buddy" in My climb on the Mountain), the other accepts or declines. One document per pair: `buddies/{a_b}`
+  (the two uids in alphabetical order) with `a` (who asked), `b` (who was asked), `users`, `status` (`pending` or
+  `paired`). A pending request can be withdrawn or declined; once accepted, only an organizer can undo the pair, with
+  "Undo this pair" on `/pulse`. Pulse also lists newcomers without a buddy, so you can nudge them on Thursday.
+- **Getting started:** new members see "Your first steps" in My climb: check in once, fill in their camp, look around the
+  Village board, open a mission, send a buddy request. The two Village steps are saved on their profile as
+  `members/{uid}.tour` (`village`, `mission`).
 - **"I'm going"** is one system for every session: collection `registrations` (see 7e). The old `rsvps` collection is no
   longer written; each member's old entries move into `registrations` on their next visit and are removed.
 - **Votes (collection `votes`):** members only, one per person and session.

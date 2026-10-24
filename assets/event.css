@@ -108,3 +108,18 @@ html.ev-locked, html.ev-locked body { overflow: hidden; }
 .btn-danger:hover { background: #8c1d18; }
 .ev-banner { margin: 0; font-weight: 700; }
 @media (prefers-color-scheme: dark) { .ev-mi.danger { color: #f2b8b5; } .ev-confirm.danger { border-color: #f2b8b5; } }
+
+/* welcome to the club: shown under the spot after joining through an event */
+.ev-welcome { margin-top: 18px; padding-top: 16px; border-top: var(--stroke, 2px) dashed var(--line); display: grid; gap: 10px; }
+.ev-welcome h3 { margin: 0; font-size: 1.25rem; }
+.ev-welcome > p { margin: 0; color: var(--ink-soft); }
+.wl-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.wl-grid a { display: grid; grid-template-columns: auto 1fr; align-content: start; column-gap: 10px; row-gap: 2px; height: 100%; box-sizing: border-box; padding: 12px 14px;
+  border: var(--stroke, 2px) solid var(--line); border-radius: 16px; color: inherit; text-decoration: none; background: var(--surface, transparent); }
+.wl-grid a:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--line); }
+.wl-grid a:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.wl-ic { grid-row: 1 / 3; font-size: 1.4rem; line-height: 1.2; }
+.wl-grid b { font-size: 1rem; }
+.wl-grid a > span:last-child { font-size: .9rem; color: var(--ink-soft); line-height: 1.4; }
+.wl-act { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+@media (prefers-reduced-motion: reduce) { .wl-grid a:hover { transform: none; } }

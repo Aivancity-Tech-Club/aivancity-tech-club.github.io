@@ -49,6 +49,12 @@ function cleanEvent(e) {
 const validEmail = (e) => new RegExp('^[^@\\s]+@' + DOMAIN.replace(/\./g, '\\.') + '$', 'i').test(String(e || '').trim());
 
 /* ================= demo backend ================= */
+// one document per pair, whoever asked first: the two ids in alphabetical order
+function normBuddy(d) {
+  const x = d.data(), ms = (t) => (t && t.toMillis ? t.toMillis() : t || 0);
+  return { id: d.id, a: x.a, b: x.b, users: x.users || [x.a, x.b], status: x.status, at: ms(x.createdAt), acceptedAt: ms(x.acceptedAt) };
+}
+function pairId(x, y) { return x < y ? x + '_' + y : y + '_' + x; }
 function demoSeed() {
   const M = (uid, name, accessories) => ({ uid, name, accessories, github: '', role: 'member', joined: '2026-09-18' });
   const members = [
@@ -107,6 +113,9 @@ function demoBackend() {
     } };
   };
   const extra = () => store.get('nw-demo-extra-v1') || extraSeed();
+  const demoBuddies = (X) => X.buddies || [
+    { id: pairId('lucas', 'sofia'), a: 'lucas', b: 'sofia', users: ['lucas', 'sofia'], status: 'paired', at: now - 20 * day, acceptedAt: now - 19 * day },
+    { id: pairId('noah', 'you'), a: 'noah', b: 'you', users: ['noah', 'you'], status: 'pending', at: now - day }];
   const saveExtra = (X) => store.set('nw-demo-extra-v1', X);
   const inDays = (n) => { const d = new Date(Date.now() + n * day); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   const demoEvents = () => [{ id: 'demo-build-night', ...cleanEvent({ title: 'Build night: ship a tiny app', title_fr: 'Soirée build : publiez une mini-app', date: inDays(9),
@@ -190,6 +199,16 @@ function demoBackend() {
     async loadVotes() { return extra().votes; },
     async vote(date, choice) { const X = extra(); X.votes = X.votes.filter(v => !(v.date === date && v.uid === 'you')); if (choice) X.votes.push({ date, uid: 'you', choice }); saveExtra(X); return { ok: true }; },
     async getCamp(uid) { const c = extra().camps[uid]; return c ? { uid, ...c } : null; },
+    // ---------- Renkei buddies (demo): Noah has asked you; Lucas and Sofia are already buddies ----------
+    async loadBuddies(uid) { return demoBuddies(extra()).filter(x => x.users.includes(uid)); },
+    async loadAllBuddies() { return demoBuddies(extra()); },
+    async requestBuddy(to) { const X = extra(), B = demoBuddies(X), id = pairId('you', to);
+      if (to === 'you' || B.some(x => x.id === id)) return { ok: false, code: 'err.generic' };
+      X.buddies = [...B, { id, a: 'you', b: to, users: ['you', to], status: 'pending', at: Date.now() }]; saveExtra(X); return { ok: true }; },
+    async answerBuddy(id, yes) { const X = extra(); X.buddies = demoBuddies(X).flatMap(x => x.id !== id ? [x] : yes ? [{ ...x, status: 'paired', acceptedAt: Date.now() }] : []); saveExtra(X); return { ok: true }; },
+    async cancelBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
+    async removeBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
+    async markTour(key) { const m = state.members.find(x => x.uid === 'you'); m.tour = { ...(m.tour || {}), [key]: true }; save(); return { ok: true }; },
     async saveCamp(c) { const X = extra(), old = X.camps.you || { hidden: false, reports: {} }; X.camps.you = { ...old, ...cleanCamp(c), updatedAt: Date.now() }; saveExtra(X); return { ok: true }; },
     async reportCamp(uid) { const X = extra(); if (X.camps[uid]) { X.camps[uid].reports = { ...(X.camps[uid].reports || {}), you: true }; saveExtra(X); } return { ok: true }; },
     async hideCamp(uid, hidden) { const X = extra(); if (X.camps[uid]) { X.camps[uid].hidden = !!hidden; saveExtra(X); } return { ok: true }; },
@@ -722,6 +741,30 @@ function firebaseBackend() {
       try { if (choice) await ref.set({ date, uid, choice: String(choice).slice(0, 40), at: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; } catch (e) { return fail(e); }
     },
     // ---------- camps ----------
+    // ---------- Renkei buddies: buddies/{pairId} { a: who asked, b: who was asked, users: [a, b], status: 'pending' | 'paired' } ----------
+    // A request can be withdrawn (a) or declined (b) while pending; once b accepts, only an organizer can undo it.
+    async loadBuddies(uid) {
+      const s = await db.collection('buddies').where('users', 'array-contains', uid).get();
+      return s.docs.map(normBuddy);
+    },
+    async loadAllBuddies() { const s = await db.collection('buddies').get(); return s.docs.map(normBuddy); },
+    async requestBuddy(to) {
+      const a = auth.currentUser.uid;
+      try { await db.collection('buddies').doc(pairId(a, to)).set({ a, b: to, users: [a, to], status: 'pending', createdAt: FV().serverTimestamp() }); return { ok: true }; }
+      catch (e) { return fail(e); }
+    },
+    async answerBuddy(id, yes) {
+      const ref = db.collection('buddies').doc(id);
+      try { if (yes) await ref.update({ status: 'paired', acceptedAt: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; }
+      catch (e) { return fail(e); }
+    },
+    async cancelBuddy(id) { try { await db.collection('buddies').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    async removeBuddy(id) { try { await db.collection('buddies').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    // getting-started steps that leave no other trace (looked at the Village board, opened a mission): saved on the profile
+    async markTour(key) {
+      try { await db.collection('members').doc(auth.currentUser.uid).update({ ['tour.' + key]: true }); return { ok: true }; }
+      catch (e) { return fail(e); }
+    },
     async getCamp(uid) { try { const d = await db.collection('camps').doc(uid).get(); return d.exists ? { uid, ...d.data() } : null; } catch (e) { if (e && e.code === 'permission-denied') return null; throw e; } },
     async saveCamp(c) {
       const uid = auth.currentUser.uid, ref = db.collection('camps').doc(uid), doc = { ...cleanCamp(c), updatedAt: FV().serverTimestamp() };
@@ -832,17 +875,18 @@ function firebaseBackend() {
       const where = (c, f = 'uid') => db.collection(c).where(f, '==', uid).get().then(refs).catch(() => []);
       const one = (c, id) => db.collection(c).doc(id).get().then(d => (d.exists ? [d.ref] : [])).catch(() => []);
       const em = String(email || '').toLowerCase();
-      const [facts, registrations, rsvps, votes, posts, profile, priv, request, camp, pend, conf, pulse, roster, board] = await Promise.all([
+      const [facts, registrations, rsvps, votes, posts, profile, priv, request, camp, pend, conf, pulse, roster, board, buddies] = await Promise.all([
         where('facts'), where('registrations'), where('rsvps'), where('votes'), where('board', 'by'),
         one('members', uid), one('private', uid), one('requests', uid), one('camps', uid), one('confirmPending', uid), one('confirmed', uid), one('pulse', uid),
-        em ? one('roster', em) : [], db.collection('board').get().then(refs).catch(() => [])]);
+        em ? one('roster', em) : [], db.collection('board').get().then(refs).catch(() => []),
+        db.collection('buddies').where('users', 'array-contains', uid).get().then(refs).catch(() => [])]);
       const mine = new Set(posts.map(r => r.path));
       // their comments anywhere, and every comment under their own posts (those go with the post)
       const comments = (await Promise.all(board.map(p => (mine.has(p.path) ? p.collection('comments').get() : p.collection('comments').where('by', '==', uid).get())
         .then(refs).catch(() => [])))).flat();
       const counts = { profile: profile.length, request: request.length, facts: facts.length, registrations: registrations.length, posts: posts.length,
-        comments: comments.length, other: priv.length + camp.length + pend.length + conf.length + pulse.length + roster.length + rsvps.length + votes.length };
-      const all = [...comments, ...posts, ...facts, ...registrations, ...rsvps, ...votes, ...camp, ...priv, ...pend, ...conf, ...pulse, ...roster, ...request, ...profile];
+        comments: comments.length, other: buddies.length + priv.length + camp.length + pend.length + conf.length + pulse.length + roster.length + rsvps.length + votes.length };
+      const all = [...comments, ...posts, ...buddies, ...facts, ...registrations, ...rsvps, ...votes, ...camp, ...priv, ...pend, ...conf, ...pulse, ...roster, ...request, ...profile];
       return { uid, counts, total: all.length, refs: all };
     },
     async erasePerson(plan) {
@@ -886,5 +930,5 @@ function firebaseBackend() {
   };
 }
 
-window.ClubData = { EVENT_FORMATS, cleanEvent, ORG_CONFIRM, INSTANT, CAMP_COLORS, cleanCamp, create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr };
+window.ClubData = { EVENT_FORMATS, cleanEvent, ORG_CONFIRM, INSTANT, CAMP_COLORS, cleanCamp, create: () => (CFG.FIREBASE ? firebaseBackend() : demoBackend()), validEmail, validPhone: (p) => PHONE_RE.test(String(p || '').trim()), DOMAIN, SUBMIT_TYPES, todayStr, pairId };
 })();

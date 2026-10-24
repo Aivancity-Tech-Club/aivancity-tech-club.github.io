@@ -112,17 +112,42 @@ html.hw .site-header::after { content: ""; position: absolute; left: 0; right: 0
 .hw-drops { position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none; overflow: visible; }
 .hw-drop { position: absolute; top: 6px; width: 7px; height: 9px; margin-left: -3.5px; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .35), transparent 35%), var(--hw-blood);
-  transform-origin: 50% 0; animation: hw-drop var(--t) cubic-bezier(.55, 0, .9, .4) forwards; }
-.hw-drop::before { content: ""; position: absolute; left: 50%; bottom: 70%; width: 2px; height: 0; margin-left: -1px; background: var(--hw-blood);
+  transform-origin: 50% 0; animation: hw-swell var(--t) cubic-bezier(.4, 0, .6, 1) forwards; }
+.hw-drop::before { content: ""; position: absolute; left: 50%; bottom: 70%; width: 2px; height: 6px; margin-left: -1px; background: var(--hw-blood);
   border-radius: 2px; animation: hw-strand var(--t) linear forwards; }
-@keyframes hw-drop {
+@keyframes hw-swell {
   0% { transform: translateY(-4px) scale(.2); opacity: 0; }
-  10% { opacity: 1; }
-  45% { transform: translateY(2px) scale(1); }          /* swelling, hanging on */
-  55% { transform: translateY(5px) scale(1, 1.12); }    /* stretching */
-  100% { transform: translateY(var(--fall)) scale(.9, 1.2); opacity: 0; }   /* let go */
+  15% { opacity: 1; }
+  80% { transform: translateY(2px) scale(1); }          /* swelling, hanging on */
+  100% { transform: translateY(6px) scale(1, 1.15); }   /* stretching: then it lets go and falls */
 }
-@keyframes hw-strand { 0%, 40% { height: 6px; } 55% { height: 10px; } 60%, 100% { height: 0; } }
+@keyframes hw-strand { 0%, 70% { height: 6px; } 100% { height: 11px; } }
+
+/* ---------- where the blood lands: a page-sized layer above the content that never takes clicks ---------- */
+.hw-gore { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 9; pointer-events: none; }
+.hw-gore * { pointer-events: none; }
+.hw-fall { position: absolute; width: 7px; height: 9px; margin: -4px 0 0 -3.5px; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .35), transparent 35%), var(--hw-blood); will-change: transform; }
+.hw-stain { position: absolute; transition: opacity 1.2s; }
+.hw-stain.gone, .hw-pool.gone, .hw-run.gone, .hw-creep.gone { opacity: 0; transition: opacity 1.5s; }
+/* a pool sits on the top edge and grows with every drop (--a: 1 to 7) */
+.hw-stain { filter: url(#hw-goo); }
+/* a pool sits on the top edge and grows with every drop (--a: 1 to 7): a soft puddle, fatter in the middle */
+.hw-pool { position: absolute; height: calc(6px + var(--a, 1) * 1.5px); width: calc(16px + var(--a, 1) * 9px); transform: translateX(-50%);
+  border-radius: 50% 50% 45% 45% / 30% 30% 70% 70%; background: radial-gradient(ellipse at 40% 20%, #c43a3a 0, var(--hw-blood) 45%, var(--hw-blood-hi) 100%);
+  transition: width .6s cubic-bezier(.2, .8, .3, 1.2), height .6s, filter 20s, opacity 1.5s; }
+/* beads hang under the puddle, swell slowly, and pull back */
+.hw-pool i { position: absolute; top: 55%; width: calc(4px + var(--a, 1) * .5px); height: calc((5px + var(--a, 1) * 2px) * var(--b)); margin-left: -3px;
+  border-radius: 40% 40% 50% 50% / 30% 30% 70% 70%; background: var(--hw-blood); transform-origin: 50% 0; animation: hw-bead var(--d) ease-in-out infinite alternate; }
+.hw-pool i::after { content: ""; position: absolute; left: 50%; bottom: -3px; width: 140%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--hw-blood); }
+@keyframes hw-bead { from { transform: scaleY(.55); } to { transform: scaleY(1.2); } }
+.hw-pool.dry { filter: brightness(.55) saturate(.7); }
+.hw-creep { position: absolute; height: 5px; border-radius: 50% / 100%; background: var(--hw-blood); transition: opacity 1.5s; }
+.hw-run { position: absolute; width: 4px; border-radius: 3px; background: linear-gradient(var(--hw-blood-hi), var(--hw-blood)); transition: opacity 1.5s; }
+.hw-run::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 9px; height: 10px; margin-left: -4.5px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%; background: var(--hw-blood); }
+.hw-splash { position: absolute; width: 18px; height: 6px; margin-left: -9px; border-radius: 50%; border: 2px solid var(--hw-blood);
+  animation: hw-splash .5s ease-out forwards; }
+@keyframes hw-splash { from { transform: scale(.3); opacity: 1; } to { transform: scale(1.6, 1.1); opacity: 0; } }
 
 /* ---------- the pumpkin surprise ---------- */
 .hw-scare { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; background: rgba(5, 3, 8, 0); cursor: pointer;
@@ -191,17 +216,17 @@ html.hw-intro-on { overflow: hidden; }
 }
 
 /* ---------- calm: paused by the pumpkin, or less motion asked by the system ---------- */
-.hw-calm .hw-anim, .hw-calm .hw-drops { display: none; }
+.hw-calm .hw-anim, .hw-calm .hw-drops, .hw-calm .hw-gore { display: none; }
 .hw-calm .hw-fog { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .hw-anim { display: none; }
   .hw-scene *, .hw-pumpkin * { animation: none !important; transition: none !important; }
-  .hw-drops, .hw-intro { display: none; }
+  .hw-drops, .hw-intro, .hw-gore { display: none; }
 }
 /* high-contrast modes and printing: no decorations at all */
 @media (forced-colors: active) {
-  .hw-drops, .hw-intro, .hw-scene, html.hw .site-header::before, html.hw .site-header::after { display: none; }
+  .hw-drops, .hw-gore, .hw-intro, .hw-scene, html.hw .site-header::before, html.hw .site-header::after { display: none; }
 }
 @media print {
-  .hw-drops, .hw-scare, .hw-intro, .hw-scene, .hw-pumpkin, html.hw .site-header::before, html.hw .site-header::after { display: none !important; }
+  .hw-drops, .hw-gore, .hw-scare, .hw-intro, .hw-scene, .hw-pumpkin, html.hw .site-header::before, html.hw .site-header::after { display: none !important; }
 }

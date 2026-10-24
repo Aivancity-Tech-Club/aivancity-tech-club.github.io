@@ -11,7 +11,7 @@
 #   - A change can never remove points or a bandana already earned.
 # ==============================================================
 
-version: "1.3.0"
+version: "1.4.0"
 effective_from: "2026-10-15"     # first Thursday session of Fall 2026
 
 # --------------------------------------------------------------
@@ -281,6 +281,23 @@ missions:
   one_at_a_time: true           # finish or release your mission before taking another
   reopen_after_days: 7          # a taken mission with no update for 7 days goes back on the board
   confirm_within_days: 7        # if the poster doesn't confirm, an organizer decides
+
+# --------------------------------------------------------------
+# RENKEI BUDDIES
+# In Renkei Ninjutsu, two ninjas combine their techniques.
+# Buddies earn no points by themselves: they learn together.
+# --------------------------------------------------------------
+buddies:
+  - text: "Any member can send a buddy request to another member, from their camp or from My climb on the Mountain."
+    text_fr: "Tout membre peut envoyer une demande de binôme à un autre membre, depuis son camp ou depuis Mon ascension sur la Montagne."
+  - text: "Nobody is paired by force: a request only counts once the other person accepts it."
+    text_fr: "Personne n'est mis en binôme de force : une demande ne compte que si l'autre personne l'accepte."
+  - text: "Until it is accepted, a request can be withdrawn by the sender or declined by the other person."
+    text_fr: "Tant qu'elle n'est pas acceptée, une demande peut être retirée par celui ou celle qui l'a envoyée, ou refusée par l'autre personne."
+  - text: "Once accepted, the two members are tied together. Only the organizers can undo a pair: ask them."
+    text_fr: "Une fois acceptée, les deux membres sont liés. Seuls les organisateurs peuvent défaire un binôme : demandez-leur."
+  - text: "You can have more than one buddy. Every pair is shown on both members' camps."
+    text_fr: "Vous pouvez avoir plusieurs binômes. Chaque binôme apparaît sur le camp des deux membres."
 
 # --------------------------------------------------------------
 # VERIFICATION OF MEMBER SUBMISSIONS

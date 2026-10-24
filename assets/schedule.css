@@ -5,7 +5,7 @@
 @media (max-width: 600px) { .month { margin-top: 28px; } .month-head { font-size: 1.35rem; margin-bottom: 10px; } }
 .month-head { font-size: 1.6rem; margin: 0 0 14px; font-weight: 700; letter-spacing: -0.02em; }
 .session.is-past { opacity: .82; }
-.chip-done { background: var(--p-green); color: var(--black); border-color: var(--black); }
+.chip-done { background: var(--p-green); color: #1e1e1e; border-color: var(--black); }
 .chip-planned { border-style: dashed; }
 .break-row {
   display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline;

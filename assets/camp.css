@@ -72,3 +72,11 @@
 }
 #camp > section { padding: 0; }
 @media (max-width: 720px) { .camp-ninja { width: 64px; } .camp-hero { gap: 14px 16px; } }
+
+/* Renkei buddies */
+.camp-bd { font-weight: 700; font-size: .95rem; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.camp-bd .linkbtn { color: inherit; opacity: .8; padding: 0; min-height: 0; }
+.camp-bd-err { margin: 0; font-size: .9rem; font-weight: 700; }
+.camp-buddies { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.camp-buddies a { display: inline-block; border: var(--stroke, 2px) solid var(--line); border-radius: 999px; padding: 6px 14px; font-weight: 700; color: inherit; text-decoration: none; }
+.camp-buddies a:hover { text-decoration: underline; }

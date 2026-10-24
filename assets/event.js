@@ -61,6 +61,7 @@ const fmtDay = (d) => { const s = parseDate(d).toLocaleDateString(LOC(), { weekd
 async function mount(root, opts) {
   const H = opts.heading || 'h2', H2 = H === 'h1' ? 'h2' : 'h3';
   const q = (sel) => root.querySelector(sel);
+  const WELCOME_KEY = 'tc-welcome';
   root.innerHTML = `<div class="ev">
       <${H} class="ev-title" tabindex="-1">${esc(T('ev.loading'))}</${H}>
       <div class="session-meta ev-chips"></div>
@@ -245,6 +246,7 @@ async function mount(root, opts) {
           joinExtra: () => ({ spot: { event: key, status: ClubData.INSTANT && ev.autoConfirm !== false ? 'confirmed' : 'pending' } }),
           onJoined: (r) => {
             joining = false; if (who) { who.hasReq = true; if (ClubData.INSTANT) who.member = true; }   // joining makes them a member straight away
+            try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}   // new to the club: show what it offers under their spot
             if (r && r.spot) {   // done: show "You're in" right away
               const uid = data.currentUid();
               // the page hears about the new account a moment later: know it now
@@ -264,7 +266,7 @@ async function mount(root, opts) {
     if (r && r.status !== 'cancelled') {
       const k = { confirmed: 'ev.st.confirmed', pending: 'ev.st.pending', waitlist: 'ev.st.waitlist' }[r.status] || 'ev.st.pending';
       box.innerHTML = `<${H2} class="reg-h">${esc(T(k + '.h'))}</${H2}><p class="ev-status st-${esc(r.status)}">${esc(T(k))}</p>${msgHTML()}
-        <p style="margin:0"><button type="button" class="link-btn" data-act="cancel" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T('ev.cancel'))}</button></p>`;
+        <p style="margin:0"><button type="button" class="link-btn" data-act="cancel" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T('ev.cancel'))}</button></p>${welcomeHTML()}`;
       return;
     }
     if (!w.member && !w.hasReq) {
@@ -286,6 +288,17 @@ async function mount(root, opts) {
     }
     box.innerHTML = `${intro()}${!w.member ? `<p class="help">${esc(T('ev.reg.review'))}</p>` : ''}${msgHTML()}
       <p style="margin:0"><button type="button" class="btn btn-primary" data-act="go" ${busy ? 'disabled aria-busy="true"' : ''}>${esc(T(full() ? 'ev.waitlist.btn' : 'rsvp.btn'))}</button></p>`;
+  }
+  // People who join the club through an event: show them what the club offers, right under their spot (until they hide it)
+  function welcomeHTML() {
+    let on = false; try { on = localStorage.getItem(WELCOME_KEY) === '1'; } catch (e) {}
+    if (!on) return '';
+    const uid = data.currentUid && data.currentUid();
+    const tiles = [['🏔️', 'wl.mountain', '/mountain#steps'], ['⛺', 'wl.camp', uid ? '/camp?u=' + encodeURIComponent(uid) + '&edit' : '/mountain#steps'],
+      ['🏘️', 'wl.village', '/village'], ['🤝', 'wl.buddies', '/mountain#steps'], ['📅', 'wl.thursday', '/schedule']];
+    return `<section class="ev-welcome" aria-labelledby="wlH"><h3 id="wlH">${esc(T('wl.h'))}</h3><p>${esc(T('wl.p'))}</p>
+      <ul class="wl-grid">${tiles.map(([icon, k, href]) => `<li><a href="${href}"><span class="wl-ic" aria-hidden="true">${icon}</span><b>${esc(T(k))}</b><span>${esc(T(k + '.p'))}</span></a></li>`).join('')}</ul>
+      <div class="wl-act"><a class="btn btn-primary" href="/mountain#steps">${esc(T('wl.cta'))}</a><button type="button" class="link-btn" data-act="wl-hide">${esc(T('wl.hide'))}</button></div></section>`;
   }
   async function reloadRegs() {
     if (past || err) return;
@@ -314,6 +327,7 @@ async function mount(root, opts) {
   root.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-act]');
     if (b && b.dataset.act === 'go') await act(async () => { const r = await signUpForSpot(); if (!r.ok) msg = { text: T(r.code || 'err.generic') }; });
+    if (b && b.dataset.act === 'wl-hide') { try { localStorage.removeItem(WELCOME_KEY); } catch (x) {} const w = q('.ev-welcome'); if (w) w.remove(); const box = q('.ev-reg'); if (box) box.focus({ preventScroll: true }); return; }
     if (b && b.dataset.act === 'cancel') await act(async () => { const r = await data.register(key, 'cancelled'); msg = r.ok ? { ok: true, text: T('ev.cancelled') } : { text: T(r.code || 'err.generic') }; });
     const c = e.target.closest('[data-copy]');
     if (c) { try { await navigator.clipboard.writeText(location.origin + eventHref(ev)); c.textContent = T('ev.copied'); setTimeout(() => (c.textContent = T('ev.copy')), 2000); } catch (x) {} }
@@ -336,6 +350,7 @@ async function mount(root, opts) {
       const a = await data.apply(f);
       if (!a.ok) { msg = { text: a.message || T('err.generic') }; return; }
       if (who) who.hasReq = true;
+      try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
       const r = await signUpForSpot(); if (!r.ok) msg = { text: T(r.code || 'err.generic') };
     });
   });
