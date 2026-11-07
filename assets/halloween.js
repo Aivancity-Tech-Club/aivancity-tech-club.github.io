@@ -199,7 +199,7 @@
       }
       // the first surface whose top edge is under (x, y), in page coordinates relative to the gore layer
       function surfaceBelow(x, y, skip) {
-        if (Date.now() - scannedAt > 5000) scan();
+        if (Date.now() - scannedAt > 15000) scan();
         const o = origin(); let best = null, top = Infinity;
         for (const n of surf) {
           if (n === skip || !n.isConnected) continue;

@@ -136,7 +136,7 @@ The website and member platform of the **aivancity Tech Club** and its Google De
 | `/event?id=…` / `/event?d=…` | everyone | One session's full details and "I'm going" (newcomers fill in the same Join form right there); organizers also see the registrations and places taken |
 | `/event-edit` | organizers | Create or edit an event (saved in Firestore, shown on the schedule) |
 | `/camp?u=…` | members | Each member's own page |
-| `/pulse` | organizers | Attendance, drifting members, approving new accounts, votes, data check, deleting someone's data on request |
+| `/pulse` | organizers | Proofs to check, attendance, drifting members, approving new accounts, members and their climb (CSV), club activity, votes, data check, deleting someone's data on request |
 | `/checkin` | organizers | Projector screen with the Thursday check-in code |
 | `/join` | — | Old link, redirects to `/apply` |
 
@@ -271,6 +271,7 @@ Points are **never stored**. The database stores *facts* (attendance, proofs, mi
 | `directory/{email}` | the school's student list (organizers only); `__settings` { on, count } turns the join check on |
 | `buddies/{a_b}` | Renkei buddies: `a` asked `b`; `status` pending → paired; `endBy` = one asked to end it, the other agrees (or an organizer undoes it) |
 | `pulse/{uid}` | "contacted" marks on `/pulse` |
+| `activity/{auto}` | buddy requests/pairs that disappeared (declined, withdrawn, ended, undone); organizers read it on `/pulse` |
 | `feedback/{id}` | feedback form entries; organizers read only |
 | `confirmPending`, `confirmed`, `blocked` | new-account approval queue and decisions |
 

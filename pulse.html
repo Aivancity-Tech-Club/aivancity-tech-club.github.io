@@ -16,11 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261024i">
-  <link rel="stylesheet" href="assets/village.css?v=20261024i">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261024i">
-  <script src="assets/i18n.js?v=20261024i"></script>
-  <script src="assets/halloween.js?v=20261024i" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261107a">
+  <link rel="stylesheet" href="assets/village.css?v=20261107a">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261107a">
+  <script src="assets/i18n.js?v=20261107a"></script>
+  <script src="assets/analytics.js?v=20261107a" defer></script>
+  <script src="assets/halloween.js?v=20261107a" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -102,12 +103,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261024i"></script>
+  <script src="assets/schedule.js?v=20261107a"></script>
 
-  <script src="assets/sessions.js?v=20261024i"></script>
-  <script src="assets/platform/config.js?v=20261024i"></script>
-  <script src="assets/platform/signin.js?v=20261024i"></script>
-  <script src="assets/platform/data.js?v=20261024i"></script>
+  <script src="assets/sessions.js?v=20261107a"></script>
+  <script src="assets/js-yaml.min.js?v=20261107a"></script>
+  <script src="assets/platform/config.js?v=20261107a"></script>
+  <script src="assets/platform/engine.js?v=20261107a"></script>
+  <script src="assets/platform/signin.js?v=20261107a"></script>
+  <script src="assets/platform/data.js?v=20261107a"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -141,6 +144,15 @@
     }
 
     let undoSure = null;   // the pair whose "Undo" was tapped once
+    let rejectOpen = null, pmQuery = "", paFilter = "all", paMore = 60, result = null, rulebook = null;
+    const pmOpen = new Set();
+    const PROOF_TYPES = ["ship_project", "open_source", "skill_badge", "certification", "mentoring"];
+    const BAND = { white: "#f4f4f4", yellow: "#f9ab00", green: "#34a853", blue: "#4285f4", red: "#ea4335", black: "#2d2d2f" };
+    const ms = (t) => (t && t.toMillis ? t.toMillis() : typeof t === "number" ? t : 0);
+    const factLabel = (f) => { const k = "fact." + f.type, v = T(k, { n: f.place }); return v !== k ? v : f.type; };
+    const safeUrl = (u) => (/^https?:\/\//i.test(String(u)) ? String(u) : "#");
+    const fold = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const shortUrl = (u) => String(u).replace(/^https?:\/\/(www\.)?/i, "").slice(0, 60);
 
     function render() {
       const { members, facts, requests, pulse, going, votes, buddies, pending, events, pendingRegs } = S;
@@ -208,7 +220,79 @@
       const spotsHTML = loose.length ? `<section class="p-card p-alert"><h2>${esc(T("pulse.spots.h"))} <small>${loose.length}</small></h2>
           <ul class="p-list">${loose.map(r => `<li><div><b>${esc(name(r.uid))}</b><small>${esc(sessionTitle(r.event))}</small></div>
             <div class="row-actions"><button type="button" class="btn btn-primary" data-spot="${esc(r.id)}">${esc(T("ev.confirm"))}</button></div></li>`).join("")}</ul></section>` : "";
-      $("pulse").innerHTML = confirmHTML + spotsHTML + eventsHTML + `
+      /* ---------- proofs waiting for an organizer (certifications, badges, projects…) ---------- */
+      const myUid = data.currentUid();
+      const proofs = facts.filter(f => f.status === "pending" && PROOF_TYPES.includes(f.type)).sort((a, b) => ms(a.createdAt) - ms(b.createdAt) || (a.date < b.date ? -1 : 1));
+      const proofsHTML = `<section class="p-card${proofs.length ? " p-alert" : ""}" id="proofs"><h2>${esc(T("pr.h"))} <small>${proofs.length}</small></h2>
+          <p class="help">${esc(T("pr.p"))}</p>
+          ${list(proofs, T("pr.none"), f => `<li class="pr-row"><div><b>${esc(name(f.uid))}</b> <span class="chip">${esc(factLabel(f))}</span>
+              <small>${esc(fmt(f.date))}${f.title ? " · " + esc(f.title) : ""}</small>
+              ${f.proof ? `<small><a href="${esc(safeUrl(f.proof))}" target="_blank" rel="noopener">${esc(T("pr.open"))} ↗</a> <span class="mono">${esc(shortUrl(f.proof))}</span></small>` : ""}
+              ${rejectOpen === f.id ? `<form class="pr-why" data-why="${esc(f.id)}"><label for="why_${esc(f.id)}">${esc(T("pr.why"))}</label>
+                <input id="why_${esc(f.id)}" maxlength="300" required placeholder="${esc(T("pr.why.ph"))}"><button class="btn btn-primary" type="submit">${esc(T("pr.no.send"))}</button>
+                <button class="btn btn-ghost" type="button" data-why-cancel>${esc(T("pr.cancel"))}</button></form>` : ""}</div>
+            <div class="row-actions">${f.uid === myUid ? `<span class="help">${esc(T("pr.own"))}</span>`
+              : `<button type="button" class="btn btn-primary" data-ok="${esc(f.id)}">${esc(T("pr.yes"))}</button><button type="button" class="btn btn-ghost" data-no="${esc(f.id)}">${esc(T("pr.no"))}</button>`}</div></li>`)}
+        </section>`;
+
+      /* ---------- members: bandana, points, and each person's climb ---------- */
+      const R = result ? result.byUid : {};
+      const memberRows = members.map(m => ({ m, s: R[m.uid] || { rank: "white", lifetime: 0, history: [], checklist: [], counts: {}, isMember: false } }))
+        .sort((a, b) => b.s.lifetime - a.s.lifetime || String(a.m.name || "").localeCompare(String(b.m.name || "")));
+      const buddyLine = (uid) => buddies.filter(b => b.users.includes(uid)).map(b => {
+        const o = b.a === uid ? b.b : b.a;
+        return b.status === "paired" ? T("pm.bd.paired", { name: name(o) }) : b.a === uid ? T("pm.bd.asked", { name: name(o) }) : T("pm.bd.askedby", { name: name(o) });
+      });
+      const memberDetail = (m, s) => {
+        const hist = (s.history || []).slice(0, 40).map(h => `<li><span>${esc(factLabel(h.fact))}${h.fact.title ? " · " + esc(h.fact.title) : ""}<small>${esc(fmt(h.fact.date))}${h.note ? " · " + esc(h.note) : ""}${h.fact.status === "rejected" && h.fact.reason ? " · " + esc(h.fact.reason) : ""}</small></span><span class="pts${h.points ? "" : " pending"}">${h.points ? "+" + h.points : "·"}</span></li>`).join("");
+        const bl = buddyLine(m.uid), regs = S.allRegs.filter(r => r.uid === m.uid && r.status !== "cancelled");
+        return `<div class="pm-detail">
+          <p class="help">${esc(T("pm.sum", { pts: s.lifetime, season: s.season || 0, n: (s.counts && s.counts.attend) || 0 }))}${m.joined ? " · " + esc(T("pm.joined", { d: fmt(m.joined) })) : ""}${m.role === "organizer" ? ` <span class="chip">${esc(T("pm.org"))}</span>` : ""}</p>
+          ${s.next ? `<h3 class="p-sub">${esc(T("pm.next", { rank: T("rank." + s.next) }))}</h3><ul class="pm-check">${(s.checklist || []).map(c => `<li class="${c.done ? "done" : ""}">${c.done ? "✓" : "○"} ${esc(T("req." + c.key, { v: c.v }))}</li>`).join("") || `<li>${esc(T("pm.pointsonly"))}</li>`}</ul>` : ""}
+          <h3 class="p-sub">${esc(T("pm.buddies"))}</h3><p class="help">${esc(bl.join(" · ") || T("pm.none"))}</p>
+          <h3 class="p-sub">${esc(T("pm.regs"))}</h3><p class="help">${esc(regs.map(r => sessionTitle(r.event) + " (" + (T("pm.st." + r.status) !== "pm.st." + r.status ? T("pm.st." + r.status) : r.status) + ")").join(" · ") || T("pm.none"))}</p>
+          <h3 class="p-sub">${esc(T("pm.hist"))}</h3><ul class="pm-hist">${hist || `<li>${esc(T("pm.none"))}</li>`}</ul>
+          <p><a href="/camp?u=${encodeURIComponent(m.uid)}">${esc(T("pm.camp"))} →</a></p></div>`;
+      };
+      const membersHTML = `<section class="p-card" id="pmCard"><div class="p-head"><h2>${esc(T("pm.h"))} <small>${members.length}</small></h2>
+            <button type="button" class="btn btn-ghost" id="pmCsv">${esc(T("pm.csv"))}</button></div>
+          <p class="help">${esc(T("pm.p"))}</p>
+          <label class="sr-only" for="pmSearch">${esc(T("pm.search"))}</label><input id="pmSearch" class="pm-search" type="search" placeholder="${esc(T("pm.search"))}" value="${esc(pmQuery)}">
+          <ul class="pm-list">${memberRows.map(({ m, s }) => `<li data-pm="${esc(fold(m.name))}"${pmQuery && !fold(m.name).includes(fold(pmQuery)) ? " hidden" : ""}>
+            <details data-open="${esc(m.uid)}"${pmOpen.has(m.uid) ? " open" : ""}><summary><span class="pm-band" style="background:${BAND[s.isMember ? s.rank : "white"]}"></span><b>${esc(m.name || "—")}</b>
+              <small>${esc(s.isMember ? T("rank." + s.rank) : T("pm.notyet"))} · ${esc(T("pm.pts", { n: s.lifetime }))}${s.waiting ? " · " + esc(T("pm.waiting")) : ""}</small></summary>
+            ${pmOpen.has(m.uid) ? memberDetail(m, s) : ""}</details></li>`).join("")}</ul>
+        </section>`;
+
+      /* ---------- club activity: everything that happened, newest first ---------- */
+      const A = [];
+      facts.forEach(f => {
+        const t0 = ms(f.createdAt) || (f.date ? new Date(f.date + "T12:00").getTime() : 0);
+        if (f.type === "attend") A.push({ k: "att", t: t0, txt: T("pa.attend", { name: name(f.uid) }) });
+        else if (f.missionId) A.push({ k: "proof", t: t0, txt: T("pa.mission", { name: name(f.uid), other: name(f.mentee), what: f.title || factLabel(f) }) });
+        else if (f.recordedBy) A.push({ k: "proof", t: t0, txt: T("pa.recorded", { name: name(f.uid), by: name(f.recordedBy), what: factLabel(f) }) });
+        else if (PROOF_TYPES.includes(f.type)) {
+          A.push({ k: "proof", t: t0, txt: T("pa.sent", { name: name(f.uid), what: factLabel(f) }) });
+          if (f.status !== "pending" && f.verifiedBy) A.push({ k: "proof", t: ms(f.verifiedAt) || t0, txt: T(f.status === "approved" ? "pa.ok" : "pa.no", { name: name(f.uid), by: name(f.verifiedBy), what: factLabel(f) }) + (f.reason ? " · " + f.reason : "") });
+        }
+      });
+      buddies.forEach(b => {
+        if (b.at) A.push({ k: "bd", t: b.at, txt: T("pa.bd.ask", { a: name(b.a), b: name(b.b) }) + (b.msg ? " · « " + b.msg + " »" : "") });
+        if (b.acceptedAt) A.push({ k: "bd", t: b.acceptedAt, txt: T("pa.bd.yes", { a: name(b.a), b: name(b.b) }) });
+        if (b.endBy && b.endAt) A.push({ k: "bd", t: b.endAt, txt: T("pa.bd.endask", { a: name(b.endBy), b: name(b.a === b.endBy ? b.b : b.a) }) });
+      });
+      S.activity.forEach(x => A.push({ k: "bd", t: x.at, txt: T("pa." + x.type, { a: name(x.uid), b: String(x.other || "").split(" ").map(name).join(" & ") }) }));
+      requests.forEach(r => r.at && A.push({ k: "new", t: r.at, txt: T("pa.join", { name: r.name || name(r.uid) }) }));
+      const shownA = A.filter(x => x.t && (paFilter === "all" || x.k === paFilter)).sort((a, b) => b.t - a.t);
+      const when = (t) => new Date(t).toLocaleString(I18N.locale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      const activityHTML = `<section class="p-card" id="paCard"><h2>${esc(T("pa.h"))}</h2>
+          <p class="help">${esc(T("pa.p"))}</p>
+          <div class="pa-filters" role="group" aria-label="${esc(T("pa.h"))}">${["all", "att", "proof", "bd", "new"].map(k => `<button type="button" class="chip" data-pa="${k}" aria-pressed="${paFilter === k}">${esc(T("pa.f." + k))}</button>`).join("")}</div>
+          ${list(shownA.slice(0, paMore), T("pa.none"), x => `<li><div><span>${esc(x.txt)}</span><small>${esc(when(x.t))}</small></div></li>`)}
+          ${shownA.length > paMore ? `<button type="button" class="btn btn-ghost" id="paMore">${esc(T("pa.more", { n: shownA.length - paMore }))}</button>` : ""}
+        </section>`;
+
+      $("pulse").innerHTML = confirmHTML + spotsHTML + proofsHTML + eventsHTML + `
         <div class="kpis">
           <div><b>${members.length}</b><span>${esc(T("pulse.k.members"))}</span></div>
           <div><b>${active}</b><span>${esc(T("pulse.k.active"))}</span></div>
@@ -242,6 +326,9 @@
             <div class="row-actions"><button type="button" class="btn btn-ghost${undoSure === b.id ? " btn-danger" : ""}" data-undo="${esc(b.id)}">${esc(T(undoSure === b.id ? "pulse.buddy.sure" : "pulse.buddy.remove"))}</button></div></li>`)}
         </section>
 
+        ${membersHTML}
+        ${activityHTML}
+
         ${SESSIONS.filter(s => s.vote && s.date >= today).map(s => {
           const vs = votes.filter(v => v.date === fileKey(s));
           return `<section class="p-card"><h2>${esc(T("pulse.vote.h", { d: fmt(s.date) }))} <small>${vs.length}</small></h2><ul class="p-list">${s.vote.options.map(o => `<li><div><b>${esc(I18N.pick(o, "title"))}</b></div><span class="mono">${vs.filter(v => v.choice === o.id).length}</span></li>`).join("")}</ul></section>`;
@@ -256,8 +343,13 @@
         data.loadVotes(today), data.loadAllBuddies().catch(() => []), data.loadPendingConfirms().catch(() => []), data.loadEvents(true).catch(() => []), data.loadAllRegistrations().catch(() => [])]);
       events.forEach(e => { e.regs = e.registration ? allRegs.filter(r => r.event === e.id) : []; });
       const pendingRegs = allRegs.filter(r => r.status === "pending");
+      const activity = await (data.loadActivity ? data.loadActivity().catch(() => []) : []);
+      try {
+        if (!rulebook) rulebook = jsyaml.load(await (await fetch("rules/rules.yaml", { cache: "no-cache" })).text());
+        result = PointsEngine.compute(rulebook, facts, members, pastThu, today);
+      } catch (e) { console.error(e); result = null; }
       const going = nextSession ? allRegs.filter(r => r.event === "d-" + fileKey(nextSession) && (r.status === "pending" || r.status === "confirmed")) : [];
-      S = { members, facts, requests, pulse, going, votes, buddies, pending, events, pendingRegs }; render();
+      S = { members, facts, requests, pulse, going, votes, buddies, pending, events, pendingRegs, allRegs, activity }; render();
     }
 
     /* ---------- Data check: read-only consistency checks over the whole database ---------- */
@@ -400,6 +492,16 @@
       if (sp) { sp.disabled = true; const reg = S.pendingRegs.find(r => r.id === sp.dataset.spot); const r = await data.setRegistration(reg, "confirmed"); if (r.ok) await load(); else { sp.disabled = false; $("pMsg").textContent = T(r.code || "err.generic"); } }
       const cf = e.target.closest("[data-confirm], [data-reject]");
       if (cf) { cf.disabled = true; const r = await data.confirmByHand(cf.dataset.confirm || cf.dataset.reject, !!cf.dataset.confirm); if (r.ok) await load(); else { cf.disabled = false; $("pMsg").textContent = T(r.code || "err.generic"); } }
+      // proofs: approve in one tap; rejecting asks for a short reason the member will see
+      const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]");
+      if (ok) { ok.disabled = true; const f = S.facts.find(x => x.id === ok.dataset.ok), r = await data.reviewFact(ok.dataset.ok, true);
+        if (r.ok) { await load(); $("pMsg").textContent = T("pr.done.ok", { name: (S.members.find(m => m.uid === f.uid) || {}).name || "—" }); } else { ok.disabled = false; $("pMsg").textContent = T(r.code || "err.generic"); } return; }
+      if (no) { rejectOpen = no.dataset.no; render(); const i = $("why_" + rejectOpen); if (i) i.focus(); return; }
+      if (e.target.closest("[data-why-cancel]")) { rejectOpen = null; render(); return; }
+      const pa = e.target.closest("[data-pa]");
+      if (pa) { paFilter = pa.dataset.pa; paMore = 60; render(); const b = document.querySelector(`[data-pa="${paFilter}"]`); if (b) b.focus(); return; }
+      if (e.target.closest("#paMore")) { paMore += 100; render(); return; }
+      if (e.target.closest("#pmCsv")) { downloadCsv(); return; }
       // undoing a pair takes two taps (members can't undo it themselves)
       if (u) {
         const id = u.dataset.undo;
@@ -411,9 +513,43 @@
         else { u.disabled = false; u.removeAttribute("aria-busy"); $("pMsg").textContent = T(r.code || "err.generic"); }
       }
     });
+    $("pulse").addEventListener("submit", async (e) => {
+      const fm = e.target.closest("[data-why]"); if (!fm) return; e.preventDefault();
+      const why = fm.querySelector("input").value.trim(); if (!why) return;
+      fm.querySelectorAll("button,input").forEach(x => (x.disabled = true));
+      const r = await data.reviewFact(fm.dataset.why, false, why);
+      if (r.ok) { rejectOpen = null; await load(); $("pMsg").textContent = T("pr.done.no"); }
+      else { fm.querySelectorAll("button,input").forEach(x => (x.disabled = false)); $("pMsg").textContent = T(r.code || "err.generic"); }
+    });
+    // a member's details are drawn when opened (and stay open when the page redraws)
+    $("pulse").addEventListener("toggle", (e) => {
+      const d = e.target; if (!d.matches || !d.matches("details[data-open]")) return;
+      const uid = d.dataset.open;
+      if (d.open && !pmOpen.has(uid)) { pmOpen.add(uid); render(); const again = document.querySelector(`details[data-open="${CSS.escape(uid)}"] summary`); if (again) again.focus(); }
+      else if (!d.open) pmOpen.delete(uid);
+    }, true);
+    $("pulse").addEventListener("input", (e) => {
+      if (e.target.id !== "pmSearch") return;
+      pmQuery = e.target.value.trim(); const q = fold(pmQuery);
+      document.querySelectorAll(".pm-list > li").forEach(li => (li.hidden = !!q && !li.dataset.pm.includes(q)));
+    });
+    function downloadCsv() {
+      const R = result ? result.byUid : {}, nm = (uid) => (S.members.find(m => m.uid === uid) || {}).name || "";
+      const cell = (v) => { const x = String(v ?? ""); return /[",\n;]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; };
+      const head = ["name", "bandana", "points", "season_points", "sessions", "proofs_approved", "proofs_pending", "buddies", "joined", "role"];
+      const rows = S.members.map(m => {
+        const s = R[m.uid] || {}, mine = S.facts.filter(f => f.uid === m.uid && PROOF_TYPES.includes(f.type));
+        const bd = S.buddies.filter(b => b.status === "paired" && b.users.includes(m.uid)).map(b => nm(b.a === m.uid ? b.b : b.a)).join(" / ");
+        return [m.name, s.isMember ? s.rank : "", s.lifetime || 0, s.season || 0, (s.counts && s.counts.attend) || 0,
+          mine.filter(f => f.status === "approved").length, mine.filter(f => f.status === "pending").length, bd, m.joined || "", m.role || "member"];
+      });
+      const csv = "﻿" + [head, ...rows].map(r => r.map(cell).join(",")).join("\n");
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      a.download = "tech-club-members-" + today + ".csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
     // coming back to this page (back button, other tab): show fresh data
     addEventListener("pageshow", (e) => { if (e.persisted && S) load(); });
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S && !undoSure) load(); });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S && !undoSure && !rejectOpen) load(); });
     addEventListener("langchange", () => { if (S) render(); });
 
     data.onAuth(async (u) => {

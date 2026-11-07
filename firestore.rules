@@ -331,6 +331,18 @@ service cloud.firestore {
             && resource.data.get('endBy', null) != null && resource.data.endBy != request.auth.uid);
     }
 
+    // Activity log: a line written with each buddy request or pair that disappears (declined, withdrawn, ended, or undone by an organizer),
+    // so organizers can still see it on /pulse. activity/{auto} { type, uid: who did it, other: the other person, at }
+    match /activity/{id} {
+      allow read: if isOrganizer();
+      allow create: if isMember()
+        && request.resource.data.keys().hasOnly(['type', 'uid', 'other', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.type in ['buddy_declined', 'buddy_withdrawn', 'buddy_ended', 'buddy_undone']
+        && request.resource.data.other is string && request.resource.data.other.size() < 200
+        && request.resource.data.at == request.time;
+    }
+
     // Organizers only: who has been contacted after drifting away (pulse/{uid} { contactedAt, by }).
     match /pulse/{uid} {
       allow read, write: if isOrganizer();

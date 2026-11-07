@@ -128,6 +128,17 @@ Nothing to set up: it uses the `board` collection (comments live under each post
   (the two uids in alphabetical order) with `a` (who asked), `b` (who was asked), `users`, `status` (`pending` or
   `paired`) and `msg` (why they should connect). A pending request can be withdrawn or declined. Ending a pair takes both:
   one asks (`endBy`), the other agrees (the pair is deleted) or keeps it. Organizers can also "Undo this pair" on `/pulse`. Pulse also lists newcomers without a buddy, so you can nudge them on Thursday.
+- **Activity log (collection `activity`):** when a buddy request or pair disappears (declined, withdrawn, ended, undone),
+  a line `{ type, uid, other, at }` is written in the same batch so organizers still see it. Only organizers can read it.
+- **Checking proofs (certifications, badges, projects):** members send them from the Mountain; they wait as `pending` and
+  earn nothing. Organizers open **Proofs to check** on `/pulse`, open the link, then Approve or Reject (with a reason the
+  member sees). Nobody can check their own proof.
+- **Members and Club activity on `/pulse`:** every member's bandana and points (open a name for their history, what they
+  still need for the next bandana, buddies and registrations), a CSV download, and a timeline of check-ins, proofs,
+  buddy requests and sign-ups.
+- **Visitor numbers:** Cloudflare Web Analytics (free, no cookies, no banner). Create a site in Cloudflare → Analytics &
+  Logs → Web Analytics → Add a site (choose the manual JS snippet), copy the token and paste it into `TOKEN` in
+  `assets/analytics.js`. Visitors see nothing; numbers appear in the Cloudflare dashboard.
 - **Buddy emails (free):** a Google Apps Script emails people about buddy requests, acceptances and "end the pair"
   requests. Setup and details: [`tools/buddy-emails/README.md`](tools/buddy-emails/README.md). It marks what it sent in
   `buddies/{id}.mailed`.

@@ -52,7 +52,7 @@ const validEmail = (e) => new RegExp('^[^@\\s]+@' + DOMAIN.replace(/\./g, '\\.')
 // one document per pair, whoever asked first: the two ids in alphabetical order
 function normBuddy(d) {
   const x = d.data(), ms = (t) => (t && t.toMillis ? t.toMillis() : t || 0);
-  return { id: d.id, a: x.a, b: x.b, users: x.users || [x.a, x.b], status: x.status, msg: x.msg || '', endBy: x.endBy || null, at: ms(x.createdAt), acceptedAt: ms(x.acceptedAt) };
+  return { id: d.id, a: x.a, b: x.b, users: x.users || [x.a, x.b], status: x.status, msg: x.msg || '', endBy: x.endBy || null, endAt: ms(x.endAt), at: ms(x.createdAt), acceptedAt: ms(x.acceptedAt) };
 }
 function pairId(x, y) { return x < y ? x + '_' + y : y + '_' + x; }
 function demoSeed() {
@@ -153,9 +153,11 @@ function demoBackend() {
       state.facts.push({ id: 'd' + Date.now(), uid: 'you', type: 'attend', date, status: 'approved' }); save();
       return { ok: true, message: tr('m.checkin.ok', 'Checked in. +1 point.') };
     },
+    async reviewFact(id, ok, reason) { const f = state.facts.find(x => x.id === id); if (!f || f.uid === 'you') return { ok: false, code: 'err.generic' };
+      Object.assign(f, { status: ok ? 'approved' : 'rejected', reason: ok ? '' : String(reason || '').trim().slice(0, 300), verifiedBy: 'you', verifiedAt: Date.now() }); save(); return { ok: true }; },
     async submit(s) {
       if (!SUBMIT_TYPES.includes(s.type)) return { ok: false, message: tr('m.proof.badtype', 'That kind of proof is not on the list.') };
-      state.facts.push({ id: 'd' + Date.now(), uid: 'you', date: todayStr(), status: 'pending', ...s }); save();
+      state.facts.push({ id: 'd' + Date.now(), uid: 'you', date: todayStr(), status: 'pending', createdAt: Date.now(), ...s }); save();
       return { ok: true, message: tr('m.proof.ok', 'Sent. An organizer will check it within 7 days.') };
     },
     /* ---------- Village Board (demo: kept in this browser) ---------- */
@@ -211,12 +213,13 @@ function demoBackend() {
     async requestBuddy(to, msg) { const X = extra(), B = demoBuddies(X), id = pairId('you', to);
       if (to === 'you' || B.some(x => x.id === id)) return { ok: false, code: 'err.generic' };
       X.buddies = [...B, { id, a: 'you', b: to, users: ['you', to], status: 'pending', msg: String(msg || '').trim().slice(0, 200), at: Date.now() }]; saveExtra(X); return { ok: true }; },
-    async answerBuddy(id, yes) { const X = extra(); X.buddies = demoBuddies(X).flatMap(x => x.id !== id ? [x] : yes ? [{ ...x, status: 'paired', acceptedAt: Date.now() }] : []); saveExtra(X); return { ok: true }; },
-    async cancelBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
+    async answerBuddy(id, yes) { const X = extra(); if (!yes) (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_declined', uid: 'you', other: (demoBuddies(X).find(x => x.id === id) || { users: [] }).users.find(u => u !== 'you') || id, at: Date.now() }); X.buddies = demoBuddies(X).flatMap(x => x.id !== id ? [x] : yes ? [{ ...x, status: 'paired', acceptedAt: Date.now() }] : []); saveExtra(X); return { ok: true }; },
+    async cancelBuddy(id) { const X = extra(); (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_withdrawn', uid: 'you', other: (demoBuddies(X).find(x => x.id === id) || { users: [] }).users.find(u => u !== 'you') || id, at: Date.now() }); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
     async askEndBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).map(x => (x.id === id ? { ...x, endBy: 'you' } : x)); saveExtra(X); return { ok: true }; },
     async keepBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).map(x => (x.id === id ? { ...x, endBy: null } : x)); saveExtra(X); return { ok: true }; },
-    async agreeEndBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
-    async removeBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
+    async agreeEndBuddy(id) { const X = extra(); (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_ended', uid: 'you', other: (demoBuddies(X).find(x => x.id === id) || { users: [] }).users.find(u => u !== 'you') || id, at: Date.now() }); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
+    async removeBuddy(id) { const X = extra(); (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_undone', uid: 'you', other: ((demoBuddies(X).find(x => x.id === id) || { users: [] }).users).join(' '), at: Date.now() }); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
+    async loadActivity() { return (extra().activity || []).slice().sort((a, b) => b.at - a.at); },
     async markTour(key) { const m = state.members.find(x => x.uid === 'you'); m.tour = { ...(m.tour || {}), [key]: true }; save(); return { ok: true }; },
     async saveCamp(c) { const X = extra(), old = X.camps.you || { hidden: false, reports: {} }; X.camps.you = { ...old, ...cleanCamp(c), updatedAt: Date.now() }; saveExtra(X); return { ok: true }; },
     async reportCamp(uid) { const X = extra(); if (X.camps[uid]) { X.camps[uid].reports = { ...(X.camps[uid].reports || {}), you: true }; saveExtra(X); } return { ok: true }; },
@@ -364,6 +367,13 @@ function cleanCamp(c) {
 function firebaseBackend() {
   let auth, db;
   const FV = () => firebase.firestore.FieldValue;
+  const goneBuddy = async (id, type) => {
+    const me = auth.currentUser.uid, ref = db.collection('buddies').doc(id), snap = await ref.get();
+    const u = snap.exists ? (snap.data().users || []) : [], other = u.includes(me) ? u.find(x => x !== me) : u.join(' ') || id;
+    const b = db.batch(); b.delete(ref);
+    b.set(db.collection('activity').doc(), { type, uid: me, other: String(other), at: FV().serverTimestamp() });
+    await b.commit();
+  };
   const target = (postId, commentId) => { const p = db.collection('board').doc(postId); return commentId ? p.collection('comments').doc(commentId) : p; };
   // a mission step by the member who took it: the post changes and their "current mission" is cleared together
   const missionStep = async (post, change) => {
@@ -772,6 +782,9 @@ function firebaseBackend() {
       try { if (choice) await ref.set({ date, uid, choice: String(choice).slice(0, 40), at: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; } catch (e) { return fail(e); }
     },
     // ---------- camps ----------
+    // a buddy pair or request disappears (declined, withdrawn, ended, undone): the delete and a line in the activity log go together,
+    // so organizers can still see it happened (activity/{auto} { type, uid: who did it, other: the other person or the pair id, at })
+    // (defined as a closure below)
     // ---------- Renkei buddies: buddies/{pairId} { a: who asked, b: who was asked, users: [a, b], status: 'pending' | 'paired' } ----------
     // A request can be withdrawn (a) or declined (b) while pending; once b accepts, only an organizer can undo it.
     async loadBuddies(uid) {
@@ -786,15 +799,27 @@ function firebaseBackend() {
     },
     async answerBuddy(id, yes) {
       const ref = db.collection('buddies').doc(id);
-      try { if (yes) await ref.update({ status: 'paired', acceptedAt: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; }
+      try { if (yes) await ref.update({ status: 'paired', acceptedAt: FV().serverTimestamp() }); else await goneBuddy(id, 'buddy_declined'); return { ok: true }; }
       catch (e) { return fail(e); }
     },
-    async cancelBuddy(id) { try { await db.collection('buddies').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    async cancelBuddy(id) { try { await goneBuddy(id, 'buddy_withdrawn'); return { ok: true }; } catch (e) { return fail(e); } },
     // ending a pair takes both: one asks (endBy), the other agrees (the pair is deleted) or keeps it (endBy cleared)
     async askEndBuddy(id) { try { await db.collection('buddies').doc(id).update({ endBy: auth.currentUser.uid, endAt: FV().serverTimestamp() }); return { ok: true }; } catch (e) { return fail(e); } },
     async keepBuddy(id) { try { await db.collection('buddies').doc(id).update({ endBy: FV().delete(), endAt: FV().delete() }); return { ok: true }; } catch (e) { return fail(e); } },
-    async agreeEndBuddy(id) { try { await db.collection('buddies').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
-    async removeBuddy(id) { try { await db.collection('buddies').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    async agreeEndBuddy(id) { try { await goneBuddy(id, 'buddy_ended'); return { ok: true }; } catch (e) { return fail(e); } },
+    async removeBuddy(id) { try { await goneBuddy(id, 'buddy_undone'); return { ok: true }; } catch (e) { return fail(e); } },
+    // ---------- organizers: proofs to check, and the club's activity log ----------
+    async reviewFact(id, ok, reason) {
+      try {
+        await db.collection('facts').doc(id).update({ status: ok ? 'approved' : 'rejected', reason: ok ? '' : String(reason || '').trim().slice(0, 300),
+          verifiedBy: auth.currentUser.uid, verifiedAt: FV().serverTimestamp() });
+        return { ok: true };
+      } catch (e) { return fail(e); }
+    },
+    async loadActivity() {
+      const s = await db.collection('activity').orderBy('at', 'desc').limit(500).get();
+      return s.docs.map(d => { const x = d.data(); return { id: d.id, type: x.type, uid: x.uid, other: x.other, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; });
+    },
     // getting-started steps that leave no other trace (looked at the Village board, opened a mission): saved on the profile
     async markTour(key) {
       try { await db.collection('members').doc(auth.currentUser.uid).update({ ['tour.' + key]: true }); return { ok: true }; }

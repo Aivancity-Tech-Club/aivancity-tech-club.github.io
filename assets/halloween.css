@@ -101,9 +101,10 @@ html.hw .site-header::after { content: ""; position: absolute; left: 0; right: 0
 }
 
 /* ---------- fog along the bottom (behind the page) ---------- */
-.hw-fog { position: absolute; left: -20%; right: -20%; bottom: -6vh; height: 34vh; opacity: .55; filter: blur(18px);
-  background: radial-gradient(40% 60% at 20% 70%, var(--hw-fog), transparent 70%), radial-gradient(35% 55% at 60% 80%, var(--hw-fog), transparent 70%),
-              radial-gradient(30% 50% at 90% 75%, var(--hw-fog), transparent 70%); }
+.hw-fog { position: absolute; left: -20%; right: -20%; bottom: -6vh; height: 34vh; opacity: .55; will-change: transform;
+  /* soft by construction (gradients that fade out slowly): a blur filter here made scrolling paint slowly */
+  background: radial-gradient(40% 60% at 20% 70%, var(--hw-fog), transparent 80%), radial-gradient(35% 55% at 60% 80%, var(--hw-fog), transparent 80%),
+              radial-gradient(30% 50% at 90% 75%, var(--hw-fog), transparent 80%); }
 .hw-fog-a { animation: hw-fog 38s ease-in-out infinite alternate; }
 .hw-fog-b { opacity: .35; bottom: -10vh; animation: hw-fog 54s ease-in-out -20s infinite alternate-reverse; }
 @keyframes hw-fog { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
@@ -131,17 +132,19 @@ html.hw .site-header::after { content: ""; position: absolute; left: 0; right: 0
 .hw-stain { position: absolute; transition: opacity 1.2s; }
 .hw-stain.gone, .hw-pool.gone, .hw-run.gone, .hw-creep.gone { opacity: 0; transition: opacity 1.5s; }
 /* a pool sits on the top edge and grows with every drop (--a: 1 to 7) */
-.hw-stain { filter: url(#hw-goo); }
+.hw-stain { contain: layout style; }
+/* the goo filter only on the small pools, never on a whole card-sized box (that made scrolling slow) */
+.hw-pool { filter: url(#hw-goo); }
 /* a pool sits on the top edge and grows with every drop (--a: 1 to 7): a soft puddle, fatter in the middle */
 .hw-pool { position: absolute; height: calc(6px + var(--a, 1) * 1.5px); width: calc(16px + var(--a, 1) * 9px); transform: translateX(-50%);
   border-radius: 50% 50% 45% 45% / 30% 30% 70% 70%; background: radial-gradient(ellipse at 40% 20%, #c43a3a 0, var(--hw-blood) 45%, var(--hw-blood-hi) 100%);
-  transition: width .6s cubic-bezier(.2, .8, .3, 1.2), height .6s, filter 20s, opacity 1.5s; }
+  transition: width .6s cubic-bezier(.2, .8, .3, 1.2), height .6s, opacity 1.5s; }
 /* beads hang under the puddle, swell slowly, and pull back */
 .hw-pool i { position: absolute; top: 55%; width: calc(4px + var(--a, 1) * .5px); height: calc((5px + var(--a, 1) * 2px) * var(--b)); margin-left: -3px;
-  border-radius: 40% 40% 50% 50% / 30% 30% 70% 70%; background: var(--hw-blood); transform-origin: 50% 0; animation: hw-bead var(--d) ease-in-out infinite alternate; }
+  border-radius: 40% 40% 50% 50% / 30% 30% 70% 70%; background: var(--hw-blood); transform-origin: 50% 0; animation: hw-bead var(--d) ease-in-out 4 alternate both; }
 .hw-pool i::after { content: ""; position: absolute; left: 50%; bottom: -3px; width: 140%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--hw-blood); }
 @keyframes hw-bead { from { transform: scaleY(.55); } to { transform: scaleY(1.2); } }
-.hw-pool.dry { filter: brightness(.55) saturate(.7); }
+.hw-pool.dry { filter: url(#hw-goo) brightness(.55) saturate(.7); }
 .hw-creep { position: absolute; height: 5px; border-radius: 50% / 100%; background: var(--hw-blood); transition: opacity 1.5s; }
 .hw-run { position: absolute; width: 4px; border-radius: 3px; background: linear-gradient(var(--hw-blood-hi), var(--hw-blood)); transition: opacity 1.5s; }
 .hw-run::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 9px; height: 10px; margin-left: -4.5px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%; background: var(--hw-blood); }
