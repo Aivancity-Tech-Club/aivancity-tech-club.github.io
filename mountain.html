@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261107a"></script>
-<script src="assets/analytics.js?v=20261107a" defer></script>
+<script src="assets/i18n.js?v=20261108a"></script>
+<script src="assets/analytics.js?v=20261108a" defer></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
@@ -198,6 +198,8 @@ label { font-weight: 700; font-size: 14px; }
 .bd-who img { width: 40px; height: auto; flex: none; }
 .bd-who b { display: block; font-size: 14px; }
 .bd-who small { color: #4a4440; font-size: 12px; }
+.bd-mail { display: block; font-size: 13px; margin-top: 2px; overflow-wrap: anywhere; }
+.bd-mail a { font-weight: 700; }
 .bd-note { margin: 0; padding: 8px 12px; border-left: 4px solid #1e1e1e; background: rgba(255, 255, 255, .6); border-radius: 0 10px 10px 0; font-size: 14px; font-style: italic; }
 .bd-find label { display: block; font-size: 13px; font-weight: 700; }
 .bd-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
@@ -432,15 +434,15 @@ label { font-weight: 700; font-size: 14px; }
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261107a"></script>
-<script src="assets/world/world.js?v=20261107a"></script>
-<script src="assets/js-yaml.min.js?v=20261107a"></script>
-<script src="assets/schedule.js?v=20261107a"></script>
-<script src="assets/sessions.js?v=20261107a"></script>
-<script src="assets/platform/config.js?v=20261107a"></script>
-<script src="assets/platform/engine.js?v=20261107a"></script>
-<script src="assets/platform/signin.js?v=20261107a"></script>
-<script src="assets/platform/data.js?v=20261107a"></script>
+<script src="assets/world/world-data.js?v=20261108a"></script>
+<script src="assets/world/world.js?v=20261108a"></script>
+<script src="assets/js-yaml.min.js?v=20261108a"></script>
+<script src="assets/schedule.js?v=20261108a"></script>
+<script src="assets/sessions.js?v=20261108a"></script>
+<script src="assets/platform/config.js?v=20261108a"></script>
+<script src="assets/platform/engine.js?v=20261108a"></script>
+<script src="assets/platform/signin.js?v=20261108a"></script>
+<script src="assets/platform/data.js?v=20261108a"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -542,6 +544,7 @@ label { font-weight: 700; font-size: 14px; }
 
   /* ---------- your first steps: a short checklist for new members ---------- */
   let extras = { buddies: [], camp: null }, extrasReady = false, endSure = null;
+  const bdMail = {}; let bdMailBusy = false;   // buddies' school emails, fetched once (rules decide who can see whose)
   async function loadExtras() {
     const [buddies, camp] = await Promise.all([data.loadBuddies(me.uid).catch(() => []), data.getCamp(me.uid).catch(() => null)]);
     extras = { buddies, camp }; extrasReady = true; renderSteps(); renderBuddies(); showNextMove();
@@ -652,6 +655,11 @@ label { font-weight: 700; font-size: 14px; }
     const camp = (uid) => `<a href="/camp?u=${encodeURIComponent(uid)}">${esc(nm(uid))}</a>`;
     const incoming = B.filter(b => b.status === 'pending' && b.b === me.uid), outgoing = B.filter(b => b.status === 'pending' && b.a === me.uid);
     const paired = B.filter(b => b.status === 'paired');
+    const mailLine = (uid, key) => bdMail[uid] ? `<small class="bd-mail">${esc(T(key))} <a href="mailto:${esc(bdMail[uid])}">${esc(bdMail[uid])}</a></small>` : '';
+    const want = [...incoming.map(b => b.a), ...paired.map(other)].filter(u => !(u in bdMail));
+    if (want.length && !bdMailBusy && data.buddyEmail) { bdMailBusy = true;
+      Promise.all(want.map(u => data.buddyEmail(u).then(e => { bdMail[u] = e || ''; }))).finally(() => { bdMailBusy = false; renderBuddies(); }); }
+    try { localStorage.setItem('nw-inbox', String(incoming.length + paired.filter(b => b.endBy && b.endBy !== me.uid).length)); } catch (e) {}
     const taken = new Set(B.map(other));
     const choices = members.filter(m => m.uid !== me.uid && !taken.has(m.uid) && m.name).sort((x, y) => x.name.localeCompare(y.name));
     box.hidden = false;
@@ -660,13 +668,14 @@ label { font-weight: 700; font-size: 14px; }
         return `<li class="bd-in"><div class="bd-who"><img src="${ninjaURI(st.isMember ? st.rank : 'white', m.accessories)}" alt=""><div><b>${T('bd.in', { name: camp(b.a) })}</b>
           <small>${esc(T('bd.sessions', { rank: RANK(st.isMember ? st.rank : 'white'), n: (st.counts && st.counts.attend) || 0 }))} · <a href="/camp?u=${encodeURIComponent(b.a)}">${esc(T('bd.seecamp'))}</a></small></div></div>
         ${b.msg ? `<blockquote class="bd-note">${esc(b.msg)}</blockquote>` : ''}
+        ${mailLine(b.a, 'bd.mail.in')}
         <span class="bd-act"><button type="button" class="btn" data-bd-yes="${esc(b.id)}">${esc(T('bd.accept'))}</button><button type="button" class="btn ghost" data-bd-no="${esc(b.id)}">${esc(T('bd.decline'))}</button></span></li>`; }).join('')}</ul>` : ''}
       ${paired.length || outgoing.length ? `<ul class="bd-list">${paired.map(b => { const o = other(b), first = esc(nm(o).split(' ')[0]);
         if (b.endBy && b.endBy !== me.uid) return `<li class="bd-in"><span>🤝 ${camp(o)}</span><b>${T('bd.end.in', { name: first })}</b>
           <span class="bd-act"><button type="button" class="btn" data-bd-keep="${esc(b.id)}">${esc(T('bd.end.keep'))}</button><button type="button" class="btn ghost" data-bd-agree="${esc(b.id)}">${esc(T('bd.end.agree'))}</button></span></li>`;
         if (b.endBy === me.uid) return `<li><span>🤝 ${camp(o)}</span><small>${T('bd.end.mine', { name: first })}</small><button type="button" class="linkish" data-bd-keep="${esc(b.id)}">${esc(T('bd.end.undo'))}</button></li>`;
-        return `<li><span>🤝 ${camp(o)}</span><button type="button" class="linkish" data-bd-end="${esc(b.id)}">${esc(endSure === b.id ? T('bd.end.sure', { name: nm(o).split(' ')[0] }) : T('bd.end'))}</button></li>`; }).join('')}
-        ${outgoing.map(b => `<li><small>${T('bd.out', { name: camp(b.b) })}</small><button type="button" class="linkish" data-bd-cancel="${esc(b.id)}">${esc(T('bd.cancel'))}</button></li>`).join('')}</ul>`
+        return `<li><span>🤝 ${camp(o)}${mailLine(o, 'bd.mail.pair')}</span><button type="button" class="linkish" data-bd-end="${esc(b.id)}">${esc(endSure === b.id ? T('bd.end.sure', { name: nm(o).split(' ')[0] }) : T('bd.end'))}</button></li>`; }).join('')}
+        ${outgoing.map(b => `<li><small>${T('bd.out', { name: camp(b.b) })}<br>${esc(T('bd.mail.out'))}</small><button type="button" class="linkish" data-bd-cancel="${esc(b.id)}">${esc(T('bd.cancel'))}</button></li>`).join('')}</ul>`
         : incoming.length ? '' : `<p class="help" style="color:inherit">${esc(T('bd.none'))}</p>`}
       ${choices.length ? `<div class="bd-find"><label for="bdPick" id="bdPickL">${esc(T('bd.find'))}</label><div class="bd-row">
         <div class="cb"><input id="bdPick" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="bdList" autocomplete="off" spellcheck="false"
@@ -916,6 +925,14 @@ label { font-weight: 700; font-size: 14px; }
       renderSteps(); setDrawer(true); setTimeout(() => $('stepsBox').scrollIntoView({ block: 'start' }), 350);
     };
     toSteps(); addEventListener('hashchange', toSteps);
+    // from the profile menu on any page: "Check in" (focus the code box) and "Buddy requests" (scroll to them)
+    const toHash = () => {
+      const h = location.hash; if (h !== '#checkin' && h !== '#buddies') return;
+      history.replaceState(null, '', location.pathname + location.search); setDrawer(true);
+      if (h === '#checkin') return setTimeout(() => { $('code').scrollIntoView({ block: 'center' }); $('code').focus(); }, 350);
+      let n = 0; const go = () => { if (!$('buddyBox').hidden) $('buddyBox').scrollIntoView({ block: 'start' }); else if (n++ < 40) setTimeout(go, 150); }; setTimeout(go, 350);
+    };
+    toHash(); addEventListener('hashchange', toHash);
     } catch (e) {
       // never leave an empty screen: say what went wrong
       console.error(e);

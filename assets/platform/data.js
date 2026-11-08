@@ -210,6 +210,7 @@ function demoBackend() {
     // ---------- Renkei buddies (demo): Noah has asked you; Lucas and Sofia are already buddies ----------
     async loadBuddies(uid) { return demoBuddies(extra()).filter(x => x.users.includes(uid)); },
     async loadAllBuddies() { return demoBuddies(extra()); },
+    async buddyEmail(uid) { const m = state.members.find(x => x.uid === uid); return m ? String(m.name || uid).split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') + '@aivancity.education' : ''; },
     async requestBuddy(to, msg) { const X = extra(), B = demoBuddies(X), id = pairId('you', to);
       if (to === 'you' || B.some(x => x.id === id)) return { ok: false, code: 'err.generic' };
       X.buddies = [...B, { id, a: 'you', b: to, users: ['you', to], status: 'pending', msg: String(msg || '').trim().slice(0, 200), at: Date.now() }]; saveExtra(X); return { ok: true }; },
@@ -792,6 +793,8 @@ function firebaseBackend() {
       return s.docs.map(normBuddy);
     },
     async loadAllBuddies() { const s = await db.collection('buddies').get(); return s.docs.map(normBuddy); },
+    // a buddy's school email (rules: whoever asked you shares theirs; yours is shared once you accept)
+    async buddyEmail(uid) { try { const d = await db.collection('private').doc(uid).get(); return d.exists ? d.data().email || '' : ''; } catch (e) { return ''; } },
     async requestBuddy(to, msg) {
       const a = auth.currentUser.uid;
       try { await db.collection('buddies').doc(pairId(a, to)).set({ a, b: to, users: [a, to], status: 'pending', msg: String(msg || '').trim().slice(0, 200), createdAt: FV().serverTimestamp() }); return { ok: true }; }

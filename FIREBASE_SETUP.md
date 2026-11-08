@@ -128,6 +128,8 @@ Nothing to set up: it uses the `board` collection (comments live under each post
   (the two uids in alphabetical order) with `a` (who asked), `b` (who was asked), `users`, `status` (`pending` or
   `paired`) and `msg` (why they should connect). A pending request can be withdrawn or declined. Ending a pair takes both:
   one asks (`endBy`), the other agrees (the pair is deleted) or keeps it. Organizers can also "Undo this pair" on `/pulse`. Pulse also lists newcomers without a buddy, so you can nudge them on Thursday.
+- **Buddies' emails:** so buddies can reach each other, `private/{uid}` (the school email) can also be read by a buddy:
+  whoever sends you a request shares their email with you, and yours is shared with them once you accept. Nobody else sees it.
 - **Activity log (collection `activity`):** when a buddy request or pair disappears (declined, withdrawn, ended, undone),
   a line `{ type, uid, other, at }` is written in the same batch so organizers still see it. Only organizers can read it.
 - **Checking proofs (certifications, badges, projects):** members send them from the Mountain; they wait as `pending` and

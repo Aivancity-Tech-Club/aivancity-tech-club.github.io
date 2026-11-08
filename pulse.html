@@ -16,12 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261107a">
-  <link rel="stylesheet" href="assets/village.css?v=20261107a">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261107a">
-  <script src="assets/i18n.js?v=20261107a"></script>
-  <script src="assets/analytics.js?v=20261107a" defer></script>
-  <script src="assets/halloween.js?v=20261107a" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261108a">
+  <link rel="stylesheet" href="assets/village.css?v=20261108a">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261108a">
+  <script src="assets/i18n.js?v=20261108a"></script>
+  <script src="assets/analytics.js?v=20261108a" defer></script>
+  <script src="assets/halloween.js?v=20261108a" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -58,14 +58,15 @@
         <div class="form-card gate" id="gSignin" hidden><div id="siBox"></div></div>
         <div class="form-card gate" id="gNo" hidden><p data-i18n="pulse.only">This page is for organizers.</p><a class="btn btn-ghost" href="/mountain" data-i18n="vb.gate.mountain">Go to the Mountain →</a></div>
         <p class="notice info" id="demoNote" hidden data-i18n="pulse.demo"></p>
+        <p class="p-foldbar"><button type="button" class="btn btn-ghost" id="pFoldAll" hidden></button></p>
         <div id="pulse" hidden></div>
-        <section class="p-card dc" id="dataCheck" hidden aria-labelledby="dcH">
+        <section class="p-card dc" id="dataCheck" data-sec="dataCheck" hidden aria-labelledby="dcH">
           <h2 id="dcH" data-i18n="dc.h">Data check</h2>
           <p class="help" data-i18n="dc.p">Looks through the club's database for things that don't line up. It only reads; nothing is changed.</p>
           <p><button type="button" class="btn btn-ghost" id="dcRun" data-i18n="dc.run">Run the check</button></p>
           <div id="dcOut" aria-live="polite"></div>
         </section>
-        <section class="p-card dc" id="dir" hidden aria-labelledby="dirH">
+        <section class="p-card dc" id="dir" data-sec="dir" hidden aria-labelledby="dirH">
           <h2 id="dirH" data-i18n="dir.h">Student list</h2>
           <p class="help" data-i18n="dir.p">With the check on, only addresses on this list (or on the roster) can join. It's stored in the club's database, never in the code, and only organizers can see it.</p>
           <div id="dirState" aria-live="polite"></div>
@@ -83,7 +84,7 @@
           </form>
           <p class="help" id="dirMsg" role="status"></p>
         </section>
-        <section class="p-card dc" id="erase" hidden aria-labelledby="erH">
+        <section class="p-card dc" id="erase" data-sec="erase" hidden aria-labelledby="erH">
           <h2 id="erH" data-i18n="er.h">Delete someone's data</h2>
           <p class="help" data-i18n="er.p">When someone asks the club to delete their data (their right under the GDPR). Pick the person, check what will go, then confirm.</p>
           <form class="er-form" id="erForm">
@@ -103,14 +104,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261107a"></script>
+  <script src="assets/schedule.js?v=20261108a"></script>
 
-  <script src="assets/sessions.js?v=20261107a"></script>
-  <script src="assets/js-yaml.min.js?v=20261107a"></script>
-  <script src="assets/platform/config.js?v=20261107a"></script>
-  <script src="assets/platform/engine.js?v=20261107a"></script>
-  <script src="assets/platform/signin.js?v=20261107a"></script>
-  <script src="assets/platform/data.js?v=20261107a"></script>
+  <script src="assets/sessions.js?v=20261108a"></script>
+  <script src="assets/js-yaml.min.js?v=20261108a"></script>
+  <script src="assets/platform/config.js?v=20261108a"></script>
+  <script src="assets/platform/engine.js?v=20261108a"></script>
+  <script src="assets/platform/signin.js?v=20261108a"></script>
+  <script src="assets/platform/data.js?v=20261108a"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -200,7 +201,7 @@
       };
       const list = (rows, empty, fn) => rows.length ? `<ul class="p-list">${rows.map(fn).join("")}</ul>` : `<p class="help">${esc(empty)}</p>`;
 
-      const confirmHTML = pending.length ? `<section class="p-card p-alert"><h2>${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.h" : "pulse.conf.h"))} <small>${pending.length}</small></h2>
+      const confirmHTML = pending.length ? `<section class="p-card p-alert" data-sec="new"><h2>${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.h" : "pulse.conf.h"))} <small>${pending.length}</small></h2>
           <p class="help">${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.p" : "pulse.conf.p"))}</p>
           <ul class="p-list">${pending.sort((a, b) => a.at - b.at).map(p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.conf.row", { email: p.email, d: p.at ? fmt(new Date(p.at).toISOString().slice(0, 10)) : "—" }))}</small>${wantsTo(p.uid).length ? `<small class="p-wants">${esc(T("pulse.new.wants", { list: wantsTo(p.uid).join(", ") }))}</small>` : ""}</div>
             <div class="row-actions"><button type="button" class="btn btn-primary" data-confirm="${esc(p.uid)}">${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.yes" : "pulse.conf.yes"))}</button><button type="button" class="btn btn-ghost" data-reject="${esc(p.uid)}">${esc(T(ClubData.ORG_CONFIRM ? "pulse.new.no" : "pulse.conf.no"))}</button></div></li>`).join("")}</ul></section>` : "";
@@ -210,20 +211,20 @@
         .filter(Boolean).map(k => ` <span class="chip ${k === "pv.hidden" ? "chip-planned" : "chip-cancelled"}">${esc(T(k))}</span>`).join("");
       const byDate = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
       const evRows = events.filter(e => e.date >= today).sort(byDate).concat(events.filter(e => e.date < today).sort(byDate).reverse());
-      const eventsHTML = `<section class="p-card"><div class="p-head"><h2>${esc(T("pv.h"))} <small>${events.length}</small></h2><a class="btn btn-primary" href="/event-edit">${esc(T("pv.new"))}</a></div>
+      const eventsHTML = `<section class="p-card" data-sec="events"><div class="p-head"><h2>${esc(T("pv.h"))} <small>${events.length}</small></h2><a class="btn btn-primary" href="/event-edit">${esc(T("pv.new"))}</a></div>
           ${list(evRows, T("pv.none"), e => `<li><div><b><a href="/event?id=${encodeURIComponent(e.id)}">${esc(I18N.pick(e, "title"))}</a></b>${evChips(e)}
               <small>${esc(fmt(e.date))}${e.registration ? " · " + esc(T("pv.row", { n: e.regs.filter(r => r.status === "pending" || r.status === "confirmed").length, p: e.regs.filter(r => r.status === "pending").length })) : ""}</small></div>
             <div class="row-actions"><a class="btn btn-ghost" href="/event-edit?${FILE_ID.test(e.id) ? "d=" + encodeURIComponent(e.id.slice(2)) : "id=" + encodeURIComponent(e.id)}">${esc(T("ev.edit"))}</a></div></li>`)}</section>`;
       // spots still waiting from people whose account is already approved (approving an account confirms the rest)
       const waitingAcc = new Set(pending.map(p => p.uid));
       const loose = pendingRegs.filter(r => !waitingAcc.has(r.uid));
-      const spotsHTML = loose.length ? `<section class="p-card p-alert"><h2>${esc(T("pulse.spots.h"))} <small>${loose.length}</small></h2>
+      const spotsHTML = loose.length ? `<section class="p-card p-alert" data-sec="spots"><h2>${esc(T("pulse.spots.h"))} <small>${loose.length}</small></h2>
           <ul class="p-list">${loose.map(r => `<li><div><b>${esc(name(r.uid))}</b><small>${esc(sessionTitle(r.event))}</small></div>
             <div class="row-actions"><button type="button" class="btn btn-primary" data-spot="${esc(r.id)}">${esc(T("ev.confirm"))}</button></div></li>`).join("")}</ul></section>` : "";
       /* ---------- proofs waiting for an organizer (certifications, badges, projects…) ---------- */
       const myUid = data.currentUid();
       const proofs = facts.filter(f => f.status === "pending" && PROOF_TYPES.includes(f.type)).sort((a, b) => ms(a.createdAt) - ms(b.createdAt) || (a.date < b.date ? -1 : 1));
-      const proofsHTML = `<section class="p-card${proofs.length ? " p-alert" : ""}" id="proofs"><h2>${esc(T("pr.h"))} <small>${proofs.length}</small></h2>
+      const proofsHTML = `<section class="p-card${proofs.length ? " p-alert" : ""}" id="proofs" data-sec="proofs"><h2>${esc(T("pr.h"))} <small>${proofs.length}</small></h2>
           <p class="help">${esc(T("pr.p"))}</p>
           ${list(proofs, T("pr.none"), f => `<li class="pr-row"><div><b>${esc(name(f.uid))}</b> <span class="chip">${esc(factLabel(f))}</span>
               <small>${esc(fmt(f.date))}${f.title ? " · " + esc(f.title) : ""}</small>
@@ -254,7 +255,7 @@
           <h3 class="p-sub">${esc(T("pm.hist"))}</h3><ul class="pm-hist">${hist || `<li>${esc(T("pm.none"))}</li>`}</ul>
           <p><a href="/camp?u=${encodeURIComponent(m.uid)}">${esc(T("pm.camp"))} →</a></p></div>`;
       };
-      const membersHTML = `<section class="p-card" id="pmCard"><div class="p-head"><h2>${esc(T("pm.h"))} <small>${members.length}</small></h2>
+      const membersHTML = `<section class="p-card" id="pmCard" data-sec="members"><div class="p-head"><h2>${esc(T("pm.h"))} <small>${members.length}</small></h2>
             <button type="button" class="btn btn-ghost" id="pmCsv">${esc(T("pm.csv"))}</button></div>
           <p class="help">${esc(T("pm.p"))}</p>
           <label class="sr-only" for="pmSearch">${esc(T("pm.search"))}</label><input id="pmSearch" class="pm-search" type="search" placeholder="${esc(T("pm.search"))}" value="${esc(pmQuery)}">
@@ -285,7 +286,7 @@
       requests.forEach(r => r.at && A.push({ k: "new", t: r.at, txt: T("pa.join", { name: r.name || name(r.uid) }) }));
       const shownA = A.filter(x => x.t && (paFilter === "all" || x.k === paFilter)).sort((a, b) => b.t - a.t);
       const when = (t) => new Date(t).toLocaleString(I18N.locale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-      const activityHTML = `<section class="p-card" id="paCard"><h2>${esc(T("pa.h"))}</h2>
+      const activityHTML = `<section class="p-card" id="paCard" data-sec="activity"><h2>${esc(T("pa.h"))}</h2>
           <p class="help">${esc(T("pa.p"))}</p>
           <div class="pa-filters" role="group" aria-label="${esc(T("pa.h"))}">${["all", "att", "proof", "bd", "new"].map(k => `<button type="button" class="chip" data-pa="${k}" aria-pressed="${paFilter === k}">${esc(T("pa.f." + k))}</button>`).join("")}</div>
           ${list(shownA.slice(0, paMore), T("pa.none"), x => `<li><div><span>${esc(x.txt)}</span><small>${esc(when(x.t))}</small></div></li>`)}
@@ -300,23 +301,23 @@
           <div><b>${going.length}</b><span>${esc(T("pulse.k.going", { d: nextSession ? fmt(nextSession.date) : "—" }))}</span></div>
         </div>
 
-        <section class="p-card"><h2>${esc(T("pulse.att.h"))}</h2>
+        <section class="p-card" data-sec="att"><h2>${esc(T("pulse.att.h"))}</h2>
           <p class="help">${esc(T("pulse.att.p"))}</p>
           <ol class="chart" aria-label="${esc(T("pulse.att.h"))}">${bars}</ol>
           ${going.length ? `<p class="help">${esc(T("pulse.going.names", { names: going.map(r => name(r.uid)).join(", ") }))}</p>` : ""}
         </section>
 
-        <section class="p-card"><h2>${esc(T("pulse.drift.h"))} <small>${drifting.length}</small></h2>
+        <section class="p-card" data-sec="drift"><h2>${esc(T("pulse.drift.h"))} <small>${drifting.length}</small></h2>
           <p class="help">${esc(T("pulse.drift.p"))}</p>
           ${list(drifting, T("pulse.drift.none"), p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.drift.row", { n: p.n, d: fmt(p.last) }))}</small></div>${contactBtns(p, "drift")}</li>`)}
         </section>
 
-        <section class="p-card"><h2>${esc(T("pulse.never.h"))} <small>${never.length}</small></h2>
+        <section class="p-card" data-sec="never"><h2>${esc(T("pulse.never.h"))} <small>${never.length}</small></h2>
           <p class="help">${esc(T("pulse.never.p"))}</p>
           ${list(never, T("pulse.never.none"), p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.never.row", { n: p.since }))}</small></div>${contactBtns(p, "never")}</li>`)}
         </section>
 
-        <section class="p-card"><h2>${esc(T("pulse.buddy.h"))} <small>${newcomers.filter(p => !p.buddies.length).length}</small></h2>
+        <section class="p-card" data-sec="buddy"><h2>${esc(T("pulse.buddy.h"))} <small>${newcomers.filter(p => !p.buddies.length).length}</small></h2>
           <p class="help">${esc(T("pulse.buddy.p"))}</p>
           <h3 class="p-sub">${esc(T("pulse.buddy.newh"))}</h3>
           ${list(newcomers, T("pulse.buddy.none"), p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.buddy.row", { n: p.n }))}</small></div>
@@ -331,11 +332,43 @@
 
         ${SESSIONS.filter(s => s.vote && s.date >= today).map(s => {
           const vs = votes.filter(v => v.date === fileKey(s));
-          return `<section class="p-card"><h2>${esc(T("pulse.vote.h", { d: fmt(s.date) }))} <small>${vs.length}</small></h2><ul class="p-list">${s.vote.options.map(o => `<li><div><b>${esc(I18N.pick(o, "title"))}</b></div><span class="mono">${vs.filter(v => v.choice === o.id).length}</span></li>`).join("")}</ul></section>`;
+          return `<section class="p-card" data-sec="vote-${esc(s.date)}"><h2>${esc(T("pulse.vote.h", { d: fmt(s.date) }))} <small>${vs.length}</small></h2><ul class="p-list">${s.vote.options.map(o => `<li><div><b>${esc(I18N.pick(o, "title"))}</b></div><span class="mono">${vs.filter(v => v.choice === o.id).length}</span></li>`).join("")}</ul></section>`;
         }).join("")}
         <p class="help" id="pMsg" role="status"></p>`;
-      show("pulse"); $("dataCheck").hidden = false; drawErasePicker();
+      show("pulse"); $("dataCheck").hidden = false; $("pFoldAll").hidden = false; drawErasePicker(); folds();
     }
+
+    /* ---------- every card can be folded away; the choice is remembered on this browser ---------- */
+    const FOLD_KEY = "pulse.folded";
+    let folded = new Set();
+    try { folded = new Set(JSON.parse(localStorage.getItem(FOLD_KEY) || "[]")); } catch (e) {}
+    const saveFolds = () => { try { localStorage.setItem(FOLD_KEY, JSON.stringify([...folded])); } catch (e) {} };
+    function folds() {
+      document.querySelectorAll("section.p-card[data-sec]").forEach(sec => {
+        const h = sec.querySelector("h2"); if (!h) return;
+        const top = h.parentElement.classList.contains("p-head") ? h.parentElement : h;
+        top.classList.add("p-top");
+        let b = sec.querySelector(":scope > .p-fold");
+        if (!b) { b = document.createElement("button"); b.type = "button"; b.className = "p-fold"; b.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; sec.prepend(b); }
+        const shut = folded.has(sec.dataset.sec);
+        sec.classList.toggle("is-folded", shut);
+        b.setAttribute("aria-expanded", String(!shut));
+        b.setAttribute("aria-label", T(shut ? "pc.open" : "pc.close", { s: (h.firstChild && h.firstChild.textContent || h.textContent).trim() }));
+      });
+      const all = $("pFoldAll");
+      if (all) { const any = [...document.querySelectorAll("section.p-card[data-sec]:not([hidden])")].some(x => !x.classList.contains("is-folded")); all.textContent = T(any ? "pc.closeall" : "pc.openall"); all.dataset.shut = any ? "1" : ""; }
+    }
+    document.querySelector(".pulse-sec").addEventListener("click", (e) => {
+      const b = e.target.closest(".p-fold, h2.p-top, .p-top h2");
+      if (b) { const sec = b.closest("section.p-card[data-sec]"); if (!sec || e.target.closest("a, button:not(.p-fold)")) return;
+        const k = sec.dataset.sec; folded.has(k) ? folded.delete(k) : folded.add(k); saveFolds(); folds();
+        if (b.classList.contains("p-fold")) b.focus(); return; }
+      const all = e.target.closest("#pFoldAll");
+      if (all) { const shut = !!all.dataset.shut;
+        document.querySelectorAll("section.p-card[data-sec]:not([hidden])").forEach(x => shut ? folded.add(x.dataset.sec) : folded.delete(x.dataset.sec));
+        saveFolds(); folds(); }
+    });
+    addEventListener("langchange", () => folds());
 
     async function load() {
       // everything in one round: the sessions' registrations come from a single query and are grouped here
@@ -412,13 +445,13 @@
     function drawErasePicker() {
       const sel = $("erWho"), cur = sel.value;
       sel.innerHTML = `<option value="">${esc(T("er.pick"))}</option>` + erasePeople().map(p => `<option value="${esc(p.uid)}"${p.uid === cur ? " selected" : ""}>${esc((p.name || "—") + (p.email ? " · " + p.email : ""))}</option>`).join("");
-      $("erase").hidden = false; drawDir();
+      $("erase").hidden = false; drawDir(); folds();
     }
     /* ---------- the school's student list ---------- */
     const DIR_RE = /[a-z0-9._%+-]+@aivancity\.education/gi;
     const dirEmails = () => [...new Set((($("dirText").value || "").match(DIR_RE) || []).map(e => e.toLowerCase()))];
     async function drawDir() {
-      $("dir").hidden = false;
+      $("dir").hidden = false; folds();
       let info; try { info = await data.directoryInfo(); } catch (e) { info = { on: false, count: 0 }; }
       $("dirState").innerHTML = `<p class="dir-state"><b>${esc(T("dir.count", { n: info.count || 0 }))}</b> · ${esc(T(info.on ? "dir.on" : "dir.off"))}</p>
         <label class="check"><input type="checkbox" id="dirOn"${info.on ? " checked" : ""}${!info.count && !info.on ? " disabled" : ""}><span>${esc(T("dir.switch"))}</span></label>

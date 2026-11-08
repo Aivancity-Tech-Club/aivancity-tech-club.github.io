@@ -52,6 +52,12 @@ en: {
   'vb.week.day': 'Day {n}',
   'vb.week.task': 'Task',
   'vb.week.link': 'Link (optional)',
+  'me.climb.sub': "Points, buddies, proofs",
+  'me.checkin': "Check in on Thursday",
+  'me.inbox': "Buddy requests",
+  'bd.mail.in': "Their school email:",
+  'bd.mail.pair': "Email:",
+  'bd.mail.out': "They see your school email so they can reach you. You’ll see theirs once they accept.",
   'me.profile': 'My profile', 'me.climb': 'My climb', 'me.rules': 'How to level up',
   'me.belt.white': 'White bandana', 'me.belt.yellow': 'Yellow bandana', 'me.belt.green': 'Green bandana', 'me.belt.blue': 'Blue bandana', 'me.belt.red': 'Red bandana', 'me.belt.black': 'Black bandana',
   'footer.rules': 'Rules',
@@ -116,7 +122,7 @@ en: {
   'vb.posts.h': 'Posts',
   'sched.f.lang': 'Language', 'sched.f.alllangs': 'Any language',
   'lang.in.en': 'In English', 'lang.in.fr': 'In French', 'lang.in.both': 'English & French', 'lang.name.en': 'English', 'lang.name.fr': 'French', 'lang.subs': '{lang} · {subs} subtitles', 'lang.sub.en': 'English', 'lang.sub.fr': 'French',
-  'ci.title': 'Check-in', 'ci.h1': 'Thursday <b>check-in</b>', 'ci.only': 'This page is for organizers.', 'ci.menu': 'Check-in screen',
+  'ci.title': 'Check-in', 'ci.h1': 'Thursday <b>check-in</b>', 'ci.only': 'This page is for organizers.', 'ci.menu': "Session code screen",
   'ci.lede': 'Organizers only. Start the check-in, put this screen on the projector, and members type the code in My climb on the Mountain.',
   'ci.demo': 'Demo: the code is always DEMO and nothing is saved online.',
   'ci.start.h': 'Start today\'s check-in', 'ci.today': 'Today: {s}', 'ci.nosession': 'no session on the schedule today',
@@ -517,7 +523,7 @@ en: {
   "tour.mission.done": "First step done: you opened a mission.",
   "tour.see": "See your steps",
   "bd.why": "Why should you two connect?",
-  "bd.why.help": "They'll see this with your request: say who you are and what you'd like to do together.",
+  "bd.why.help": "They'll see this and your school email with your request: say who you are and what you'd like to do together.",
   "bd.why.ph": "e.g. I'm in PGE 2 and learning Flutter. Want to build something for the next hackathon together?",
   "bd.why.short": "Write a few words (at least 10 characters) so they know who you are.",
   "bd.count": "{n}/200",
@@ -649,6 +655,10 @@ en: {
   "news.out.e1": "Whether you code every day or have never written a line, there's a place for you in the Tech Club. See what's coming up, register, and come to our event on 12 November.",
   "news.out.cta1": "See the schedule →",
   "news.out.cta2": "Join the club",
+  "pc.close": "Fold {s}",
+  "pc.open": "Unfold {s}",
+  "pc.closeall": "Fold all",
+  "pc.openall": "Unfold all",
   'vb.loading': 'Loading the board…',
   'vb.form.as': 'Post as',
   'vb.form.as.help': 'Elders only. A team or council post shows the club as the author; the details panel still says who posted it, so people know who to message.',
@@ -983,6 +993,12 @@ fr: {
   'vb.week.day': 'Jour {n}',
   'vb.week.task': 'Tâche',
   'vb.week.link': 'Lien (facultatif)',
+  'me.climb.sub': "Points, binômes, preuves",
+  'me.checkin': "Pointer ma présence le jeudi",
+  'me.inbox': "Demandes de binôme",
+  'bd.mail.in': "Son e-mail de l’école :",
+  'bd.mail.pair': "E-mail :",
+  'bd.mail.out': "La personne voit votre e-mail de l’école pour pouvoir vous écrire. Vous verrez le sien quand elle aura accepté.",
   'me.profile': 'Mon profil', 'me.climb': 'Mon ascension', 'me.rules': 'Comment progresser',
   'me.belt.white': 'Bandana blanc', 'me.belt.yellow': 'Bandana jaune', 'me.belt.green': 'Bandana vert', 'me.belt.blue': 'Bandana bleu', 'me.belt.red': 'Bandana rouge', 'me.belt.black': 'Bandana noir',
   'footer.rules': 'Règles',
@@ -1047,7 +1063,7 @@ fr: {
   'vb.posts.h': 'Publications',
   'sched.f.lang': 'Langue', 'sched.f.alllangs': 'Toutes les langues',
   'lang.in.en': 'En anglais', 'lang.in.fr': 'En français', 'lang.in.both': 'Anglais et français', 'lang.name.en': 'Anglais', 'lang.name.fr': 'Français', 'lang.subs': '{lang} · sous-titres en {subs}', 'lang.sub.en': 'anglais', 'lang.sub.fr': 'français',
-  'ci.title': 'Présence', 'ci.h1': 'Présence du <b>jeudi</b>', 'ci.only': 'Cette page est réservée aux organisateurs.', 'ci.menu': 'Écran de présence',
+  'ci.title': 'Présence', 'ci.h1': 'Présence du <b>jeudi</b>', 'ci.only': 'Cette page est réservée aux organisateurs.', 'ci.menu': "Écran du code de séance",
   'ci.lede': 'Réservé aux organisateurs. Lancez l\'enregistrement, affichez cet écran au projecteur, et les membres tapent le code dans Mon ascension sur la Montagne.',
   'ci.demo': 'Démo : le code est toujours DEMO et rien n\'est enregistré en ligne.',
   'ci.start.h': 'Lancer l\'enregistrement du jour', 'ci.today': 'Aujourd\'hui : {s}', 'ci.nosession': 'pas de séance au programme aujourd\'hui',
@@ -1448,7 +1464,7 @@ fr: {
   "tour.mission.done": "Premier pas fait : vous avez ouvert une mission.",
   "tour.see": "Voir vos pas",
   "bd.why": "Pourquoi vous connecter ?",
-  "bd.why.help": "Il ou elle verra ce message avec votre demande : dites qui vous êtes et ce que vous aimeriez faire ensemble.",
+  "bd.why.help": "La personne verra ce message et votre e-mail de l’école avec votre demande : dites qui vous êtes et ce que vous aimeriez faire ensemble.",
   "bd.why.ph": "ex. Je suis en PGE 2 et j'apprends Flutter. On construit quelque chose ensemble pour le prochain hackathon ?",
   "bd.why.short": "Écrivez quelques mots (au moins 10 caractères) pour qu'il ou elle sache qui vous êtes.",
   "bd.count": "{n}/200",
@@ -1580,6 +1596,10 @@ fr: {
   "news.out.e1": "Que vous codiez tous les jours ou que vous n'ayez jamais écrit une ligne, vous avez votre place au Tech Club. Découvrez le programme, inscrivez-vous et venez à notre événement du 12 novembre.",
   "news.out.cta1": "Voir le programme →",
   "news.out.cta2": "Rejoindre le club",
+  "pc.close": "Replier : {s}",
+  "pc.open": "Déplier : {s}",
+  "pc.closeall": "Tout replier",
+  "pc.openall": "Tout déplier",
   'vb.loading': 'Chargement du tableau…',
   'vb.form.as': 'Publier en tant que',
   'vb.form.as.help': 'Réservé aux anciens. Une publication de l\'équipe ou du conseil affiche le club comme auteur ; le détail indique toujours qui l\'a publiée, pour savoir à qui écrire.',
@@ -1920,22 +1940,25 @@ function addProfile() {
   if (!H.classList.contains('is-member')) { if (H.classList.contains('is-signed')) addAccount(); return; }
   const nav = document.querySelector('.site-header .nav'); if (!nav || nav.querySelector('.me-wrap')) return;
   const me = myCard() || {}, rank = RANK_KEYS.includes(me.rank) ? me.rank : 'white';
+  let inbox = 0; try { inbox = Math.max(0, parseInt(localStorage.getItem('nw-inbox') || '0', 10) || 0); } catch (e) {}
   const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const w = document.createElement('div'); w.className = 'me-wrap';
   w.innerHTML = `<button type="button" class="me-pill" aria-haspopup="true" aria-expanded="false" aria-controls="meMenu">
-      <img src="/assets/ninjas/ninja-${rank}.svg" alt=""><span class="me-name">${esc((me.name || '').split(' ')[0] || t('me.profile'))}</span></button>
+      <img src="/assets/ninjas/ninja-${rank}.svg" alt="">${inbox ? '<span class="me-dot" aria-hidden="true"></span>' : ''}<span class="me-name">${esc((me.name || '').split(' ')[0] || t('me.profile'))}</span></button>
     <div class="me-menu" id="meMenu" hidden>
       <div class="me-head"><img src="/assets/ninjas/ninja-${rank}.svg" alt=""><div><b>${esc(me.name || t('me.profile'))}</b><span data-me-belt></span></div></div>
+      <a href="/mountain#me" class="me-main"><span data-i18n="me.climb">My climb</span><small data-i18n="me.climb.sub">Points, buddies, proofs</small></a>
+      <a href="/mountain#checkin" data-i18n="me.checkin">Check in on Thursday</a>
+      ${inbox ? `<a href="/mountain#buddies" class="me-inbox"><span data-i18n="me.inbox">Buddy requests</span> <b>${inbox}</b></a>` : ''}
       <a href="/camp" data-i18n="camp.mine">My camp</a>
-      <a href="/mountain#me" data-i18n="me.climb">My climb</a>
       <a href="/rules" data-i18n="me.rules">How to level up</a>
       ${me.org ? '<a href="/pulse" data-i18n="pulse.menu">Club pulse</a>' : ''}
-      ${me.org ? '<a href="/checkin" data-i18n="ci.menu">Check-in screen</a>' : ''}
+      ${me.org ? '<a href="/checkin" data-i18n="ci.menu">Session code screen</a>' : ''}
       ${me.org ? '<a href="/event-edit" data-i18n="ev.menu">Create an event</a>' : ''}
       <a href="/feedback" data-i18n="footer.feedback">Give feedback</a>
       <a href="/mountain#signout" data-i18n="m.signout">Sign out</a>
     </div>`;
-  const belt = () => { const b = w.querySelector('[data-me-belt]'); b.textContent = me.rank ? t('me.belt.' + rank) : ''; w.querySelector('.me-pill').setAttribute('aria-label', t('me.profile') + (me.name ? ' · ' + me.name : '')); };
+  const belt = () => { const b = w.querySelector('[data-me-belt]'); b.textContent = me.rank ? t('me.belt.' + rank) : ''; w.querySelector('.me-pill').setAttribute('aria-label', t('me.profile') + (me.name ? ' · ' + me.name : '') + (inbox ? ' · ' + t('me.inbox') + ' (' + inbox + ')' : '')); };
   belt(); addEventListener('langchange', belt);
   const btn = w.querySelector('.me-pill'), menu = w.querySelector('.me-menu');
   const open = (on) => { menu.hidden = !on; btn.setAttribute('aria-expanded', String(on)); };

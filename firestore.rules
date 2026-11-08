@@ -157,9 +157,18 @@ service cloud.firestore {
       allow read, write: if isOrganizer();
     }
 
-    // Email addresses: only the person and organizers can read them.
+    // Email addresses: only the person and organizers can read them, plus buddies so they can reach each other:
+    // someone who sent you a buddy request shares their address with you; yours is shared with them once you accept.
+    function buddyPairSees(pairPath, uid) {
+      return exists(pairPath) && (get(pairPath).data.status == 'paired' || get(pairPath).data.a == uid);
+    }
+    function buddySees(uid) {
+      return isMember() && request.auth.uid != uid
+        && (buddyPairSees(/databases/$(db)/documents/buddies/$(uid + '_' + request.auth.uid), uid)
+            || buddyPairSees(/databases/$(db)/documents/buddies/$(request.auth.uid + '_' + uid), uid));
+    }
     match /private/{uid} {
-      allow read: if (signedIn() && request.auth.uid == uid) || isOrganizer();
+      allow read: if (signedIn() && request.auth.uid == uid) || isOrganizer() || buddySees(uid);
       // only your own address, exactly as your account has it
       allow create, update: if onRoster() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['email']) && request.resource.data.email.lower() == email();
