@@ -67,7 +67,10 @@ function who(cache, uid) {
   const m = plain((getDoc('members/' + uid) || {}).fields || {});
   const p = plain((getDoc('private/' + uid) || {}).fields || {});
   const r = plain((getDoc('requests/' + uid) || {}).fields || {});
-  return (cache[uid] = { name: m.name || r.name || 'A club member', email: p.email || r.email || '', lang: r.lang === 'fr' ? 'fr' : 'en' });
+  const email = p.email || r.email || '';
+  // language: the class on the school's student list (_FR / _EN), else the language the site was in when they joined
+  const cls = email ? (plain((getDoc('directory/' + encodeURIComponent(String(email).toLowerCase())) || {}).fields || {}).lang) : '';
+  return (cache[uid] = { name: m.name || r.name || 'A club member', email, lang: cls === 'fr' || cls === 'en' ? cls : r.lang === 'fr' ? 'fr' : 'en' });
 }
 function notify(cache, uid, kind, data) {
   const p = who(cache, uid);

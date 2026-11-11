@@ -646,11 +646,12 @@ function firebaseBackend() {
     /* ---------- the school's student list (organizers): directory/{email}, directory/__settings { on, count } ---------- */
     async directoryInfo() { const d = await db.collection('directory').doc('__settings').get(); return d.exists ? d.data() : { on: false, count: 0 }; },
     async directoryHas(email) { const d = await db.collection('directory').doc(String(email).trim().toLowerCase()).get(); return d.exists; },
-    async directoryEdit(emails, add) {
+    // meta (optional): { email: { group, lang } } from the school's export; lang = the class language, used for club emails
+    async directoryEdit(emails, add, meta) {
       try {
         for (let i = 0; i < emails.length; i += 450) {
           const b = db.batch();
-          emails.slice(i, i + 450).forEach(em => { const r = db.collection('directory').doc(em); if (add) b.set(r, { at: FV().serverTimestamp() }); else b.delete(r); });
+          emails.slice(i, i + 450).forEach(em => { const r = db.collection('directory').doc(em); if (add) b.set(r, Object.assign({ at: FV().serverTimestamp() }, (meta && meta[em]) || {})); else b.delete(r); });
           await b.commit();
         }
         const all = await db.collection('directory').get(), count = all.docs.filter(d => d.id !== '__settings').length;

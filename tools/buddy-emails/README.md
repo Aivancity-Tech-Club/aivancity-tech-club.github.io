@@ -8,7 +8,7 @@ Emails members so they don't miss buddy news:
 
 It's a small Google Apps Script that runs every 10 minutes under the club's Google account. It's free, with no Firebase upgrade and no card.
 Gmail allows about 100 emails a day on a normal Google account, which is plenty. Each email goes out once, in the person's
-language (from their join form), from the club account's address with the name "aivancity Tech Club".
+language (their class on the student list, _FR or _EN, else the site's language when they joined), from the club account's address with the name "aivancity Tech Club".
 
 ## Set it up (about 10 minutes, once)
 
@@ -41,6 +41,6 @@ To check that it's running, open **Triggers** (clock icon) for the timer and **E
 
 ## What it touches
 
-- **Reads:** `buddies`, `members/{uid}` (name), `private/{uid}` (email), `requests/{uid}` (language).
+- **Reads:** `buddies`, `members/{uid}` (name), `private/{uid}` (email), `requests/{uid}` and `directory/{email}` (language: the class on the student list, `_FR` / `_EN`, else the site's language when they joined).
 - **Writes:** only `buddies/{id}.mailed`, a note of which emails went out. Nothing else changes.
 - **Privacy:** addresses stay in the database and are only used to send these emails.

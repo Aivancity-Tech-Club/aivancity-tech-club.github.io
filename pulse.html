@@ -16,12 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261111j">
-  <link rel="stylesheet" href="assets/village.css?v=20261111j">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261111j">
-  <script src="assets/i18n.js?v=20261111j"></script>
-  <script src="assets/analytics.js?v=20261111j" defer></script>
-  <script src="assets/halloween.js?v=20261111j" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261111k">
+  <link rel="stylesheet" href="assets/village.css?v=20261111k">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261111k">
+  <script src="assets/i18n.js?v=20261111k"></script>
+  <script src="assets/analytics.js?v=20261111k" defer></script>
+  <script src="assets/halloween.js?v=20261111k" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -104,14 +104,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261111j"></script>
+  <script src="assets/schedule.js?v=20261111k"></script>
 
-  <script src="assets/sessions.js?v=20261111j"></script>
-  <script src="assets/js-yaml.min.js?v=20261111j"></script>
-  <script src="assets/platform/config.js?v=20261111j"></script>
-  <script src="assets/platform/engine.js?v=20261111j"></script>
-  <script src="assets/platform/signin.js?v=20261111j"></script>
-  <script src="assets/platform/data.js?v=20261111j"></script>
+  <script src="assets/sessions.js?v=20261111k"></script>
+  <script src="assets/js-yaml.min.js?v=20261111k"></script>
+  <script src="assets/platform/config.js?v=20261111k"></script>
+  <script src="assets/platform/engine.js?v=20261111k"></script>
+  <script src="assets/platform/signin.js?v=20261111k"></script>
+  <script src="assets/platform/data.js?v=20261111k"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -469,6 +469,16 @@
     /* ---------- the school's student list ---------- */
     const DIR_RE = /[a-z0-9._%+-]+@(?:aivancity\.education|ccclx\.tech)/gi;
     const dirEmails = () => [...new Set((($("dirText").value || "").match(DIR_RE) || []).map(e => e.toLowerCase()))];
+    // the school's export puts each student's class on the same line ("_2026_IdF_PGE_2_EN"): keep it, and the class language
+    // (_FR / _EN) becomes the language of that student's club emails
+    const dirMeta = () => { const out = {};
+      ($("dirText").value || "").split(/\r?\n/).forEach(line => {
+        const em = (line.match(DIR_RE) || [])[0], g = (line.match(/_20\d\d_[A-Za-z0-9_-]+/) || [])[0];
+        if (!em || !g) return;
+        const lang = /_FR$/i.test(g) ? "fr" : /_EN$/i.test(g) ? "en" : "";
+        out[em.toLowerCase()] = lang ? { group: g, lang } : { group: g };
+      });
+      return out; };
     async function drawDir() {
       $("dir").hidden = false; folds();
       let info; try { info = await data.directoryInfo(); } catch (e) { info = { on: false, count: 0 }; }
@@ -480,11 +490,12 @@
       if (e.target.id === "dirOn") { e.target.disabled = true; const r = await data.directorySwitch(e.target.checked); $("dirMsg").textContent = r.ok ? T(e.target.checked ? "dir.on.done" : "dir.off.done") : T(r.code || "err.generic"); drawDir(); }
       if (e.target.id === "dirFile" && e.target.files[0]) { const t = await e.target.files[0].text(); $("dirText").value = t; $("dirText").dispatchEvent(new Event("input")); }
     });
-    $("dirText").addEventListener("input", () => { const n = dirEmails().length; $("dirFound").textContent = n ? T("dir.found", { n }) : ""; });
+    $("dirText").addEventListener("input", () => { const n = dirEmails().length, m = Object.values(dirMeta()).filter(x => x.lang).length;
+      $("dirFound").textContent = n ? T("dir.found", { n }) + (m ? " " + T("dir.found.lang", { m }) : "") : ""; });
     async function dirEdit(add, btn) {
       const list = dirEmails(); if (!list.length) { $("dirMsg").textContent = T("dir.none"); $("dirText").focus(); return; }
       btn.disabled = true; btn.setAttribute("aria-busy", "true"); $("dirMsg").textContent = T("dir.saving", { n: list.length });
-      const r = await data.directoryEdit(list, add);
+      const r = await data.directoryEdit(list, add, add ? dirMeta() : null);
       btn.disabled = false; btn.removeAttribute("aria-busy");
       $("dirMsg").textContent = r.ok ? T(add ? "dir.added" : "dir.removed", { n: list.length, total: r.count }) : T(r.code || "err.generic");
       if (r.ok) { $("dirText").value = ""; $("dirFound").textContent = ""; $("dirFile").value = ""; drawDir(); }
