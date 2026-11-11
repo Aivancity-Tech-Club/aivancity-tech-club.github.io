@@ -28,7 +28,8 @@ Gmail allows about 100 emails a day on a normal account; if there are more membe
 5. Pick **`preview`** in the function menu → **Run**. Allow the permissions (Advanced → Go to … (unsafe) → Allow).
    `ADMIN` gets what three members would receive. Nobody else gets anything. Change the text in `TEXT` if needed.
 6. **Deploy → New deployment** → type **Web app** → Execute as **Me**, Who has access **Anyone** → **Deploy**.
-   This makes the "turn these emails off" link work.
+   Copy the **Web app URL** (it ends in `/exec`) and paste it into `WEBAPP_URL` at the top of `Code.gs`, then **Save**.
+   This makes the "turn these emails off" link work. Test it in a private window.
 7. Pick **`setup`** → **Run**. The first round goes out at the next 9:00 run, then every 14 days.
 
 Check it in **Triggers** (clock icon: a daily `run`) and **Executions**.

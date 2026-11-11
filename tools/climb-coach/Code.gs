@@ -16,7 +16,11 @@
 const PROJECT = 'aivancity-tech-club';
 const SITE = 'https://aivancity-tech-club.github.io';
 const FROM_NAME = 'aivancity Tech Club';
+const GDG = 'https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/';   // the club's GDG on Campus chapter page
+// Every idea in the emails must match rules/rules.yaml (who records what, what counts) and things that exist today.
 const ADMIN = 'victoria.alajemba@aivancity.education';   // gets the digest and the previews
+// the web app's address, from Deploy → Manage deployments (it ends in /exec). The "turn these emails off" link uses it.
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyzTrbaDSCrHNj1hXlgIxoyJGCpEz8Qc7N6ldd1gcv-j8vYQMB5eA8A7ibneC95rLEp/exec';
 const EVERY_DAYS = 14;                                    // one email every two weeks
 const KEEP_FOR_OTHERS = 20;                               // daily emails left for the buddy emails script
 const BASE = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents';
@@ -36,7 +40,7 @@ function setup() {
   ScriptApp.newTrigger('run').timeBased().everyDays(1).atHour(9).create();
   if (!P.getProperty('SECRET')) P.setProperty('SECRET', Utilities.getUuid() + Utilities.getUuid());
   Logger.log('Ready. The first round starts at the next run (around 9:00), then every ' + EVERY_DAYS + ' days.');
-  if (!ScriptApp.getService().getUrl()) Logger.log('Remember to deploy the web app (README step 6), or the "turn off" links will not work.');
+  if (!WEBAPP_URL) Logger.log('Remember to deploy the web app (README step 6), or the "turn off" links will not work.');
 }
 
 /* ---------- the timer runs this every day ---------- */
@@ -90,9 +94,15 @@ function load() {
   const today = Utilities.formatDate(new Date(), 'Europe/Paris', 'yyyy-MM-dd');
   const thursday = (d) => new Date(d + 'T12:00:00Z').getUTCDay() === 4;
   const regular = SESSIONS.filter(s => s.track !== 'break' && thursday(s.date) && s.date <= today).map(s => s.date).sort();
-  const next = SESSIONS.filter(s => s.track !== 'break' && s.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0] || null;
-
   const docs = (c) => listAll(c).map(d => Object.assign({ id: d.name.split('/').pop() }, plain(d.fields || {})));
+  // the next session as the Schedule page shows it: the file's sessions with organizers' edits ("d-YYYY-MM-DD"), plus events made on the site
+  const FILE_ID = /^d-\d{4}-\d{2}-\d{2}(-[a-z0-9-]{1,40})?$/, fileKey = (x) => x.key || x.date, siteEvents = docs('events');
+  const over = Object.fromEntries(siteEvents.filter(e => FILE_ID.test(e.id)).map(e => [e.id.slice(2), e]));
+  const all = SESSIONS.map(x => (over[fileKey(x)] && x.track !== 'break' ? Object.assign({}, x, over[fileKey(x)]) : x))
+    .concat(siteEvents.filter(e => !(FILE_ID.test(e.id) && SESSIONS.some(x => fileKey(x) === e.id.slice(2)))))
+    .filter(x => x.date && !x.hidden && !x.deleted && x.published !== false && !x.cancelled && x.track !== 'break');
+  const next = all.filter(x => x.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0] || null;
+
   const members = docs('members').map(m => Object.assign(m, { uid: m.id }));
   const facts = docs('facts'), priv = byId(docs('private')), reqs = byId(docs('requests')), buddies = docs('buddies'), dir = byId(docs('directory'));
   const res = engine.compute(rb, facts, members, regular, today);
@@ -122,21 +132,25 @@ const TEXT = {
     toNext: next => 'To reach <b>' + next + '</b>:',
     top: 'You hold the Black bandana. Thank you for carrying the club.',
     idea: 'One idea for these two weeks',
+    how: '<b>How you get the points:</b> done something? On the Mountain, open <b>My climb → Submit a proof</b> and paste the link (your Skills Boost public profile, the repo, the certificate). An organizer checks it, then the points appear.',
     buddy: n => '<b>' + n + '</b> asked to be your buddy. Answer on the Mountain.',
     session: (t, d) => 'Next session: <b>' + t + '</b>, ' + d + '.',
+    gdg: 'Not on our <a href="' + GDG + '" style="color:#8a817a">GDG on Campus chapter</a> yet? Join it to follow the club there.',
     cta: 'Open my climb', off: 'You get this every two weeks as a club member.', offLink: 'Turn these emails off',
     req: { first_check_in: 'Check in at a session', lifetime_points: v => v + ' points in total', compete_enter: v => 'Enter ' + v + ' competition' + (v > 1 ? 's' : ''),
       talk_or_workshop: v => 'Give ' + v + ' talk or workshop', ship_project_or_workshop: v => 'Ship ' + v + ' project or give ' + v + ' workshop', workshop: v => 'Give ' + v + ' workshop',
       mentoring: v => v + ' mentoring sessions', seasons_active: v => 'Be active ' + v + ' seasons' },
     ideas: {
       first_check_in: 'Come this Thursday and type the session code on the Mountain: that check-in is your first point.',
-      points: (cert, badge, mission) => 'Pick one: a certification (+' + cert + '), a skill badge (+' + badge + '), or a mission on the Village board' + (mission ? ' (+' + mission + ')' : '') + '. Send the proof from My climb.',
-      compete_enter: 'Enter the next club competition or any online one (Kaggle, a hackathon), then send the proof.',
-      talk: 'Give a 5-minute lightning talk on Thursday: something you built or learned. Reply to this email to book a slot.',
-      ship: 'Ship a small project in a public repo, or run a short workshop on something you know.',
-      mentoring: 'Help a newer member on a Village board mission: each confirmed session counts.',
-      ai: 'Into AI? A Google Cloud Skills Boost badge on generative AI is a quick start.', web: 'Into web? Ship a small site and send the repo as a project.',
-      data: 'Into data? A short Kaggle competition counts as a competition entered.', cloud: 'Into cloud? Google Cloud badges and certifications earn points.',
+      points: (cert, badge) => 'Pick one: a professional certification (+' + cert + '), a skill badge on <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a> (+' + badge + '), or a mission on the <a href="' + SITE + '/village">Village board</a>.',
+      compete_enter: 'Take part in a club competition when one is announced (WhatsApp or the Schedule page). Organizers record who took part: there is nothing to send.',
+      talk: 'Give a lightning talk (10 minutes or less) at a Thursday session, about something you built or learned. Ask an organizer for a slot: they record it.',
+      ship: 'Present a project from a public GitHub repo at a session, or lead a session of 30 minutes or more on something you know.',
+      mentoring: 'Help a newer member on a <a href="' + SITE + '/village">Village board</a> mission: each confirmed one counts as a mentoring session.',
+      ai: 'Into AI? Create a free account on <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a>, earn a skill badge on an AI topic, then send your public profile link as proof.',
+      web: 'Into web? Build a small site in a public repo and present it at a session.',
+      data: 'Into data? Skill badges on <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a> cover data topics too, and each badge counts.',
+      cloud: 'Into cloud? Each skill badge on <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a> earns points, and a professional certification earns more.',
       career: 'Building your CV? Certifications and a shipped project are what recruiters look for.',
     },
   },
@@ -151,21 +165,25 @@ const TEXT = {
     toNext: next => 'Pour atteindre le <b>bandana ' + next + '</b> :',
     top: 'Vous portez le bandana Noir. Merci de porter le club.',
     idea: 'Une idée pour ces deux semaines',
+    how: '<b>Comment obtenir les points :</b> vous avez fait quelque chose ? Sur la Montagne, ouvrez <b>Mon ascension → Envoyer une preuve</b> et collez le lien (votre profil public Skills Boost, le dépôt, le certificat). Un organisateur vérifie, puis les points apparaissent.',
     buddy: n => '<b>' + n + '</b> vous propose d’être son binôme. Répondez sur la Montagne.',
     session: (t, d) => 'Prochaine séance : <b>' + t + '</b>, ' + d + '.',
+    gdg: 'Pas encore sur notre <a href="' + GDG + '" style="color:#8a817a">chapitre GDG on Campus</a> ? Rejoignez-le pour suivre le club sur ce réseau.',
     cta: 'Voir mon ascension', off: 'Vous recevez cet e-mail toutes les deux semaines en tant que membre du club.', offLink: 'Ne plus recevoir ces e-mails',
     req: { first_check_in: 'Pointer à une séance', lifetime_points: v => v + ' points au total', compete_enter: v => 'Participer à ' + v + ' compétition' + (v > 1 ? 's' : ''),
       talk_or_workshop: v => 'Donner ' + v + ' présentation ou atelier', ship_project_or_workshop: v => 'Livrer ' + v + ' projet ou animer ' + v + ' atelier', workshop: v => 'Animer ' + v + ' atelier',
       mentoring: v => v + ' séances de mentorat', seasons_active: v => 'Être actif ' + v + ' saisons' },
     ideas: {
       first_check_in: 'Venez ce jeudi et tapez le code de la séance sur la Montagne : ce pointage est votre premier point.',
-      points: (cert, badge, mission) => 'Au choix : une certification (+' + cert + '), un badge de compétence (+' + badge + '), ou une mission du Village board' + (mission ? ' (+' + mission + ')' : '') + '. Envoyez la preuve depuis Mon ascension.',
-      compete_enter: 'Participez à la prochaine compétition du club ou à une compétition en ligne (Kaggle, un hackathon), puis envoyez la preuve.',
-      talk: 'Faites une présentation éclair de 5 minutes jeudi : un projet ou quelque chose que vous avez appris. Répondez à cet e-mail pour réserver.',
-      ship: 'Livrez un petit projet dans un dépôt public, ou animez un court atelier sur un sujet que vous maîtrisez.',
-      mentoring: 'Aidez un nouveau membre sur une mission du Village board : chaque séance confirmée compte.',
-      ai: 'L’IA vous intéresse ? Un badge Google Cloud Skills Boost sur l’IA générative est un bon début.', web: 'Le web vous intéresse ? Mettez en ligne un petit site et envoyez le dépôt comme projet.',
-      data: 'La data vous intéresse ? Une courte compétition Kaggle compte comme compétition.', cloud: 'Le cloud vous intéresse ? Les badges et certifications Google Cloud rapportent des points.',
+      points: (cert, badge) => 'Au choix : une certification professionnelle (+' + cert + '), un badge de compétence sur <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a> (+' + badge + '), ou une mission du <a href="' + SITE + '/village">Village board</a>.',
+      compete_enter: 'Participez à une compétition du club dès qu’elle est annoncée (WhatsApp ou la page Programme). Les organisateurs enregistrent les participants : rien à envoyer.',
+      talk: 'Faites une présentation éclair (10 minutes maximum) lors d’une séance du jeudi, sur un projet ou quelque chose que vous avez appris. Demandez un créneau à un organisateur : il l’enregistre.',
+      ship: 'Présentez un projet d’un dépôt GitHub public lors d’une séance, ou animez une séance de 30 minutes ou plus sur un sujet que vous maîtrisez.',
+      mentoring: 'Aidez un nouveau membre sur une mission du <a href="' + SITE + '/village">Village board</a> : chaque mission confirmée compte comme une séance de mentorat.',
+      ai: 'L’IA vous intéresse ? Créez un compte gratuit sur <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a>, obtenez un badge de compétence sur un sujet d’IA, puis envoyez le lien de votre profil public comme preuve.',
+      web: 'Le web vous intéresse ? Créez un petit site dans un dépôt public et présentez-le lors d’une séance.',
+      data: 'La data vous intéresse ? Les badges de compétence sur <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a> couvrent aussi la data, et chaque badge compte.',
+      cloud: 'Le cloud vous intéresse ? Chaque badge de compétence sur <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a> rapporte des points, et une certification professionnelle encore plus.',
       career: 'Vous préparez votre CV ? Les certifications et un projet livré sont ce que les recruteurs regardent.',
     },
   },
@@ -197,22 +215,26 @@ function build(ctx, p) {
   else if (has('talk_or_workshop')) ideas.push(I.talk);
   else if (has('ship_project_or_workshop') || has('workshop')) ideas.push(I.ship);
   else if (has('mentoring')) ideas.push(I.mentoring);
-  else if (has('lifetime_points')) ideas.push(I.points(ctx.pts('certification') || 15, ctx.pts('skill_badge') || 3, ctx.pts('mentoring')));
+  else if (has('lifetime_points')) ideas.push(I.points(ctx.pts('certification') || 15, ctx.pts('skill_badge') || 3));
   const fav = (p.interests || []).find(k => I[k]); if (fav) ideas.push(I[fav]);
-  if (ideas.length) body += '<p style="margin:0 0 4px;font-weight:bold">' + L.idea + '</p><ul style="margin:0 0 16px;padding-left:20px">' + ideas.map(x => '<li style="margin:2px 0">' + esc(x) + '</li>').join('') + '</ul>';
+  // ideas are our own text with links (no member data in them), so they are not escaped
+  if (ideas.length) body += '<p style="margin:0 0 4px;font-weight:bold">' + L.idea + '</p><ul style="margin:0 0 12px;padding-left:20px">' + ideas.map(x => '<li style="margin:2px 0">' + x + '</li>').join('') + '</ul>';
+  if (s.isMember) body += '<p style="margin:0 0 16px;font-size:14px;color:#57504a">' + L.how + '</p>';
   const asked = ctx.buddies.filter(b => b.status === 'pending' && b.b === p.uid);
   if (asked.length) body += '<p>' + L.buddy(esc(ctx.nameOf(asked[0].a) || '…')) + '</p>';
   if (ctx.next) {
     const t = p.lang === 'fr' ? (ctx.next.title_fr || ctx.next.title) : ctx.next.title;
     const d = Utilities.formatDate(new Date(ctx.next.date + 'T12:00:00Z'), 'Europe/Paris', p.lang === 'fr' ? 'dd/MM' : 'd MMM');
-    body += '<p>' + L.session(esc(t), d) + '</p>';
+    const tm = p.lang === 'fr' ? (ctx.next.time_fr || ctx.next.time) : ctx.next.time;
+    body += '<p>' + L.session(esc(t), d + (tm ? ', ' + esc(tm) : '') + (ctx.next.room ? ' · ' + esc(ctx.next.room) : '')) + '</p>';
   }
-  const url = ScriptApp.getService().getUrl(), sig = sign(p.uid);
+  const url = webappUrl(), sig = sign(p.uid);
   const offUrl = url ? url + '?u=' + encodeURIComponent(p.uid) + '&s=' + sig + '&l=' + p.lang : '';
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1e1e1e;font-size:15px;line-height:1.5">'
     + '<p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6b625b;margin:0 0 12px">aivancity Tech Club · ' + (p.lang === 'fr' ? 'Montagne' : 'Mountain') + '</p>'
     + '<p>' + L.hi(esc(first)) + '</p>' + body
     + '<p style="margin:20px 0 28px"><a href="' + SITE + '/mountain#me" style="display:inline-block;background:#2e3a6e;color:#fff;text-decoration:none;font-weight:bold;padding:12px 20px;border-radius:999px">' + L.cta + ' →</a></p>'
+    + '<p style="font-size:12px;color:#8a817a;margin:0 0 8px">' + L.gdg + '</p>'
     + '<p style="font-size:12px;color:#8a817a;margin:0">' + L.off + (offUrl ? ' <a href="' + offUrl + '" style="color:#8a817a">' + L.offLink + '</a>' : '') + '</p></div>';
   return { subject, html };
 }
@@ -222,13 +244,14 @@ function doGet(e) {
   const q = (e && e.parameter) || {}, uid = String(q.u || ''), fr = q.l === 'fr';
   const ok = uid && q.s === sign(uid), on = q.on === '1';
   if (ok) { if (on) P.deleteProperty('off:' + uid); else P.setProperty('off:' + uid, '1'); }
-  const url = ScriptApp.getService().getUrl() + '?u=' + encodeURIComponent(uid) + '&s=' + q.s + '&l=' + (fr ? 'fr' : 'en');
+  const url = webappUrl() + '?u=' + encodeURIComponent(uid) + '&s=' + q.s + '&l=' + (fr ? 'fr' : 'en');
   const msg = !ok ? (fr ? 'Ce lien n’est pas valide.' : 'This link is not valid.')
     : on ? (fr ? 'C’est noté : vous recevrez à nouveau les e-mails du Climb Coach.' : 'Done: you will get the Climb Coach emails again.')
     : (fr ? 'C’est noté : vous ne recevrez plus ces e-mails. <a href="' + url + '&on=1">Les réactiver</a>' : 'Done: you won’t get these emails any more. <a href="' + url + '&on=1">Turn them back on</a>');
   return HtmlService.createHtmlOutput('<div style="font-family:Arial,sans-serif;max-width:480px;margin:60px auto;font-size:17px;line-height:1.5">'
     + '<p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6b625b">aivancity Tech Club</p><p>' + msg + '</p></div>').setTitle('aivancity Tech Club');
 }
+function webappUrl() { return WEBAPP_URL || String(ScriptApp.getService().getUrl() || '').replace(/\/dev$/, '/exec'); }
 function sign(uid) {
   let secret = P.getProperty('SECRET');
   if (!secret) { secret = Utilities.getUuid() + Utilities.getUuid(); P.setProperty('SECRET', secret); }   // made on first use (preview can run before setup)

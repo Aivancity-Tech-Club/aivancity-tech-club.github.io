@@ -469,9 +469,8 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.proof is string && request.resource.data.proof.size() < 500;
 
-      // 3) Organizers record results for other members (never for themselves).
+      // 3) Organizers record results for members, themselves included (recordedBy shows who did it, on /pulse).
       allow create: if isOrganizer()
-        && request.resource.data.uid != request.auth.uid
         && request.resource.data.recordedBy == request.auth.uid;
 
       // 4) Village Board mission confirmed by the member who posted it (fact id = "m_" + mission id, so once only).
@@ -491,9 +490,9 @@ service cloud.firestore {
         && request.resource.data.mentee == request.auth.uid
         && request.resource.data.recordedBy == request.auth.uid;
 
-      // 5) Organizers verify submissions from other members. Only the decision fields can change.
+      // 5) Organizers verify submitted proofs, their own included (verifiedBy shows who decided, on /pulse).
+      //    Only the decision fields can change.
       allow update: if isOrganizer()
-        && resource.data.uid != request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reason', 'verifiedBy', 'verifiedAt'])
         && request.resource.data.verifiedBy == request.auth.uid
         && request.resource.data.status in ['approved', 'rejected'];

@@ -156,7 +156,7 @@ function demoBackend() {
       state.facts.push({ id: 'd' + Date.now(), uid: 'you', type: 'attend', date, status: 'approved' }); save();
       return { ok: true, message: tr('m.checkin.ok', 'Checked in. +1 point.') };
     },
-    async reviewFact(id, ok, reason) { const f = state.facts.find(x => x.id === id); if (!f || f.uid === 'you') return { ok: false, code: 'err.generic' };
+    async reviewFact(id, ok, reason) { const f = state.facts.find(x => x.id === id); if (!f) return { ok: false, code: 'err.generic' };
       Object.assign(f, { status: ok ? 'approved' : 'rejected', reason: ok ? '' : String(reason || '').trim().slice(0, 300), verifiedBy: 'you', verifiedAt: Date.now() }); save(); return { ok: true }; },
     async submit(s) {
       if (!SUBMIT_TYPES.includes(s.type)) return { ok: false, message: tr('m.proof.badtype', 'That kind of proof is not on the list.') };
