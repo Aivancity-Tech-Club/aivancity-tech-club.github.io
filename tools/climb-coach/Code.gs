@@ -18,7 +18,8 @@ const SITE = 'https://aivancity-tech-club.github.io';
 const FROM_NAME = 'aivancity Tech Club';
 const GDG = 'https://gdg.community.dev/gdg-on-campus-aivancity-villejuif-france/';   // the club's GDG on Campus chapter page
 // Every idea in the emails must match rules/rules.yaml (who records what, what counts) and things that exist today.
-const ADMIN = 'victoria.alajemba@aivancity.education';   // gets the digest and the previews
+const ADMIN = 'victoria.alajemba@aivancity.education';   // gets the review email, the digest and the previews
+const REVIEWERS = [ADMIN];                                // organizers who get the review email; any one of them can approve the round
 // the web app's address, from Deploy → Manage deployments (it ends in /exec). The "turn these emails off" link uses it.
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyzTrbaDSCrHNj1hXlgIxoyJGCpEz8Qc7N6ldd1gcv-j8vYQMB5eA8A7ibneC95rLEp/exec';
 const EVERY_DAYS = 14;                                    // one email every two weeks
@@ -37,20 +38,27 @@ function preview() {
 /* ---------- 2. then run this once: it starts the daily timer (emails go out every two weeks) ---------- */
 function setup() {
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'run').forEach(t => ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger('run').timeBased().everyDays(1).atHour(9).create();
+  const t = ScriptApp.newTrigger('run').timeBased().everyDays(1).atHour(9).create();
+  P.setProperty('DAILY_TRIGGER', t.getUniqueId());
   if (!P.getProperty('SECRET')) P.setProperty('SECRET', Utilities.getUuid() + Utilities.getUuid());
-  Logger.log('Ready. The first round starts at the next run (around 9:00), then every ' + EVERY_DAYS + ' days.');
+  Logger.log('Ready. At the next run (around 9:00) the organizers get the first round to check; members get nothing until one approves it. Then every ' + EVERY_DAYS + ' days.');
   if (!WEBAPP_URL) Logger.log('Remember to deploy the web app (README step 6), or the "turn off" links will not work.');
 }
 
 /* ---------- the timer runs this every day ---------- */
 function run() {
   const lock = LockService.getScriptLock(); if (!lock.tryLock(5000)) return;
+  // remove one-off "send now" triggers that already fired (the daily one stays)
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'run' && !isDaily(t)).forEach(t => { try { ScriptApp.deleteTrigger(t); } catch (x) {} });
   try {
     let cycle = JSON.parse(P.getProperty('CYCLE') || 'null');
     const now = Date.now();
-    if (!cycle || (cycle.finished && now - cycle.start >= EVERY_DAYS * 864e5 - 3600e3)) cycle = { start: now, done: [], finished: false, skipped: [] };
-    if (cycle.finished) return;
+    // a new round every EVERY_DAYS: it starts with a review email to the organizers, and nothing goes to members until one approves
+    if (!cycle || (now - cycle.start >= EVERY_DAYS * 864e5 - 3600e3 && (cycle.finished || !cycle.approved))) {
+      cycle = { start: now, token: Utilities.getUuid(), approved: false, done: [], finished: false, skipped: [] };
+      save(cycle); review(load(), cycle); return;
+    }
+    if (!cycle.approved || cycle.finished) return;
     const ctx = load();
     for (const p of ctx.people) {
       if (cycle.done.includes(p.uid)) continue;
@@ -65,6 +73,34 @@ function run() {
     digest(ctx, cycle);
   } finally { lock.releaseLock(); }
 }
+
+/* ---------- the review email: who would get what, a few real samples, and one button to approve (or skip) the round ---------- */
+function review(ctx, cycle) {
+  const off = (p) => !!P.getProperty('off:' + p.uid);
+  const going = ctx.people.filter(p => p.email && !off(p)), noEmail = ctx.people.filter(p => !p.email), offList = ctx.people.filter(off);
+  const st = (p) => ctx.res.byUid[p.uid] || {};
+  // samples: one member not started yet, one climbing, one in each language when possible
+  const picks = [], add = (p) => { if (p && !picks.includes(p) && picks.length < 4) picks.push(p); };
+  add(going.find(p => !st(p).isMember && p.lang === 'fr')); add(going.find(p => !st(p).isMember && p.lang === 'en'));
+  add(going.find(p => st(p).isMember && p.lang === 'fr')); add(going.find(p => st(p).isMember && p.lang === 'en'));
+  going.forEach(add);
+  const link = (act) => webappUrl() + '?round=' + encodeURIComponent(cycle.token) + '&act=' + act + '&s=' + sign(act + ':' + cycle.token);
+  const btn = (href, label, main) => '<a href="' + href + '" style="display:inline-block;margin:0 8px 8px 0;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold;'
+    + (main ? 'background:#2e3a6e;color:#fff' : 'border:2px solid #2e3a6e;color:#2e3a6e') + '">' + label + '</a>';
+  const html = '<div style="font-family:Arial,sans-serif;max-width:640px">'
+    + '<h2 style="margin:0 0 8px">Climb Coach: a round is ready to check</h2>'
+    + '<p><b>' + going.length + '</b> members would get their email (' + going.filter(p => p.lang === 'fr').length + ' in French, ' + going.filter(p => p.lang === 'en').length + ' in English). '
+    + offList.length + ' turned the emails off. ' + noEmail.length + ' have no email on file.</p>'
+    + '<p>Nothing has been sent to members. Read the samples below. If they look right, approve and the emails go out within a few minutes. If something is wrong, skip this round and tell whoever maintains the script.</p>'
+    + '<p>' + btn(link('approve'), 'Approve and send', true) + btn(link('skip'), 'Skip this round', false) + '</p>'
+    + '<p style="font-size:13px;color:#57504a">Points are read again at sending time, so a member who checks in after this email will see the newer numbers.</p>'
+    + picks.map(p => { const m = build(ctx, p); return '<hr style="margin:24px 0"><p style="font-size:13px;color:#57504a;margin:0 0 4px">Sample for <b>' + esc(p.name) + '</b> (' + p.lang.toUpperCase() + ') · subject: <b>' + esc(m.subject) + '</b></p>'
+      + '<div style="border:1px solid #ddd;border-radius:12px">' + m.html + '</div>'; }).join('')
+    + '</div>';
+  MailApp.sendEmail({ to: REVIEWERS.join(','), subject: 'To check: Climb Coach round for ' + going.length + ' members', htmlBody: html, name: FROM_NAME });
+}
+
+function isDaily(t) { return P.getProperty('DAILY_TRIGGER') === t.getUniqueId(); }
 function save(cycle) { P.setProperty('CYCLE', JSON.stringify(cycle)); }
 
 /* ---------- digest for the organizers: new bandanas since last round, and who couldn't be reached ---------- */
@@ -241,7 +277,9 @@ function build(ctx, p) {
 
 /* ---------- "turn these emails off" (deployed as a web app; the link is signed so nobody can turn off someone else) ---------- */
 function doGet(e) {
-  const q = (e && e.parameter) || {}, uid = String(q.u || ''), fr = q.l === 'fr';
+  const q0 = (e && e.parameter) || {};
+  if (q0.round) return roundAnswer(q0);
+  const q = q0, uid = String(q.u || ''), fr = q.l === 'fr';
   const ok = uid && q.s === sign(uid), on = q.on === '1';
   if (ok) { if (on) P.deleteProperty('off:' + uid); else P.setProperty('off:' + uid, '1'); }
   const url = webappUrl() + '?u=' + encodeURIComponent(uid) + '&s=' + q.s + '&l=' + (fr ? 'fr' : 'en');
@@ -250,6 +288,22 @@ function doGet(e) {
     : (fr ? 'C’est noté : vous ne recevrez plus ces e-mails. <a href="' + url + '&on=1">Les réactiver</a>' : 'Done: you won’t get these emails any more. <a href="' + url + '&on=1">Turn them back on</a>');
   return HtmlService.createHtmlOutput('<div style="font-family:Arial,sans-serif;max-width:480px;margin:60px auto;font-size:17px;line-height:1.5">'
     + '<p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6b625b">aivancity Tech Club</p><p>' + msg + '</p></div>').setTitle('aivancity Tech Club');
+}
+// an organizer clicked "Approve and send" or "Skip this round" in the review email
+function roundAnswer(q) {
+  const page = (msg) => HtmlService.createHtmlOutput('<div style="font-family:Arial,sans-serif;max-width:480px;margin:60px auto;font-size:17px;line-height:1.5"><p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6b625b">Climb Coach</p><p>' + msg + '</p></div>').setTitle('Climb Coach');
+  const act = q.act === 'skip' ? 'skip' : 'approve';
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const cycle = JSON.parse(P.getProperty('CYCLE') || 'null');
+    if (!cycle || cycle.token !== q.round || q.s !== sign(act + ':' + q.round)) return page('This link is not valid, or a newer round has replaced it.');
+    if (cycle.finished) return page('This round is already finished.');
+    if (cycle.approved) return page('This round is already approved: the emails are going out.');
+    if (act === 'skip') { cycle.finished = true; cycle.skippedRound = true; save(cycle); return page('Skipped: no emails will go out for this round. The next round comes in ' + EVERY_DAYS + ' days.'); }
+    cycle.approved = true; cycle.approvedAt = Date.now(); save(cycle);
+  } finally { lock.releaseLock(); }
+  ScriptApp.newTrigger('run').timeBased().after(60 * 1000).create();   // send in about a minute, not at tomorrow's 9:00
+  return page('Approved. The emails go out in the next few minutes, and you will get the digest when they are done.');
 }
 function webappUrl() { return WEBAPP_URL || String(ScriptApp.getService().getUrl() || '').replace(/\/dev$/, '/exec'); }
 function sign(uid) {

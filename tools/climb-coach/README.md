@@ -9,7 +9,12 @@ Every two weeks, each member gets a short personal email:
 - a buddy request waiting for them, if any;
 - the next session.
 
-The organizer in `ADMIN` (top of `Code.gs`) gets a digest after each round: **who moved up a bandana** (for the
+**Nothing goes to members without an organizer's OK.** Every 14 days the organizers in `REVIEWERS` first get a review
+email with **every email attached** as a spreadsheet file (opens in Excel or Google Sheets: name, email, language,
+subject, full text). To leave someone out, click the link in the last column of their row. Then **Approve and send**:
+exactly the emails in the file go out a few minutes later. Or **Skip this round**.
+
+The organizer in `ADMIN` (top of `Code.gs`) also gets a digest after each round: **who moved up a bandana** (for the
 public shout-out) and who has no email on file. Members can turn the emails off with the link at the bottom.
 
 Points come from the site's own engine and rules, fetched from the live site, so the email always matches the
@@ -30,14 +35,15 @@ Gmail allows about 100 emails a day on a normal account; if there are more membe
 6. **Deploy → New deployment** → type **Web app** → Execute as **Me**, Who has access **Anyone** → **Deploy**.
    Copy the **Web app URL** (it ends in `/exec`) and paste it into `WEBAPP_URL` at the top of `Code.gs`, then **Save**.
    This makes the "turn these emails off" link work. Test it in a private window.
-7. Pick **`setup`** → **Run**. The first round goes out at the next 9:00 run, then every 14 days.
+7. Pick **`setup`** → **Run**. At the next 9:00 run the reviewers get the first round to check; then every 14 days.
 
 Check it in **Triggers** (clock icon: a daily `run`) and **Executions**.
 
 ## Change or stop it
 
 - **Stop:** Triggers → delete `run`. **Start again:** run `setup`.
-- **Who gets the digest:** `ADMIN`. **How often:** `EVERY_DAYS`.
+- **Who checks each round:** `REVIEWERS` (any one can approve). **Who gets the digest:** `ADMIN`. **How often:** `EVERY_DAYS`.
+- **Missed the review email?** Nothing goes out; the next round's review replaces it after 14 days.
 - **Someone wants the emails back:** the confirmation page after "turn off" has a link to turn them back on.
 
 ## What it touches
