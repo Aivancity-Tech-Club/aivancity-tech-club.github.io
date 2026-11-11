@@ -174,7 +174,7 @@ function demoBackend() {
       if (p.for && typeof p.for === 'string') post.for = p.for.slice(0, 128);
       if (p.kind !== 'week' && /^\d{4}-\d{2}-\d{2}$/.test(p.expires || '')) post.expires = p.expires;
       if (p.kind === 'event') Object.assign(post, { date: p.date || '', where: p.where || '' });
-      if (p.title_fr) post.title_fr = String(p.title_fr).slice(0, 90); if (p.body_fr) post.body_fr = String(p.body_fr).slice(0, 800);
+      if (p.title_fr) post.title_fr = String(p.title_fr).slice(0, 90); if (p.body_fr) post.body_fr = String(p.body_fr).slice(0, 2000);
       if (p.kind === 'week') Object.assign(post, { start: p.start, days: p.days || [] });
       if (p.id) { if (B.posts.some(x => x.id === p.id)) return { ok: true, skipped: true }; post.id = p.id; }
       B.posts.push(post); saveBoard(B); return { ok: true };
@@ -721,7 +721,7 @@ function firebaseBackend() {
       if (p.for && typeof p.for === 'string') doc.for = p.for.slice(0, 128);
       if (p.kind !== 'week' && /^\d{4}-\d{2}-\d{2}$/.test(p.expires || '')) doc.expires = p.expires;
       if (p.kind === 'event') Object.assign(doc, { date: p.date || '', where: p.where || '' });
-      if (p.title_fr) doc.title_fr = String(p.title_fr).slice(0, 90); if (p.body_fr) doc.body_fr = String(p.body_fr).slice(0, 800);
+      if (p.title_fr) doc.title_fr = String(p.title_fr).slice(0, 90); if (p.body_fr) doc.body_fr = String(p.body_fr).slice(0, 2000);
       if (p.kind === 'week') Object.assign(doc, { start: p.start, days: p.days || [] });
       try {
         if (p.id) {   // starter pack: fixed ids, so publishing twice never duplicates
