@@ -86,6 +86,9 @@ function ninjaSvg(rank, accessories) {
 
 async function create(opts) {
   const D = window.NW_DATA, L = D.layers, PEAKS = D.peaks;
+  // birds seen from the side (facing right; flipped when they fly left), with one wing that beats up and down
+  L.birdBody = '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="20" viewBox="0 0 44 20"><path d="M3,8 L9,10.5 L3,13 L10,12 Q17,14.5 27,13 Q32,12.5 35,10.5 L41,10 L35,8.6 Q32,7 28,8 Q17,8 10,10.2 Z" fill="#3b3f5c"/></svg>';
+  L.birdWing = '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="14" viewBox="0 0 26 14"><path d="M17,14 Q15,6 2,0.5 Q6,3 8,7 Q9,10 10,14 Z" fill="#3b3f5c"/></svg>';
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let motion = !reduceMotion, mode = opts.mode || modeForClock();
   const R = rng(42), rand = (a, b) => a + (b - a) * R();
@@ -93,7 +96,7 @@ async function create(opts) {
   const app = new PIXI.Application({ resizeTo: opts.container, antialias: true, backgroundColor: 0x79b8f2, autoDensity: true, resolution: Math.min(window.devicePixelRatio || 1, 2) });
   opts.container.appendChild(app.view);
 
-  const hiRes = ['pine0', 'pine1', 'pine2', 'broad', 'sakura', 'grass0', 'grass1', 'grass2', 'daisy', 'bell', 'fish', 'mermaid', 'tail', 'boat', 'oar', 'raft', 'bird', 'moon'];
+  const hiRes = ['pine0', 'pine1', 'pine2', 'broad', 'sakura', 'grass0', 'grass1', 'grass2', 'daisy', 'bell', 'fish', 'mermaid', 'tail', 'boat', 'oar', 'raft', 'bird', 'birdBody', 'birdWing', 'moon'];
   const tex = {};
   const scaleOf = (k) => (hiRes.includes(k) ? 2 : 1);
   const layerCache = await openTexCache(L);
@@ -499,11 +502,25 @@ async function create(opts) {
   }
   function birds() {
     const n = 4 + Math.floor(live() * 5), dir = live() < 0.5 ? 1 : -1, y = lrand(110, 300), sp = lrand(55, 85) * dir, flock = [];
-    for (let i = 0; i < n; i++) { const b = sprite(tex.bird, birdsL, (dir > 0 ? -60 : W + 60) - dir * (Math.abs(i - n / 2) * 26), y + Math.abs(i - n / 2) * 14 + lrand(-6, 6), 0.5, 0.5, lrand(0.42, 0.6)); b.s = b.scale.x; b.ph = lrand(0, 6); flock.push(b); }
+    const kB = tex.birdBody.k || 1, kW = tex.birdWing.k || 1;
+    for (let i = 0; i < n; i++) {
+      const c = new PIXI.Container(), s = lrand(0.42, 0.6);
+      c.x = (dir > 0 ? -60 : W + 60) - dir * (Math.abs(i - n / 2) * 26); c.y = y + Math.abs(i - n / 2) * 14 + lrand(-6, 6);
+      const body = new PIXI.Sprite(tex.birdBody); body.anchor.set(0.5); body.scale.set(1 / kB);
+      const wing = new PIXI.Sprite(tex.birdWing); wing.anchor.set(0.5, 1); wing.x = 2; wing.y = 1; wing.scale.set(1 / kW);
+      c.addChild(body, wing); c.scale.set(s * dir, s);   // the drawing faces right: mirror it for birds flying left
+      birdsL.addChild(c);
+      flock.push({ c, wing, ph: lrand(0, 6), beat: lrand(6, 8) });
+    }
     const t0 = now();
     events.push({ update() { const t = now() - t0;
-      for (const b of flock) { b.x += sp / 60; b.y += Math.sin(t * 1.3 + b.ph) * 0.15; b.scale.y = b.s * (0.25 + 0.75 * Math.abs(Math.sin(t * 6 + b.ph))); }
-      if (t > (W + 400) / Math.abs(sp)) { flock.forEach(b => b.destroy()); return false; } return true; } });
+      for (const b of flock) {
+        b.c.x += sp / 60; b.c.y += Math.sin(t * 1.3 + b.ph) * 0.15;
+        // flap, then glide a little: the wing goes up, down past the body, and back
+        const f = Math.sin(t * b.beat + b.ph), glide = Math.sin(t * 0.7 + b.ph) > 0.6;
+        b.wing.scale.y = (glide ? 0.35 : f) / kW;
+      }
+      if (t > (W + 400) / Math.abs(sp)) { flock.forEach(b => b.c.destroy({ children: true })); return false; } return true; } });
   }
   function shootingStar() {
     const s = sprite(streakTex, starsL, lrand(200, W - 400), lrand(40, 200), 1, 0.5, 1); s.scale.set(2.4, 1.2); s.rotation = lrand(0.25, 0.5); s.blendMode = PIXI.BLEND_MODES.ADD;

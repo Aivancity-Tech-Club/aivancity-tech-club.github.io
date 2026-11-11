@@ -131,6 +131,11 @@ Nothing to set up: it uses the `board` collection (comments live under each post
 - **Buddies' emails:** so buddies can reach each other, `private/{uid}` (the school email) can also be read by a buddy:
   whoever sends you a request shares their email with you, and yours is shared with them once you accept. Nobody else sees it.
 - **French version of board posts:** a post can carry `title_fr` and `body_fr` (optional; titles up to 90 characters, details up to 2000). People using the site in French see them.
+- **School addresses:** `@aivancity.education` and `@ccclx.tech` (BSc SYSNUM) can join. The list is `EMAIL_DOMAINS` in
+  `assets/platform/config.js` and `schoolEmail()` in `firestore.rules`; change both together.
+- **"My email isn't accepted":** when the student-list check blocks someone, the sign-up message links to `/feedback?topic=access`
+  (feedback topic `access`, with the email to check and reply to). Organizers see these on `/pulse` under **Email not accepted**,
+  and can add the address to the student list in one tap.
 - **"Interested" on the Village board (collection `interest`):** `interest/{postId}_{uid}` `{ post, uid, at }`. Members see
   who is interested in a post; each person adds or removes only their own. The board also shows "Recently on the board"
   (new posts, missions taken, finished, confirmed, and who is interested), and the same lines appear in Club activity on `/pulse`.

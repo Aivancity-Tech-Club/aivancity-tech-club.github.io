@@ -25,12 +25,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261111c">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261111c">
-  <link rel="stylesheet" href="assets/village.css?v=20261111c">
-  <script src="assets/i18n.js?v=20261111c"></script>
-  <script src="assets/analytics.js?v=20261111c" defer></script>
-  <script src="assets/halloween.js?v=20261111c" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261111h">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261111h">
+  <link rel="stylesheet" href="assets/village.css?v=20261111h">
+  <script src="assets/i18n.js?v=20261111h"></script>
+  <script src="assets/analytics.js?v=20261111h" defer></script>
+  <script src="assets/halloween.js?v=20261111h" defer></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -183,6 +183,7 @@
           <button type="button" class="new-pill" id="newPill" hidden></button>
           <p class="vb-count help" id="count" aria-live="polite"></p>
           <div class="cards" id="posts"></div>
+          <div id="fullView" hidden></div>
 
           <!-- one post, full details (a side panel on wide screens, a full-screen sheet on phones) -->
           <div class="vb-detail" id="detail" hidden>
@@ -205,13 +206,13 @@
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261111c"></script>
-  <script src="assets/schedule.js?v=20261111c"></script>
-  <script src="assets/sessions.js?v=20261111c"></script>
-  <script src="assets/platform/config.js?v=20261111c"></script>
-  <script src="assets/platform/engine.js?v=20261111c"></script>
-  <script src="assets/platform/signin.js?v=20261111c"></script>
-  <script src="assets/platform/data.js?v=20261111c"></script>
+  <script src="assets/js-yaml.min.js?v=20261111h"></script>
+  <script src="assets/schedule.js?v=20261111h"></script>
+  <script src="assets/sessions.js?v=20261111h"></script>
+  <script src="assets/platform/config.js?v=20261111h"></script>
+  <script src="assets/platform/engine.js?v=20261111h"></script>
+  <script src="assets/platform/signin.js?v=20261111h"></script>
+  <script src="assets/platform/data.js?v=20261111h"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -241,6 +242,10 @@
     const comments = {};
     const F = { kind: "", openOnly: false, mtype: "", q: "" };
     let openId = null;   // the post shown in the details panel
+    // ?view=<id>: one post on its own page (long posts link here with "See full details")
+    const viewId = new URLSearchParams(location.search).get("view");
+    const LONG = 1000;   // details longer than this are cut in the panel
+    const cut = (t, n) => { const x = String(t || ""); return x.length <= n ? x : x.slice(0, n).replace(/\s\S*$/, "") + "…"; };
     const TIMES = ["lt1", "1to3", "sessions", "ongoing"], LEVELS = ["all", "beginner", "intermediate", "advanced"];
     let armedDelete = null;
 
@@ -277,7 +282,7 @@
       const byId = Object.fromEntries(posts.map(p => [p.id, p]));
       const A = [];
       posts.filter(ok).forEach(p => {
-        if (p.kind !== "week") A.push({ t: p.at, p, txt: T("vb.feed.post", { name: fullName(p.by) }) });
+        if (p.kind !== "week") A.push({ t: p.at, p, txt: T("vb.feed.post", { name: AS.includes(p.as) ? T("vb.as." + p.as) : fullName(p.by) }) });   // team / council posts show the club, not the person
         if (p.kind === "mission" && p.takenBy && p.takenAtMs) A.push({ t: p.takenAtMs, p, txt: T("vb.feed.take", { name: fullName(p.takenBy) }) });
         if (p.kind === "mission" && p.takenBy && p.doneAtMs) A.push({ t: p.doneAtMs, p, txt: T("vb.feed.done", { name: fullName(p.takenBy) }) });
         if (p.kind === "mission" && p.status === "done" && p.confirmedAtMs) A.push({ t: p.confirmedAtMs, p, txt: T("vb.feed.ok", { name: fullName(p.takenBy) }) });
@@ -311,7 +316,19 @@
       const mine = posts.find(p => p.id === active);
       if (!mine || mine.takenBy !== me.uid || mine.status !== "taken") active = null;
       if (openId) comments[openId] = await data.loadComments(openId, isOrg);
+      if (viewId) comments[viewId] = await data.loadComments(viewId, isOrg);
+      // a background refresh must not move the page: keep the card at the top of the screen where it was
+      let anchor = null;
+      if (background && scrollY > 0) {
+        const c = [...document.querySelectorAll("#posts .card")].find(el => el.getBoundingClientRect().bottom > 80);
+        const a = c && c.querySelector("[data-open-post]");
+        if (a) anchor = { id: a.dataset.openPost, top: c.getBoundingClientRect().top };
+      }
       render();
+      if (anchor) {
+        const a = document.querySelector(`#posts [data-open-post="${CSS.escape(anchor.id)}"]`), c = a && a.closest(".card");
+        if (c) window.scrollBy(0, c.getBoundingClientRect().top - anchor.top);
+      }
     }
 
     // ---------- rendering ----------
@@ -400,7 +417,7 @@
       return weeks.find(p => weekState(p) === "now") || weeks.filter(p => weekState(p) === "next").sort((a, b) => (a.start < b.start ? -1 : 1))[0] || null;
     }
 
-    function postHTML(p) {
+    function postHTML(p, full = false) {
       const mineP = p.by === me.uid, rep = !!(p.reports || {})[me.uid];
       const kindLabel = p.kind === "mission" ? T("vb.k.mission") + " · " + T(MT_LABEL[p.mtype] || "vb.mt.help") : T("vb.k." + p.kind);
       const mp = p.kind === "mission" ? missionPts(p.mtype) : null;
@@ -416,9 +433,9 @@
           <button class="btn btn-ghost" type="submit">${esc(T("vb.a.comment"))}</button></form></div>`;
       return `<article class="post detail k-${esc(p.kind)}${p.hidden ? " is-hidden" : ""}" id="post-${p.id}">
         <div class="post-meta"><span class="chip kind">${esc(kindLabel)}</span>${p.kind === "week" ? weekChip(p) : ""}${ptsChip}${statusLine(p)}${flags}</div>
-        <h2 class="d-title" id="dTitle" tabindex="-1">${esc(tt(p))}</h2>
+        <h2 class="d-title" id="${full ? "fTitle" : "dTitle"}" tabindex="-1">${esc(tt(p))}</h2>
         ${facts(p)}${takenHint(p)}
-        ${when}${bb(p) ? `<p class="vb-body">${esc(bb(p)).replace(/\n/g, "<br>")}</p>` : ""}${p.outcome ? `<p class="vb-outcome"><b>${esc(T("vb.done.when"))}</b> ${esc(p.outcome)}</p>` : ""}${p.kind === "week" ? weekHTML(p) : ""}${link}${autoHidden}
+        ${when}${bb(p) ? `<p class="vb-body">${esc(full || bb(p).length <= LONG ? bb(p) : cut(bb(p), 700)).replace(/\n/g, "<br>")}</p>${!full && bb(p).length > LONG ? `<p><a class="btn btn-ghost vb-full" href="?view=${encodeURIComponent(p.id)}">${esc(T("vb.full"))} →</a></p>` : ""}` : ""}${p.outcome ? `<p class="vb-outcome"><b>${esc(T("vb.done.when"))}</b> ${esc(p.outcome)}</p>` : ""}${p.kind === "week" ? weekHTML(p) : ""}${link}${autoHidden}
         ${interestHTML(p)}
         <div class="post-foot">
           <span class="by">${byHTML(p, true)} · ${esc(rel(p.at))}${p.editedAt ? ` · <span class="help">${esc(T("vb.edited"))}</span>` : ""}</span>
@@ -468,6 +485,14 @@
       </article>`;
     }
     function render() {
+      if (viewId) {   // one post on its own page
+        $("board").classList.add("vb-fullmode");
+        const p = posts.find(x => x.id === viewId);
+        $("fullView").hidden = false;
+        $("fullView").innerHTML = `<p><a href="/village" class="vb-back">← ${esc(T("vb.back"))}</a></p>` + (p ? postHTML(p, true) : `<p class="vb-empty">${esc(T("vb.view.gone"))}</p>`);
+        if (p) document.title = tt(p) + " · aivancity Tech Club";
+        return;
+      }
       renderHow(); renderFilters();
       const mine = posts.find(p => p.id === active);
       $("mine").innerHTML = mine ? `<div class="mine"><p class="eyebrow" style="margin:0">${esc(T("vb.mine.h"))}</p>${cardHTML(mine, "is-mine")}</div>` : "";
@@ -700,7 +725,7 @@
       setTimeout(() => { flash = new Set(); document.querySelectorAll("#posts .is-new").forEach(x => x.classList.remove("is-new")); }, 2500);
     });
     // check for new posts every minute while the page is open, and when you come back to the tab
-    const poll = async () => { if (!me || !me.email || $("board").hidden || document.visibilityState !== "visible" || openId) return; try { await refresh(true); } catch (e) {} };
+    const poll = async () => { if (!me || !me.email || $("board").hidden || document.visibilityState !== "visible" || openId || viewId) return; try { await refresh(true); } catch (e) {} };
     setInterval(poll, 60e3); document.addEventListener("visibilitychange", poll);
 
     const err = await ready;

@@ -16,6 +16,8 @@ window.CLUB_PLATFORM = {
        storageBucket: "….appspot.com", messagingSenderId: "…", appId: "…"
      }, */
   EMAIL_DOMAIN: "aivancity.education",
+  // every school address that can join (BSc SYSNUM students have @ccclx.tech addresses). Keep in step with schoolEmail() in firestore.rules.
+  EMAIL_DOMAINS: ["aivancity.education", "ccclx.tech"],
   /* How new accounts are confirmed:
      "none"      = no waiting: sending the Join form makes the person a member straight away (organizers can still
                    refuse or remove someone afterwards). Must match instantJoin() in firestore.rules (true).

@@ -46,7 +46,8 @@ function cleanEvent(e) {
     autoConfirm: e.autoConfirm !== false,
   };
 }
-const validEmail = (e) => new RegExp('^[^@\\s]+@' + DOMAIN.replace(/\./g, '\\.') + '$', 'i').test(String(e || '').trim());
+const DOMAINS = (CFG.EMAIL_DOMAINS || [DOMAIN]).map(d => String(d).toLowerCase());
+const validEmail = (e) => { const m = String(e || '').trim().toLowerCase().match(/^[^@\s]+@([^@\s]+)$/); return !!m && DOMAINS.includes(m[1]); };
 
 /* ================= demo backend ================= */
 // one document per pair, whoever asked first: the two ids in alphabetical order
@@ -142,6 +143,8 @@ function demoBackend() {
     async ensureMember() { return this.getProfile('you'); },
     async inviteLink() { return null; },
     async sendFeedback() { return { ok: true, demo: true }; },
+    async loadAccessRequests() { const X = extra(); if (!X.access) { X.access = [{ id: 'f1', contact: 'new.student@aivancity.education', message: 'Marie Dupont, PGE 1 FR. I started in October.', lang: 'en', at: Date.now() - 864e5 }]; saveExtra(X); } return X.access.slice(); },
+    async closeFeedback(id) { const X = extra(); X.access = (X.access || []).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
     async loadMembers() { return state.members; }, async loadFacts() { return state.facts; },
     async getProfile(uid) { return state.members.find(m => m.uid === uid) || null; },
     async saveProfile(p) { Object.assign(state.members.find(m => m.uid === 'you'), p); save(); },
@@ -662,6 +665,13 @@ function firebaseBackend() {
       try { const d = await db.collection('invites').doc('whatsapp').get({ source: 'server' }); return d.exists ? (d.data().link || null) : null; }
       catch (e) { return null; }
     },
+    // organizers: "my email isn't accepted" requests sent from the feedback form
+    async loadAccessRequests() {
+      try { const s = await db.collection('feedback').where('topic', '==', 'access').get();
+        return s.docs.map(d => { const x = d.data(); return { id: d.id, contact: x.contact || '', message: x.message || '', lang: x.lang, at: tsMs(x.createdAt) }; }).sort((a, b) => b.at - a.at); }
+      catch (e) { return []; }
+    },
+    async closeFeedback(id) { try { await db.collection('feedback').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
     async sendFeedback(f) {
       const doc = { topic: f.topic, message: f.message, lang: f.lang === 'fr' ? 'fr' : 'en', createdAt: firebase.firestore.FieldValue.serverTimestamp() };
       if (f.rating) doc.rating = f.rating;

@@ -23,10 +23,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261111c">
-  <script src="assets/i18n.js?v=20261111c"></script>
-  <script src="assets/analytics.js?v=20261111c" defer></script>
-  <script src="assets/halloween.js?v=20261111c" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261111h">
+  <script src="assets/i18n.js?v=20261111h"></script>
+  <script src="assets/analytics.js?v=20261111h" defer></script>
+  <script src="assets/halloween.js?v=20261111h" defer></script>
 </head>
 <body data-i18n-title="fb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -61,26 +61,27 @@
       <div class="wrap form-layout">
         <div class="form-card" aria-live="polite">
           <form id="fbForm" class="form-grid" novalidate>
+            <p class="notice info" id="accessNote" hidden data-i18n="fb.access.note"></p>
             <fieldset>
               <legend data-i18n="fb.about">What is it about?</legend>
               <div class="choices" id="topics"></div>
             </fieldset>
-            <fieldset>
+            <fieldset id="ratingSet">
               <legend><span data-i18n="fb.rating">How is the club going for you?</span> <span class="help" style="font-weight:400" data-i18n="fb.rating.skip">Optional</span></legend>
               <div class="rating" id="rating"></div>
             </fieldset>
             <div class="field">
               <label for="message" data-i18n="fb.message">Your message</label>
-              <textarea class="textarea" id="message" maxlength="2000" required data-i18n-attr="placeholder:fb.message.ph"></textarea>
+              <textarea class="textarea" id="message" maxlength="2000" required></textarea>
               <p class="help"><span id="count">0</span> / 2000</p>
             </div>
             <div class="field">
-              <label for="contact" data-i18n="fb.contact">Email, if you'd like a reply (optional)</label>
+              <label for="contact">Email, if you'd like a reply (optional)</label>
               <input class="input" id="contact" type="email" autocomplete="email" maxlength="120" aria-describedby="anonHelp">
               <p class="help" id="anonHelp" data-i18n="fb.anon"></p>
             </div>
             <p class="notice bad form-msg" id="fbMsg" role="alert"></p>
-            <div><button class="btn btn-primary" type="submit" id="fbBtn" data-i18n="fb.send">Send feedback</button></div>
+            <div><button class="btn btn-primary" type="submit" id="fbBtn">Send feedback</button></div>
           </form>
           <div id="fbDone" class="form-grid" hidden>
             <p class="notice ok" id="fbDoneMsg"></p>
@@ -107,12 +108,12 @@
     </div>
   </footer>
 
-  <script src="assets/platform/config.js?v=20261111c"></script>
-  <script src="assets/platform/data.js?v=20261111c"></script>
+  <script src="assets/platform/config.js?v=20261111h"></script>
+  <script src="assets/platform/data.js?v=20261111h"></script>
   <script>
   (() => {
     const $ = id => document.getElementById(id), T = k => I18N.t(k);
-    const TOPICS = ["sessions", "platform", "club", "stopped", "idea", "problem", "other"];
+    const TOPICS = ["access", "sessions", "platform", "club", "stopped", "idea", "problem", "other"];
     const pre = new URLSearchParams(location.search).get("topic");
     $("topics").innerHTML = TOPICS.map(k => `<label class="choice"><input type="radio" name="topic" value="${k}"${k === (TOPICS.includes(pre) ? pre : "club") ? " checked" : ""}><span data-i18n="fb.t.${k}"></span></label>`).join("");
     $("rating").innerHTML = [1, 2, 3, 4, 5].map(n => `<label class="choice"><input type="radio" name="rating" value="${n}"><span><b>${n}</b><small data-i18n="fb.r${n}"></small></span></label>`).join("");
@@ -121,6 +122,18 @@
     let last = null;
     $("rating").addEventListener("click", e => { const i = e.target.closest("input"); if (!i) return; if (last === i.value) { i.checked = false; last = null; } else last = i.value; });
     $("message").addEventListener("input", () => { $("count").textContent = $("message").value.length; });
+    // "My email isn't accepted": a short note, no rating, and an email to reply to (prefilled with the address they tried)
+    const isAccess = () => ((document.querySelector("[name=topic]:checked") || {}).value === "access");
+    function syncTopic() {
+      const a = isAccess();
+      $("accessNote").hidden = !a; $("ratingSet").hidden = a;
+      $("contact").required = a;
+      $("contact").previousElementSibling.textContent = T(a ? "fb.contact.access" : "fb.contact");
+      $("message").placeholder = T(a ? "fb.access.ph" : "fb.message.ph");
+      $("anonHelp").hidden = a; $("fbBtn").textContent = T(a ? "fb.access.send" : "fb.send");
+      if (a && !$("contact").value) { try { $("contact").value = sessionStorage.getItem("nw-access-email") || ""; } catch (e) {} }
+    }
+    $("topics").addEventListener("change", syncTopic); addEventListener("langchange", syncTopic); syncTopic();
 
     const data = ClubData.create();
     const ready = data.init().catch(e => e);
@@ -131,13 +144,14 @@
       const message = $("message").value.trim(), contact = $("contact").value.trim();
       $("message").removeAttribute("aria-invalid");
       if (!message) { msg(T("fb.err.message")); $("message").setAttribute("aria-invalid", "true"); $("message").focus(); return; }
+      if (isAccess() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) { msg(T("fb.err.contact")); $("contact").setAttribute("aria-invalid", "true"); $("contact").focus(); return; }
       msg("");
       const btn = $("fbBtn"); btn.disabled = true;
       const err = await ready;
       if (err instanceof Error) { msg(T("err.generic") + " (" + err.message + ")"); btn.disabled = false; return; }
       const r = await data.sendFeedback({
         topic: (document.querySelector("[name=topic]:checked") || {}).value || "other",
-        rating: Number((document.querySelector("[name=rating]:checked") || {}).value) || 0,
+        rating: isAccess() ? 0 : Number((document.querySelector("[name=rating]:checked") || {}).value) || 0,
         message, contact, lang: I18N.lang,
       });
       btn.disabled = false;

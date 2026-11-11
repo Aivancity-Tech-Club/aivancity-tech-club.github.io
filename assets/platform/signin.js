@@ -100,7 +100,7 @@ function mount(el, data, opts = {}) {
   };
   function msgHTML() {
     if (!msg || msg.field) return '';
-    const act = msg.offerCreate ? ` <a href="#" data-si="join">${esc(T('join.withthis'))}</a>` : msg.offerSignin ? ` <a href="#" data-si="signin">${esc(T('join.signin.instead'))}</a>` : '';
+    const act = msg.offerAccess ? ` <a href="/feedback?topic=access">${esc(T('join.access.link'))} →</a>` : msg.offerCreate ? ` <a href="#" data-si="join">${esc(T('join.withthis'))}</a>` : msg.offerSignin ? ` <a href="#" data-si="signin">${esc(T('join.signin.instead'))}</a>` : '';
     return `<p class="si-msg ${msg.ok ? 'ok' : 'bad'}" role="${msg.ok ? 'status' : 'alert'}">${esc(msg.text)}${act}</p>`;
   }
 
@@ -285,6 +285,8 @@ function mount(el, data, opts = {}) {
       settling = false;
       if (opts.onFail) opts.onFail();
       if (/email-already-in-use/.test(r.code || '')) { mode = 'signin'; msg = { text: T('join.exists') }; return; }
+      // not on the school's student list: point them to the form to ask the organizers (the address is kept for that form, never in the link)
+      if (r.code === 'join.notstudent') { try { sessionStorage.setItem('nw-access-email', email); } catch (e) {} msg = { text: T('join.notstudent'), offerAccess: true }; return; }
       msg = { text: r.message || T('err.generic') };
     });
   }

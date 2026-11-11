@@ -256,3 +256,11 @@ details.elder-tools > p, details.elder-tools > button { margin: 0 0 10px; }
 .fr-box summary { cursor: pointer; font-weight: 700; }
 .fr-box[open] { display: grid; gap: 10px; }
 .fr-box .help { margin: 4px 0 0; }
+
+/* one post on its own page (?view=id) */
+.vb-fullmode > :not(#fullView):not(#msg) { display: none !important; }
+#fullView { max-width: 760px; margin: 0 auto; }
+#fullView .post { padding: clamp(18px, 4vw, 32px); border: var(--stroke) solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: 6px 6px 0 var(--line); }
+#fullView .vb-body { line-height: 1.65; }
+.vb-back { font-weight: 700; }
+.vb-fullmode [data-act="edit"] { display: none; }   /* editing happens on the board */

@@ -6,10 +6,11 @@ service cloud.firestore {
   match /databases/{db}/documents {
 
     function signedIn() { return request.auth != null; }
-    // Only @aivancity.education accounts: verified by the email link, or signed in with Microsoft.
+    // Only school accounts (@aivancity.education, or @ccclx.tech for BSc SYSNUM students): verified by the email link, or signed in with Microsoft.
+    // Keep in step with EMAIL_DOMAINS in assets/platform/config.js.
     // The Microsoft app is registered single-tenant (aivancity's directory only), so Microsoft vouches for the address.
     // An organizer can also confirm someone by hand (confirmed/{uid}) when the confirmation email never arrives.
-    function schoolEmail() { return signedIn() && request.auth.token.email.matches('.*@aivancity[.]education$'); }
+    function schoolEmail() { return signedIn() && request.auth.token.email.lower().matches('.*@(aivancity[.]education|ccclx[.]tech)$'); }
     // A school account counts once its email is confirmed, OR (while the school's email blocks our confirmation emails)
     // once an organizer has approved it on /pulse (confirmed/{uid}). An organizer can also refuse an account (blocked/{uid}).
     // Joining without waiting: true = any @aivancity.education account counts straight away (organizers can still refuse an
@@ -128,7 +129,7 @@ service cloud.firestore {
     // Feedback (the /feedback form). Anyone can send it, signed in or not; only organizers can read it.
     match /feedback/{id} {
       allow create: if request.resource.data.keys().hasOnly(['topic', 'rating', 'message', 'contact', 'lang', 'createdAt'])
-        && request.resource.data.topic in ['sessions', 'platform', 'club', 'stopped', 'idea', 'problem', 'other']
+        && request.resource.data.topic in ['access', 'sessions', 'platform', 'club', 'stopped', 'idea', 'problem', 'other']
         && request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 2000
         && (!('rating' in request.resource.data) || (request.resource.data.rating is int && request.resource.data.rating >= 1 && request.resource.data.rating <= 5))
         && (!('contact' in request.resource.data) || (request.resource.data.contact is string && request.resource.data.contact.size() <= 120))
