@@ -250,3 +250,9 @@ details.elder-tools > p, details.elder-tools > button { margin: 0 0 10px; }
 .vb-feed li a { font-weight: 700; }
 .vb-feed small { flex: none; color: var(--ink-soft); }
 @media (max-width: 560px) { .vb-feed li { flex-direction: column; gap: 2px; } }
+
+/* optional French version in the post form */
+.fr-box { border: 1.5px dashed color-mix(in srgb, var(--line) 40%, transparent); border-radius: 14px; padding: 10px 14px; }
+.fr-box summary { cursor: pointer; font-weight: 700; }
+.fr-box[open] { display: grid; gap: 10px; }
+.fr-box .help { margin: 4px 0 0; }

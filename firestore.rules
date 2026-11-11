@@ -193,12 +193,17 @@ service cloud.firestore {
       allow delete: if (isMember() && resource.data.uid == request.auth.uid) || isOrganizer();
     }
 
+    // optional French version of a post's title and details
+    function frOk(d) {
+      return d.get('title_fr', '') is string && d.get('title_fr', '').size() <= 90 && d.get('body_fr', '') is string && d.get('body_fr', '').size() <= 800;
+    }
     match /board/{id} {
       allow get, list: if isMember() && (resource.data.hidden == false || isOrganizer());
 
       allow create: if isMember()
         && request.resource.data.by == request.auth.uid
-        && request.resource.data.keys().hasOnly(['kind', 'title', 'body', 'link', 'by', 'createdAt', 'hidden', 'reports', 'mtype', 'status', 'takenBy', 'takenAt', 'date', 'where', 'start', 'days', 'outcome', 'time', 'level', 'skills', 'as', 'expires', 'for'])
+        && request.resource.data.keys().hasOnly(['kind', 'title', 'body', 'link', 'by', 'createdAt', 'hidden', 'reports', 'mtype', 'status', 'takenBy', 'takenAt', 'date', 'where', 'start', 'days', 'outcome', 'time', 'level', 'skills', 'as', 'expires', 'for', 'title_fr', 'body_fr'])
+        && frOk(request.resource.data)
         && request.resource.data.kind in ['mission', 'event', 'oss', 'week']
         && request.resource.data.get('outcome', '') is string && request.resource.data.get('outcome', '').size() <= 300
         && request.resource.data.get('time', 'lt1') in ['lt1', '1to3', 'sessions', 'ongoing']
@@ -224,7 +229,8 @@ service cloud.firestore {
       // the author edits the text (a mission only while it's still open), or closes their own open mission
       allow update: if isMember() && resource.data.by == request.auth.uid && resource.data.hidden == false
         && (resource.data.kind != 'mission' || resource.data.status == 'open')
-        && onlyKeys(['title', 'body', 'link', 'date', 'where', 'status', 'start', 'days', 'outcome', 'time', 'level', 'skills', 'expires', 'editedAt'])
+        && onlyKeys(['title', 'body', 'link', 'date', 'where', 'status', 'start', 'days', 'outcome', 'time', 'level', 'skills', 'expires', 'editedAt', 'title_fr', 'body_fr'])
+        && frOk(request.resource.data)
         && (request.resource.data.get('editedAt', null) == resource.data.get('editedAt', null) || request.resource.data.editedAt == request.time)
         && request.resource.data.get('outcome', '') is string && request.resource.data.get('outcome', '').size() <= 300
         && request.resource.data.get('time', 'lt1') in ['lt1', '1to3', 'sessions', 'ongoing']

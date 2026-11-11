@@ -25,12 +25,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261111a">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261111a">
-  <link rel="stylesheet" href="assets/village.css?v=20261111a">
-  <script src="assets/i18n.js?v=20261111a"></script>
-  <script src="assets/analytics.js?v=20261111a" defer></script>
-  <script src="assets/halloween.js?v=20261111a" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261111b">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261111b">
+  <link rel="stylesheet" href="assets/village.css?v=20261111b">
+  <script src="assets/i18n.js?v=20261111b"></script>
+  <script src="assets/analytics.js?v=20261111b" defer></script>
+  <script src="assets/halloween.js?v=20261111b" defer></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -143,6 +143,13 @@
               <input class="input" id="pTitle" maxlength="90" data-i18n-attr="placeholder:vb.form.title.ph" required></div>
             <div class="field"><label for="pBody" data-i18n="vb.form.body">Details</label>
               <textarea class="textarea" id="pBody" maxlength="800" data-i18n-attr="placeholder:vb.form.body.ph"></textarea></div>
+            <details class="field fr-box" id="frBox"><summary data-i18n="vb.form.fr">Add a French version (optional)</summary>
+              <p class="help" data-i18n="vb.form.fr.help">People who use the site in French will see this instead.</p>
+              <div class="field"><label for="pTitleFr" data-i18n="vb.form.title.fr">Title in French</label>
+                <input class="input" id="pTitleFr" maxlength="90" lang="fr"></div>
+              <div class="field"><label for="pBodyFr" data-i18n="vb.form.body.fr">Details in French</label>
+                <textarea class="textarea" id="pBodyFr" maxlength="800" lang="fr"></textarea></div>
+            </details>
             <div id="missionFields" class="form-grid" hidden>
               <div class="field"><label for="pOutcome" data-i18n="vb.form.outcome">Done when…</label>
                 <input class="input" id="pOutcome" maxlength="300" data-i18n-attr="placeholder:vb.form.outcome.ph"></div>
@@ -198,13 +205,13 @@
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261111a"></script>
-  <script src="assets/schedule.js?v=20261111a"></script>
-  <script src="assets/sessions.js?v=20261111a"></script>
-  <script src="assets/platform/config.js?v=20261111a"></script>
-  <script src="assets/platform/engine.js?v=20261111a"></script>
-  <script src="assets/platform/signin.js?v=20261111a"></script>
-  <script src="assets/platform/data.js?v=20261111a"></script>
+  <script src="assets/js-yaml.min.js?v=20261111b"></script>
+  <script src="assets/schedule.js?v=20261111b"></script>
+  <script src="assets/sessions.js?v=20261111b"></script>
+  <script src="assets/platform/config.js?v=20261111b"></script>
+  <script src="assets/platform/engine.js?v=20261111b"></script>
+  <script src="assets/platform/signin.js?v=20261111b"></script>
+  <script src="assets/platform/data.js?v=20261111b"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -251,6 +258,8 @@
       return f.format(Math.round(d / 86400), "day");
     };
     const stale = (p) => p.status === "taken" && Date.now() - p.takenAtMs > 7 * DAY;
+    // a post can have a French version (title_fr, body_fr): shown when the site is in French
+    const tt = (p) => (I18N.lang === "fr" && p.title_fr ? p.title_fr : p.title), bb = (p) => (I18N.lang === "fr" && p.body_fr ? p.body_fr : p.body);
     // who said "Interested" on a post, oldest first
     const fans = (id) => interest.filter(x => x.post === id).sort((a, b) => a.at - b.at).map(x => x.uid);
     const names3 = (uids) => { const n = uids.map(nameOf); return n.length <= 6 ? n.join(", ") : n.slice(0, 6).join(", ") + " " + T("vb.int.more", { n: n.length - 6 }); };
@@ -279,7 +288,7 @@
     function renderFeed() {
       const items = feedItems(), shown = items.slice(0, feedOpen ? 30 : 5);
       $("feed").innerHTML = items.length ? `<section class="vb-feed" aria-labelledby="feedH"><h2 id="feedH">${esc(T("vb.feed.h"))}</h2>
-        <ul>${shown.map(x => `<li><span>${esc(x.txt.charAt(0).toUpperCase() + x.txt.slice(1))} <a href="?post=${encodeURIComponent(x.p.id)}" data-open-post="${esc(x.p.id)}">${esc(x.p.title)}</a></span><small>${esc(rel(x.t))}</small></li>`).join("")}</ul>
+        <ul>${shown.map(x => `<li><span>${esc(x.txt.charAt(0).toUpperCase() + x.txt.slice(1))} <a href="?post=${encodeURIComponent(x.p.id)}" data-open-post="${esc(x.p.id)}">${esc(tt(x.p))}</a></span><small>${esc(rel(x.t))}</small></li>`).join("")}</ul>
         ${items.length > 5 ? `<button type="button" class="linkbtn" id="feedMore" aria-expanded="${feedOpen}">${esc(T(feedOpen ? "vb.feed.less" : "vb.feed.more"))}</button>` : ""}</section>` : "";
     }
 
@@ -407,9 +416,9 @@
           <button class="btn btn-ghost" type="submit">${esc(T("vb.a.comment"))}</button></form></div>`;
       return `<article class="post detail k-${esc(p.kind)}${p.hidden ? " is-hidden" : ""}" id="post-${p.id}">
         <div class="post-meta"><span class="chip kind">${esc(kindLabel)}</span>${p.kind === "week" ? weekChip(p) : ""}${ptsChip}${statusLine(p)}${flags}</div>
-        <h2 class="d-title" id="dTitle" tabindex="-1">${esc(p.title)}</h2>
+        <h2 class="d-title" id="dTitle" tabindex="-1">${esc(tt(p))}</h2>
         ${facts(p)}${takenHint(p)}
-        ${when}${p.body ? `<p class="vb-body">${esc(p.body).replace(/\n/g, "<br>")}</p>` : ""}${p.outcome ? `<p class="vb-outcome"><b>${esc(T("vb.done.when"))}</b> ${esc(p.outcome)}</p>` : ""}${p.kind === "week" ? weekHTML(p) : ""}${link}${autoHidden}
+        ${when}${bb(p) ? `<p class="vb-body">${esc(bb(p)).replace(/\n/g, "<br>")}</p>` : ""}${p.outcome ? `<p class="vb-outcome"><b>${esc(T("vb.done.when"))}</b> ${esc(p.outcome)}</p>` : ""}${p.kind === "week" ? weekHTML(p) : ""}${link}${autoHidden}
         ${interestHTML(p)}
         <div class="post-foot">
           <span class="by">${byHTML(p, true)} · ${esc(rel(p.at))}${p.editedAt ? ` · <span class="help">${esc(T("vb.edited"))}</span>` : ""}</span>
@@ -450,10 +459,10 @@
         p.hidden ? `<span class="chip">${esc(T("vb.hidden.tag"))}</span>` : "",
       ].join("");
       const today_ = p.kind === "week" ? (p.days || [])[Math.round((new Date(today + "T12:00") - new Date(p.start + "T12:00")) / DAY)] : null;
-      const sub = today_ ? `${T("vb.week.today")}: ${today_.title}` : p.kind === "event" && p.date ? `${fmtDate(p.date)}${p.where ? " · " + p.where : ""}` : summary(p.body);
+      const sub = today_ ? `${T("vb.week.today")}: ${today_.title}` : p.kind === "event" && p.date ? `${fmtDate(p.date)}${p.where ? " · " + p.where : ""}` : summary(bb(p));
       return `<article class="card k-${esc(p.kind)} ${extraCls}${p.hidden ? " is-hidden" : ""}">
         <div class="post-meta">${meta}</div>
-        <h3><a href="?post=${encodeURIComponent(p.id)}" data-open-post="${esc(p.id)}">${esc(p.title)}</a></h3>
+        <h3><a href="?post=${encodeURIComponent(p.id)}" data-open-post="${esc(p.id)}">${esc(tt(p))}</a></h3>
         ${sub ? `<p class="card-sub">${esc(sub)}</p>` : ""}
         <p class="by">${byHTML(p, false)} · ${esc(rel(p.at))}</p>
       </article>`;
@@ -472,7 +481,7 @@
         .filter(p => (F.kind === "week") === pastWeek(p) || (p.kind !== "week"))
         .filter(p => !F.openOnly || (p.kind === "mission" && p.status === "open" && !expired(p)))
         .filter(p => !F.mtype || (p.kind === "mission" && p.mtype === F.mtype))
-        .filter(p => !q || [p.title, p.body, p.outcome, (p.skills || []).join(" ")].join(" ").toLowerCase().includes(q));
+        .filter(p => !q || [p.title, p.body, p.title_fr, p.body_fr, p.outcome, (p.skills || []).join(" ")].join(" ").toLowerCase().includes(q));
       $("count").textContent = F.q || F.kind || F.openOnly || F.mtype ? T("vb.count", { n: list.length }) : "";
       list.sort((a, b) => b.at - a.at);   // newest first
       $("posts").innerHTML = list.map(p => cardHTML(p, flash.has(p.id) ? "is-new" : "")).join("") || `<p class="vb-empty">${esc(T(F.q ? "vb.noresults" : "vb.empty"))}</p>`;
@@ -609,6 +618,7 @@
       $("pTime").value = p.time || "1to3"; $("pLevel").value = p.level || "all";
       syncForm();
       $("pTitle").value = p.title || ""; $("pBody").value = p.body || ""; $("pLink").value = p.link || "";
+      $("pTitleFr").value = p.title_fr || ""; $("pBodyFr").value = p.body_fr || ""; $("frBox").open = !!(p.title_fr || p.body_fr);
       $("pOutcome").value = p.outcome || ""; $("pSkills").value = (p.skills || []).join(", ");
       $("pDate").value = p.date || ""; $("pWhere").value = p.where || ""; $("pExpires").value = p.expires || "";
       if (p.kind === "week") { $("wStart").value = p.start || ""; (p.days || []).forEach((d, i) => { const t = document.querySelector(`[data-wt="${i}"]`), l = document.querySelector(`[data-wl="${i}"]`); if (t) t.value = d.title || ""; if (l) l.value = d.link || ""; }); }
@@ -620,7 +630,8 @@
       const p = { kind: document.querySelector("[name=kind]:checked").value, mtype: (document.querySelector("[name=mtype]:checked") || {}).value,
         expires: $("pExpires").value,
         as: isOrg ? ((document.querySelector("[name=as]:checked") || {}).value || "") : "",
-        title: $("pTitle").value.trim(), body: $("pBody").value.trim(), link: $("pLink").value.trim(), date: $("pDate").value, where: $("pWhere").value.trim() };
+        title: $("pTitle").value.trim(), body: $("pBody").value.trim(), link: $("pLink").value.trim(), date: $("pDate").value, where: $("pWhere").value.trim(),
+        title_fr: $("pTitleFr").value.trim(), body_fr: $("pBodyFr").value.trim() };
       if (p.title.length < 3) { say($("formMsg"), T("vb.err.title")); $("pTitle").focus(); return; }
       if (p.kind === "mission") {
         p.outcome = $("pOutcome").value.trim(); p.time = $("pTime").value; p.level = $("pLevel").value;
@@ -638,7 +649,7 @@
       }
       if (editingPost) {
         // only what the author may change: never the kind, the mission type or who it's posted as
-        const patch = { title: p.title, body: p.body, link: p.link };
+        const patch = { title: p.title, body: p.body, link: p.link, title_fr: p.title_fr, body_fr: p.body_fr };
         if (p.kind === "mission") Object.assign(patch, { outcome: p.outcome, time: p.time, level: p.level, skills: p.skills });
         if (p.kind === "event") Object.assign(patch, { date: p.date, where: p.where });
         if (p.kind === "week") Object.assign(patch, { start: p.start, days: p.days });
