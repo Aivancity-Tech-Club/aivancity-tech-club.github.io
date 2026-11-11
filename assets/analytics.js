@@ -3,7 +3,7 @@
    from the snippet it shows ({"token": "…"}) and paste it below. Empty = off. The stats are at
    dash.cloudflare.com → Web Analytics (only people with access to the club's Cloudflare account see them). */
 (function () {
-  var TOKEN = '';
+  var TOKEN = '7b2e9c4c2b2a44c08dfda3701760aaa3';
   if (!TOKEN || location.hostname === 'localhost' || location.hostname === '127.0.0.1') return;
   var s = document.createElement('script');
   s.defer = true;

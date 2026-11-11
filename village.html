@@ -25,12 +25,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261108a">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261108a">
-  <link rel="stylesheet" href="assets/village.css?v=20261108a">
-  <script src="assets/i18n.js?v=20261108a"></script>
-  <script src="assets/analytics.js?v=20261108a" defer></script>
-  <script src="assets/halloween.js?v=20261108a" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261111a">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261111a">
+  <link rel="stylesheet" href="assets/village.css?v=20261111a">
+  <script src="assets/i18n.js?v=20261111a"></script>
+  <script src="assets/analytics.js?v=20261111a" defer></script>
+  <script src="assets/halloween.js?v=20261111a" defer></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -117,6 +117,7 @@
           <div id="weekPin"></div>
 
           <div id="mine"></div>
+          <div id="feed"></div>
 
           <div class="vb-toolbar">
             <div class="vb-search">
@@ -197,13 +198,13 @@
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261108a"></script>
-  <script src="assets/schedule.js?v=20261108a"></script>
-  <script src="assets/sessions.js?v=20261108a"></script>
-  <script src="assets/platform/config.js?v=20261108a"></script>
-  <script src="assets/platform/engine.js?v=20261108a"></script>
-  <script src="assets/platform/signin.js?v=20261108a"></script>
-  <script src="assets/platform/data.js?v=20261108a"></script>
+  <script src="assets/js-yaml.min.js?v=20261111a"></script>
+  <script src="assets/schedule.js?v=20261111a"></script>
+  <script src="assets/sessions.js?v=20261111a"></script>
+  <script src="assets/platform/config.js?v=20261111a"></script>
+  <script src="assets/platform/engine.js?v=20261111a"></script>
+  <script src="assets/platform/signin.js?v=20261111a"></script>
+  <script src="assets/platform/data.js?v=20261111a"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -227,7 +228,7 @@
 
 
     // ---------- state ----------
-    let me = null, isOrg = false, names = {}, ranks = {}, posts = [], active = null;
+    let me = null, isOrg = false, names = {}, ranks = {}, posts = [], active = null, interest = [], feedOpen = false;
     // posts that arrived in the background: kept behind the "new posts" button until it's tapped
     const held = new Set(); let flash = new Set();
     const comments = {};
@@ -250,6 +251,37 @@
       return f.format(Math.round(d / 86400), "day");
     };
     const stale = (p) => p.status === "taken" && Date.now() - p.takenAtMs > 7 * DAY;
+    // who said "Interested" on a post, oldest first
+    const fans = (id) => interest.filter(x => x.post === id).sort((a, b) => a.at - b.at).map(x => x.uid);
+    const names3 = (uids) => { const n = uids.map(nameOf); return n.length <= 6 ? n.join(", ") : n.slice(0, 6).join(", ") + " " + T("vb.int.more", { n: n.length - 6 }); };
+    function interestHTML(p) {
+      if (p.kind === "week") return "";
+      const f = fans(p.id), mineI = f.includes(me.uid);
+      return `<div class="vb-int"><button type="button" class="btn ${mineI ? "btn-primary" : "btn-ghost"} vb-int-btn" data-act="interest" data-id="${p.id}" aria-pressed="${mineI}">
+          <span aria-hidden="true">${mineI ? "★" : "☆"}</span> ${esc(T(mineI ? "vb.int.on" : "vb.int.add"))}${f.length ? ` · ${f.length}` : ""}</button>
+        ${f.length ? `<p class="help vb-int-who">${esc(T("vb.int.who", { names: names3(f) }))}</p>` : `<p class="help vb-int-who">${esc(T("vb.int.none"))}</p>`}</div>`;
+    }
+    // what happened on the board lately: new posts, missions taken / finished / confirmed, people interested
+    function feedItems() {
+      const fullName = (uid) => names[uid] || "—";   // real names here ("you is interested" reads badly)
+      const ok = (p) => p && !p.hidden && visible(p);
+      const byId = Object.fromEntries(posts.map(p => [p.id, p]));
+      const A = [];
+      posts.filter(ok).forEach(p => {
+        if (p.kind !== "week") A.push({ t: p.at, p, txt: T("vb.feed.post", { name: fullName(p.by) }) });
+        if (p.kind === "mission" && p.takenBy && p.takenAtMs) A.push({ t: p.takenAtMs, p, txt: T("vb.feed.take", { name: fullName(p.takenBy) }) });
+        if (p.kind === "mission" && p.takenBy && p.doneAtMs) A.push({ t: p.doneAtMs, p, txt: T("vb.feed.done", { name: fullName(p.takenBy) }) });
+        if (p.kind === "mission" && p.status === "done" && p.confirmedAtMs) A.push({ t: p.confirmedAtMs, p, txt: T("vb.feed.ok", { name: fullName(p.takenBy) }) });
+      });
+      interest.forEach(x => { if (ok(byId[x.post])) A.push({ t: x.at, p: byId[x.post], txt: T("vb.feed.int", { name: fullName(x.uid) }) }); });
+      return A.sort((a, b) => b.t - a.t);
+    }
+    function renderFeed() {
+      const items = feedItems(), shown = items.slice(0, feedOpen ? 30 : 5);
+      $("feed").innerHTML = items.length ? `<section class="vb-feed" aria-labelledby="feedH"><h2 id="feedH">${esc(T("vb.feed.h"))}</h2>
+        <ul>${shown.map(x => `<li><span>${esc(x.txt.charAt(0).toUpperCase() + x.txt.slice(1))} <a href="?post=${encodeURIComponent(x.p.id)}" data-open-post="${esc(x.p.id)}">${esc(x.p.title)}</a></span><small>${esc(rel(x.t))}</small></li>`).join("")}</ul>
+        ${items.length > 5 ? `<button type="button" class="linkbtn" id="feedMore" aria-expanded="${feedOpen}">${esc(T(feedOpen ? "vb.feed.less" : "vb.feed.more"))}</button>` : ""}</section>` : "";
+    }
 
     async function loadPeople() {
       const [members, facts] = await Promise.all([data.loadMembers(), data.loadFacts()]);
@@ -262,7 +294,7 @@
     }
     async function refresh(background = false) {
       const shown = new Set(posts.map(p => p.id));
-      let fresh; [fresh, active] = await Promise.all([data.loadBoard(isOrg), data.myMission()]);
+      let fresh; [fresh, active, interest] = await Promise.all([data.loadBoard(isOrg), data.myMission(), data.loadInterest ? data.loadInterest() : []]);
       if (background && shown.size) fresh.forEach(p => { if (!shown.has(p.id) && p.by !== me.uid) held.add(p.id); });
       posts = fresh;
       saveCache();
@@ -378,6 +410,7 @@
         <h2 class="d-title" id="dTitle" tabindex="-1">${esc(p.title)}</h2>
         ${facts(p)}${takenHint(p)}
         ${when}${p.body ? `<p class="vb-body">${esc(p.body).replace(/\n/g, "<br>")}</p>` : ""}${p.outcome ? `<p class="vb-outcome"><b>${esc(T("vb.done.when"))}</b> ${esc(p.outcome)}</p>` : ""}${p.kind === "week" ? weekHTML(p) : ""}${link}${autoHidden}
+        ${interestHTML(p)}
         <div class="post-foot">
           <span class="by">${byHTML(p, true)} · ${esc(rel(p.at))}${p.editedAt ? ` · <span class="help">${esc(T("vb.edited"))}</span>` : ""}</span>
           <span class="post-actions">${actions(p)}</span>
@@ -412,6 +445,7 @@
         p.time ? `<span class="chip">${esc(T("vb.t." + p.time))}</span>` : "",
         p.level && p.level !== "all" ? `<span class="chip lv-${esc(p.level)}">${esc(T("level." + p.level))}</span>` : "",
         statusLine(p),
+        fans(p.id).length ? `<span class="chip int">★ ${esc(T("vb.int.n", { n: fans(p.id).length }))}</span>` : "",
         isOrg && p.reportCount ? `<span class="chip st-reported">${esc(T("vb.reported.tag", { n: p.reportCount }))}</span>` : "",
         p.hidden ? `<span class="chip">${esc(T("vb.hidden.tag"))}</span>` : "",
       ].join("");
@@ -430,6 +464,7 @@
       $("mine").innerHTML = mine ? `<div class="mine"><p class="eyebrow" style="margin:0">${esc(T("vb.mine.h"))}</p>${cardHTML(mine, "is-mine")}</div>` : "";
       const pin = pinnedWeek(); // always on top while there is a current or upcoming theme
       $("weekPin").innerHTML = pin ? cardHTML(pin, "is-pin") : "";
+      renderFeed();
       const q = F.q.toLowerCase();
       const list = posts.filter(p => p.id !== active && (!pin || p.id !== pin.id) && !held.has(p.id))
         .filter(visible)
@@ -487,6 +522,7 @@
       if (await ready) return;
       say($("msg"), "");
       const r = await ({
+        interest: () => data.setInterest(p.id, !fans(p.id).includes(me.uid)),
         take: () => data.takeMission(p), release: () => data.releaseMission(p), finish: () => data.finishMission(p),
         confirm: () => data.confirmMission(p), reopen: () => data.reopenMission(p), close: () => data.closePost(p),
         delete: () => data.deletePost(p), report: () => data.report(p.id), hide: () => data.setHidden(p.id, null, true), unhide: () => data.setHidden(p.id, null, false),
@@ -496,6 +532,7 @@
       if (kind === "confirm" && r.ok) await loadPeople();   // their bandana may change
       if (kind === "delete" && r.ok && openId === p.id) closePost();
       await refresh();
+      if (kind === "interest") { const ib = document.querySelector("#detail .vb-int-btn"); if (ib) ib.focus(); }
     }
     document.addEventListener("click", async (e) => {
       const f = e.target.closest("[data-kind], [data-open], [data-mtype]");
@@ -505,6 +542,7 @@
         else { F.kind = f.dataset.kind; if (F.kind && F.kind !== "mission") { F.openOnly = false; F.mtype = ""; } }
         render(); return;
       }
+      if (e.target.closest("#feedMore")) { feedOpen = !feedOpen; renderFeed(); $("feedMore").focus(); return; }
       const o = e.target.closest("[data-open-post]");
       if (o) { e.preventDefault(); openPost(o.dataset.openPost); return; }
       const card = e.target.closest(".card");
@@ -635,12 +673,12 @@
 
     // ---------- the board from your last visit, shown at once; fresh data replaces it in the background ----------
     const CACHE_KEY = "nw-vb-cache-v1";
-    function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: me.uid, isOrg, names, ranks, posts, active, at: Date.now() })); } catch (e) {} }
+    function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: me.uid, isOrg, names, ranks, posts, active, interest, at: Date.now() })); } catch (e) {} }
     let fromCache = false;
     try {
       const c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
       if (c && c.uid && Array.isArray(c.posts) && document.documentElement.classList.contains("is-member") && Date.now() - c.at < 14 * DAY) {
-        ({ isOrg, names, ranks, posts, active } = c); me = { uid: c.uid }; fromCache = true;
+        ({ isOrg, names, ranks, posts, active } = c); interest = c.interest || []; me = { uid: c.uid }; fromCache = true;
         render(); gate("board");
       }
     } catch (e) { fromCache = false; }

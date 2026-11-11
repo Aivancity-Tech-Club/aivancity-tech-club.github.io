@@ -97,7 +97,7 @@ function demoBackend() {
     { id: 'p3', kind: 'event', title: 'DevFest Paris 2026', body: 'Google Developer Groups conference: talks on AI, Cloud and Android. Student tickets are cheaper.', link: 'https://gdg.community.dev/', by: 'sofia', createdAt: now - 5 * day, hidden: false, reports: {}, date: '2026-11-21', where: 'Paris' },
     { id: 'p4', kind: 'oss', title: 'First issues in a French open-data library', body: 'Good-first-issue labels, friendly maintainers, Python. Merged pull requests count as open-source points.', link: 'https://github.com/example/opendata-fr', by: 'lucas', createdAt: now - 6 * day, hidden: false, reports: {} },
     { id: 'p5', kind: 'mission', mtype: 'help', title: 'Review my first REST API', body: 'Express + SQLite, about 300 lines. Looking for feedback on structure and error handling.', link: '', by: 'you', createdAt: now - 1 * day, hidden: false, reports: {}, status: 'review', takenBy: 'noah', takenAt: now - day, doneAt: now - 3600e3 },
-  ], comments: { p1: [{ id: 'c1', by: 'noah', text: 'I can do Thursday after the session if nobody takes it before.', createdAt: now - day, hidden: false, reports: {} }] } });
+  ], interest: [{ id: 'p3_noah', post: 'p3', uid: 'noah', at: now - 2 * day }, { id: 'p3_maya', post: 'p3', uid: 'maya', at: now - day }, { id: 'p4_lucas', post: 'p4', uid: 'lucas', at: now - 3600e3 * 5 }], comments: { p1: [{ id: 'c1', by: 'noah', text: 'I can do Thursday after the session if nobody takes it before.', createdAt: now - day, hidden: false, reports: {} }] } });
   const board = () => store.get('nw-demo-board-v1') || boardSeed();
   const saveBoard = (B) => store.set('nw-demo-board-v1', B);
   // demo extras: a few "going", a vote, two camps, applications (one person who never came)
@@ -161,6 +161,9 @@ function demoBackend() {
       return { ok: true, message: tr('m.proof.ok', 'Sent. An organizer will check it within 7 days.') };
     },
     /* ---------- Village Board (demo: kept in this browser) ---------- */
+    async loadInterest() { return (board().interest || []).slice(); },
+    async setInterest(postId, on) { const B = board(); B.interest = (B.interest || []).filter(x => !(x.post === postId && x.uid === 'you'));
+      if (on) B.interest.push({ id: postId + '_you', post: postId, uid: 'you', at: Date.now() }); saveBoard(B); return { ok: true }; },
     async loadBoard(isOrg) { return board().posts.filter(p => isOrg || !p.hidden).map(p => normPost(p.id, p)).sort((a, b) => b.at - a.at); },
     async myMission() { return board().active || null; },
     async createPost(p) {
@@ -328,7 +331,7 @@ function markMember(on) { try { on ? localStorage.setItem('nw-member', '1') : (l
 /* Village Board helpers shared by both backends */
 const MISSION_RULE = { help: 'mentoring', build: 'collab', club: 'club_quest' };
 const tsMs = (v) => (v && typeof v.toMillis === 'function' ? v.toMillis() : typeof v === 'number' ? v : v ? Date.parse(v) : Date.now());
-function normPost(id, d) { return { id, ...d, at: tsMs(d.createdAt), takenAtMs: d.takenAt ? tsMs(d.takenAt) : 0, reportCount: Object.keys(d.reports || {}).length }; }
+function normPost(id, d) { return { id, ...d, at: tsMs(d.createdAt), takenAtMs: d.takenAt ? tsMs(d.takenAt) : 0, doneAtMs: d.doneAt ? tsMs(d.doneAt) : 0, confirmedAtMs: d.confirmedAt ? tsMs(d.confirmedAt) : 0, reportCount: Object.keys(d.reports || {}).length }; }
 function fail(e, code) {
   console.error(e);
   const c = (e && e.code) || '';
@@ -690,6 +693,16 @@ function firebaseBackend() {
       }
     },
     /* ---------- Village Board (missions, events, open-source projects) ---------- */
+    // "Interested" on a Village board post: interest/{postId}_{uid} { post, uid, at }, visible to members
+    async loadInterest() {
+      try { const q = await db.collection('interest').get(); return q.docs.map(d => { const x = d.data(); return { id: d.id, post: x.post, uid: x.uid, at: tsMs(x.at) }; }); }
+      catch (e) { return []; }
+    },
+    async setInterest(postId, on) {
+      const uid = auth.currentUser.uid, ref = db.collection('interest').doc(postId + '_' + uid);
+      try { if (on) await ref.set({ post: postId, uid, at: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; }
+      catch (e) { return fail(e); }
+    },
     async loadBoard(isOrg) {
       let q = db.collection('board'); if (!isOrg) q = q.where('hidden', '==', false);
       const snap = await q.get();
@@ -938,18 +951,18 @@ function firebaseBackend() {
       const where = (c, f = 'uid') => db.collection(c).where(f, '==', uid).get().then(refs).catch(() => []);
       const one = (c, id) => db.collection(c).doc(id).get().then(d => (d.exists ? [d.ref] : [])).catch(() => []);
       const em = String(email || '').toLowerCase();
-      const [facts, registrations, rsvps, votes, posts, profile, priv, request, camp, pend, conf, pulse, roster, board, buddies] = await Promise.all([
+      const [facts, registrations, rsvps, votes, posts, profile, priv, request, camp, pend, conf, pulse, roster, board, buddies, interest] = await Promise.all([
         where('facts'), where('registrations'), where('rsvps'), where('votes'), where('board', 'by'),
         one('members', uid), one('private', uid), one('requests', uid), one('camps', uid), one('confirmPending', uid), one('confirmed', uid), one('pulse', uid),
         em ? one('roster', em) : [], db.collection('board').get().then(refs).catch(() => []),
-        db.collection('buddies').where('users', 'array-contains', uid).get().then(refs).catch(() => [])]);
+        db.collection('buddies').where('users', 'array-contains', uid).get().then(refs).catch(() => []), where('interest')]);
       const mine = new Set(posts.map(r => r.path));
       // their comments anywhere, and every comment under their own posts (those go with the post)
       const comments = (await Promise.all(board.map(p => (mine.has(p.path) ? p.collection('comments').get() : p.collection('comments').where('by', '==', uid).get())
         .then(refs).catch(() => [])))).flat();
       const counts = { profile: profile.length, request: request.length, facts: facts.length, registrations: registrations.length, posts: posts.length,
-        comments: comments.length, other: buddies.length + priv.length + camp.length + pend.length + conf.length + pulse.length + roster.length + rsvps.length + votes.length };
-      const all = [...comments, ...posts, ...buddies, ...facts, ...registrations, ...rsvps, ...votes, ...camp, ...priv, ...pend, ...conf, ...pulse, ...roster, ...request, ...profile];
+        comments: comments.length, other: buddies.length + interest.length + priv.length + camp.length + pend.length + conf.length + pulse.length + roster.length + rsvps.length + votes.length };
+      const all = [...comments, ...posts, ...buddies, ...interest, ...facts, ...registrations, ...rsvps, ...votes, ...camp, ...priv, ...pend, ...conf, ...pulse, ...roster, ...request, ...profile];
       return { uid, counts, total: all.length, refs: all };
     },
     async erasePerson(plan) {

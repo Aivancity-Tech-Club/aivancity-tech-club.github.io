@@ -181,6 +181,18 @@ service cloud.firestore {
     function notExpired(d) {
       return !('expires' in d) || request.time < timestamp.date(int(d.expires.split('-')[0]), int(d.expires.split('-')[1]), int(d.expires.split('-')[2])) + duration.value(1, 'd');
     }
+    // "Interested" on a board post: interest/{postId}_{uid} { post, uid, at }. Members see who is interested; you add or remove only your own.
+    match /interest/{id} {
+      allow read: if isMember();
+      allow create: if isMember()
+        && request.resource.data.keys().hasOnly(['post', 'uid', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.post is string && id == request.resource.data.post + '_' + request.auth.uid
+        && request.resource.data.at == request.time
+        && exists(/databases/$(db)/documents/board/$(request.resource.data.post));
+      allow delete: if (isMember() && resource.data.uid == request.auth.uid) || isOrganizer();
+    }
+
     match /board/{id} {
       allow get, list: if isMember() && (resource.data.hidden == false || isOrganizer());
 

@@ -271,6 +271,7 @@ Points are **never stored**. The database stores *facts* (attendance, proofs, mi
 | `directory/{email}` | the school's student list (organizers only); `__settings` { on, count } turns the join check on |
 | `buddies/{a_b}` | Renkei buddies: `a` asked `b`; `status` pending → paired; `endBy` = one asked to end it, the other agrees (or an organizer undoes it) |
 | `pulse/{uid}` | "contacted" marks on `/pulse` |
+| `interest/{postId}_{uid}` | "Interested" on a Village board post; members can read it |
 | `activity/{auto}` | buddy requests/pairs that disappeared (declined, withdrawn, ended, undone); organizers read it on `/pulse` |
 | `feedback/{id}` | feedback form entries; organizers read only |
 | `confirmPending`, `confirmed`, `blocked` | new-account approval queue and decisions |

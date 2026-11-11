@@ -16,12 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261108a">
-  <link rel="stylesheet" href="assets/village.css?v=20261108a">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261108a">
-  <script src="assets/i18n.js?v=20261108a"></script>
-  <script src="assets/analytics.js?v=20261108a" defer></script>
-  <script src="assets/halloween.js?v=20261108a" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261111a">
+  <link rel="stylesheet" href="assets/village.css?v=20261111a">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261111a">
+  <script src="assets/i18n.js?v=20261111a"></script>
+  <script src="assets/analytics.js?v=20261111a" defer></script>
+  <script src="assets/halloween.js?v=20261111a" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -104,14 +104,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261108a"></script>
+  <script src="assets/schedule.js?v=20261111a"></script>
 
-  <script src="assets/sessions.js?v=20261108a"></script>
-  <script src="assets/js-yaml.min.js?v=20261108a"></script>
-  <script src="assets/platform/config.js?v=20261108a"></script>
-  <script src="assets/platform/engine.js?v=20261108a"></script>
-  <script src="assets/platform/signin.js?v=20261108a"></script>
-  <script src="assets/platform/data.js?v=20261108a"></script>
+  <script src="assets/sessions.js?v=20261111a"></script>
+  <script src="assets/js-yaml.min.js?v=20261111a"></script>
+  <script src="assets/platform/config.js?v=20261111a"></script>
+  <script src="assets/platform/engine.js?v=20261111a"></script>
+  <script src="assets/platform/signin.js?v=20261111a"></script>
+  <script src="assets/platform/data.js?v=20261111a"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -284,11 +284,21 @@
       });
       S.activity.forEach(x => A.push({ k: "bd", t: x.at, txt: T("pa." + x.type, { a: name(x.uid), b: String(x.other || "").split(" ").map(name).join(" & ") }) }));
       requests.forEach(r => r.at && A.push({ k: "new", t: r.at, txt: T("pa.join", { name: r.name || name(r.uid) }) }));
+      // Village board: posts, missions taken / finished / confirmed, "Interested"
+      const posts = Object.fromEntries((S.board || []).map(p => [p.id, p]));
+      (S.board || []).forEach(p => {
+        const q = "« " + p.title + " »";
+        if (p.kind !== "week") A.push({ k: "vb", t: p.at, txt: T("pa.vb.post", { name: name(p.by), what: q }) });
+        if (p.kind === "mission" && p.takenBy && p.takenAtMs) A.push({ k: "vb", t: p.takenAtMs, txt: T("pa.vb.take", { name: name(p.takenBy), what: q }) });
+        if (p.kind === "mission" && p.takenBy && p.doneAtMs) A.push({ k: "vb", t: p.doneAtMs, txt: T("pa.vb.done", { name: name(p.takenBy), what: q }) });
+        if (p.kind === "mission" && p.status === "done" && p.confirmedAtMs) A.push({ k: "vb", t: p.confirmedAtMs, txt: T("pa.vb.ok", { name: name(p.takenBy), what: q }) });
+      });
+      (S.interest || []).forEach(x => posts[x.post] && A.push({ k: "vb", t: x.at, txt: T("pa.vb.int", { name: name(x.uid), what: "« " + posts[x.post].title + " »" }) }));
       const shownA = A.filter(x => x.t && (paFilter === "all" || x.k === paFilter)).sort((a, b) => b.t - a.t);
       const when = (t) => new Date(t).toLocaleString(I18N.locale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
       const activityHTML = `<section class="p-card" id="paCard" data-sec="activity"><h2>${esc(T("pa.h"))}</h2>
           <p class="help">${esc(T("pa.p"))}</p>
-          <div class="pa-filters" role="group" aria-label="${esc(T("pa.h"))}">${["all", "att", "proof", "bd", "new"].map(k => `<button type="button" class="chip" data-pa="${k}" aria-pressed="${paFilter === k}">${esc(T("pa.f." + k))}</button>`).join("")}</div>
+          <div class="pa-filters" role="group" aria-label="${esc(T("pa.h"))}">${["all", "att", "proof", "bd", "vb", "new"].map(k => `<button type="button" class="chip" data-pa="${k}" aria-pressed="${paFilter === k}">${esc(T("pa.f." + k))}</button>`).join("")}</div>
           ${list(shownA.slice(0, paMore), T("pa.none"), x => `<li><div><span>${esc(x.txt)}</span><small>${esc(when(x.t))}</small></div></li>`)}
           ${shownA.length > paMore ? `<button type="button" class="btn btn-ghost" id="paMore">${esc(T("pa.more", { n: shownA.length - paMore }))}</button>` : ""}
         </section>`;
@@ -376,13 +386,13 @@
         data.loadVotes(today), data.loadAllBuddies().catch(() => []), data.loadPendingConfirms().catch(() => []), data.loadEvents(true).catch(() => []), data.loadAllRegistrations().catch(() => [])]);
       events.forEach(e => { e.regs = e.registration ? allRegs.filter(r => r.event === e.id) : []; });
       const pendingRegs = allRegs.filter(r => r.status === "pending");
-      const activity = await (data.loadActivity ? data.loadActivity().catch(() => []) : []);
+      const [activity, board, interest] = await Promise.all([data.loadActivity ? data.loadActivity().catch(() => []) : [], data.loadBoard ? data.loadBoard(true).catch(() => []) : [], data.loadInterest ? data.loadInterest().catch(() => []) : []]);
       try {
         if (!rulebook) rulebook = jsyaml.load(await (await fetch("rules/rules.yaml", { cache: "no-cache" })).text());
         result = PointsEngine.compute(rulebook, facts, members, pastThu, today);
       } catch (e) { console.error(e); result = null; }
       const going = nextSession ? allRegs.filter(r => r.event === "d-" + fileKey(nextSession) && (r.status === "pending" || r.status === "confirmed")) : [];
-      S = { members, facts, requests, pulse, going, votes, buddies, pending, events, pendingRegs, allRegs, activity }; render();
+      S = { members, facts, requests, pulse, going, votes, buddies, pending, events, pendingRegs, allRegs, activity, board, interest }; render();
     }
 
     /* ---------- Data check: read-only consistency checks over the whole database ---------- */
