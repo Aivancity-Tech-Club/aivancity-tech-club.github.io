@@ -228,6 +228,8 @@ function demoBackend() {
     async agreeEndBuddy(id) { const X = extra(); (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_ended', uid: 'you', other: (demoBuddies(X).find(x => x.id === id) || { users: [] }).users.find(u => u !== 'you') || id, at: Date.now() }); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
     async removeBuddy(id) { const X = extra(); (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_undone', uid: 'you', other: ((demoBuddies(X).find(x => x.id === id) || { users: [] }).users).join(' '), at: Date.now() }); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
     async loadActivity() { return (extra().activity || []).slice().sort((a, b) => b.at - a.at); },
+    async awardStarter(step, pair) { if (state.facts.some(f => f.id === 'you_st_' + step)) return { ok: false }; state.facts.push({ id: 'you_st_' + step, uid: 'you', type: 'starter', step, date: todayStr(), status: 'approved', pair }); save(); return { ok: true }; },
+    async awardBuddySession(date, pair) { if (state.facts.some(f => f.id === 'you_bs_' + date)) return { ok: false }; state.facts.push({ id: 'you_bs_' + date, uid: 'you', type: 'buddy_session', date, pair, status: 'approved' }); save(); return { ok: true }; },
     async markTour(key) { const m = state.members.find(x => x.uid === 'you'); m.tour = { ...(m.tour || {}), [key]: true }; save(); return { ok: true }; },
     async saveCamp(c) { const X = extra(), old = X.camps.you || { hidden: false, reports: {} }; X.camps.you = { ...old, ...cleanCamp(c), updatedAt: Date.now() }; saveExtra(X); return { ok: true }; },
     async reportCamp(uid) { const X = extra(); if (X.camps[uid]) { X.camps[uid].reports = { ...(X.camps[uid].reports || {}), you: true }; saveExtra(X); } return { ok: true }; },
@@ -698,7 +700,10 @@ function firebaseBackend() {
     async checkIn(code) {
       const uid = auth.currentUser.uid, date = todayStr(), c = String(code).trim().toUpperCase();
       try {
-        await db.collection('facts').doc(uid + '_' + date).set({ uid, type: 'attend', date, code: c, status: 'approved', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        const fact = { uid, type: 'attend', date, code: c, status: 'approved', createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+        // members can't read codes: a double-points code only accepts a check-in marked double, so try plain first, then double
+        try { await db.collection('facts').doc(uid + '_' + date).set(fact); }
+        catch (e1) { if (!e1 || e1.code !== 'permission-denied') throw e1; await db.collection('facts').doc(uid + '_' + date).set({ ...fact, double: true }); }
         return { ok: true, message: tr('m.checkin.ok', 'Checked in. +1 point.') };
       } catch (e) {
         return { ok: false, message: tr('m.checkin.bad', 'That code did not work. Check it on the screen, and note codes only work during the session.') };
@@ -850,6 +855,17 @@ function firebaseBackend() {
       return s.docs.map(d => { const x = d.data(); return { id: d.id, type: x.type, uid: x.uid, other: x.other, at: x.at && x.at.toMillis ? x.at.toMillis() : 0 }; });
     },
     // getting-started steps that leave no other trace (looked at the Village board, opened a mission): saved on the profile
+    // points the site gives by itself: a getting-started step (+1 each) and coming with your buddy (+2); the rules check both
+    async awardStarter(step, pair) {
+      const uid = auth.currentUser.uid, doc = { uid, type: 'starter', step, date: todayStr(), status: 'approved', createdAt: FV().serverTimestamp() };
+      if (pair) doc.pair = pair;
+      try { await db.collection('facts').doc(uid + '_st_' + step).set(doc); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    async awardBuddySession(date, pair) {
+      const uid = auth.currentUser.uid;
+      try { await db.collection('facts').doc(uid + '_bs_' + date).set({ uid, type: 'buddy_session', date, pair, status: 'approved', createdAt: FV().serverTimestamp() }); return { ok: true }; }
+      catch (e) { return fail(e); }
+    },
     async markTour(key) {
       try { await db.collection('members').doc(auth.currentUser.uid).update({ ['tour.' + key]: true }); return { ok: true }; }
       catch (e) { return fail(e); }

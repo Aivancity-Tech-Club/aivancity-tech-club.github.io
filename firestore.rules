@@ -448,6 +448,13 @@ service cloud.firestore {
       allow read, write: if isOrganizer();
     }
 
+    // both people of a paired buddy pair checked in on that date
+    function buddyBoth(pair, uid, date) {
+      let p = get(/databases/$(db)/documents/buddies/$(pair)).data;
+      return p.status == 'paired' && uid in p.users
+        && exists(/databases/$(db)/documents/facts/$(p.a + '_' + date))
+        && exists(/databases/$(db)/documents/facts/$(p.b + '_' + date));
+    }
     match /facts/{id} {
       allow read: if isMember();
 
@@ -460,7 +467,32 @@ service cloud.firestore {
         && exists(/databases/$(db)/documents/checkinCodes/$(request.resource.data.code))
         && code(request.resource.data.code).date == request.resource.data.date
         && request.time >= code(request.resource.data.code).validFrom
-        && request.time <= code(request.resource.data.code).validUntil;
+        && request.time <= code(request.resource.data.code).validUntil
+        // a double-points session: the check-in says so only when the code was made with double points
+        && request.resource.data.get('double', false) == code(request.resource.data.code).get('double', false);
+
+      // 1b) Getting-started steps, +1 each, once per step (fact id = uid + "_st_" + step). Each step is checked against what it says:
+      //     camp = a camp exists, village / mission = the member's tour flags, buddy = a buddy request or pair they are part of.
+      allow create: if isMember()
+        && request.resource.data.keys().hasOnly(['uid', 'type', 'step', 'date', 'status', 'pair', 'createdAt'])
+        && request.resource.data.type == 'starter' && request.resource.data.status == 'approved'
+        && request.resource.data.uid == request.auth.uid
+        && id == request.auth.uid + '_st_' + request.resource.data.step
+        && request.resource.data.date is string && request.resource.data.date.size() == 10
+        && ((request.resource.data.step == 'camp' && exists(/databases/$(db)/documents/camps/$(request.auth.uid)))
+            || (request.resource.data.step in ['village', 'mission'] && get(/databases/$(db)/documents/members/$(request.auth.uid)).data.get('tour', {}).get(request.resource.data.step, false) == true)
+            || (request.resource.data.step == 'buddy' && request.resource.data.pair is string
+                && exists(/databases/$(db)/documents/buddies/$(request.resource.data.pair))
+                && request.auth.uid in get(/databases/$(db)/documents/buddies/$(request.resource.data.pair)).data.users));
+
+      // 1c) Came with your buddy: +2 when both people of a pair checked in at the same session (fact id = uid + "_bs_" + date).
+      allow create: if isMember()
+        && request.resource.data.keys().hasOnly(['uid', 'type', 'date', 'status', 'pair', 'createdAt'])
+        && request.resource.data.type == 'buddy_session' && request.resource.data.status == 'approved'
+        && request.resource.data.uid == request.auth.uid
+        && id == request.auth.uid + '_bs_' + request.resource.data.date
+        && request.resource.data.pair is string
+        && buddyBoth(request.resource.data.pair, request.auth.uid, request.resource.data.date);
 
       // 2) Proof submissions start as pending and earn nothing until an organizer verifies them.
       allow create: if isMember()

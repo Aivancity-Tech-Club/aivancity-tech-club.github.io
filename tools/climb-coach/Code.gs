@@ -59,16 +59,18 @@ function run() {
       save(cycle); review(load(), cycle); return;
     }
     if (!cycle.approved || cycle.finished) return;
-    const ctx = load();
-    for (const p of ctx.people) {
-      if (cycle.done.includes(p.uid)) continue;
+    // send exactly what the organizers read (stored at review time), minus anyone excluded or who turned the emails off since
+    const batch = loadBatch(), excluded = cycle.excluded || [];
+    for (const m of batch) {
+      if (cycle.done.includes(m.uid)) continue;
       if (MailApp.getRemainingDailyQuota() <= KEEP_FOR_OTHERS) { save(cycle); Logger.log('Daily limit: the rest go out tomorrow.'); return; }
-      if (P.getProperty('off:' + p.uid)) { cycle.done.push(p.uid); continue; }
-      if (!p.email) { cycle.skipped.push(p.name); cycle.done.push(p.uid); continue; }
-      try { const m = build(ctx, p); MailApp.sendEmail({ to: p.email, subject: m.subject, htmlBody: m.html, name: FROM_NAME }); }
-      catch (e) { Logger.log('Could not email ' + p.uid + ': ' + e); }
-      cycle.done.push(p.uid);
+      if (!excluded.includes(m.uid) && !P.getProperty('off:' + m.uid)) {
+        try { MailApp.sendEmail({ to: m.email, subject: m.subject, htmlBody: m.html, name: FROM_NAME }); }
+        catch (e) { Logger.log('Could not email ' + m.uid + ': ' + e); }
+      }
+      cycle.done.push(m.uid);
     }
+    const ctx = load();
     cycle.finished = true; save(cycle);
     digest(ctx, cycle);
   } finally { lock.releaseLock(); }
@@ -78,26 +80,48 @@ function run() {
 function review(ctx, cycle) {
   const off = (p) => !!P.getProperty('off:' + p.uid);
   const going = ctx.people.filter(p => p.email && !off(p)), noEmail = ctx.people.filter(p => !p.email), offList = ctx.people.filter(off);
-  const st = (p) => ctx.res.byUid[p.uid] || {};
-  // samples: one member not started yet, one climbing, one in each language when possible
-  const picks = [], add = (p) => { if (p && !picks.includes(p) && picks.length < 4) picks.push(p); };
-  add(going.find(p => !st(p).isMember && p.lang === 'fr')); add(going.find(p => !st(p).isMember && p.lang === 'en'));
-  add(going.find(p => st(p).isMember && p.lang === 'fr')); add(going.find(p => st(p).isMember && p.lang === 'en'));
-  going.forEach(add);
-  const link = (act) => webappUrl() + '?round=' + encodeURIComponent(cycle.token) + '&act=' + act + '&s=' + sign(act + ':' + cycle.token);
+  // every email, built now and stored: what the organizers read is exactly what will be sent
+  const batch = going.map(p => { const m = build(ctx, p); return { uid: p.uid, name: p.name, email: p.email, lang: p.lang, subject: m.subject, html: m.html }; });
+  saveBatch(batch);
+  const link = (act, uid) => webappUrl() + '?round=' + encodeURIComponent(cycle.token) + '&act=' + act + (uid ? '&u=' + encodeURIComponent(uid) : '')
+    + '&s=' + sign(act + ':' + cycle.token + (uid ? ':' + uid : ''));
+  const cell = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const csv = '﻿' + [['Name', 'Email', 'Language', 'Subject', 'Email text', 'Do not send to this person (click)'].map(cell).join(',')]
+    .concat(batch.map(m => [m.name, m.email, m.lang.toUpperCase(), m.subject, toText(m.html), link('exclude', m.uid)].map(cell).join(','))).join('\r\n');
+  const day = Utilities.formatDate(new Date(), 'Europe/Paris', 'yyyy-MM-dd');
   const btn = (href, label, main) => '<a href="' + href + '" style="display:inline-block;margin:0 8px 8px 0;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold;'
     + (main ? 'background:#2e3a6e;color:#fff' : 'border:2px solid #2e3a6e;color:#2e3a6e') + '">' + label + '</a>';
+  const sample = batch.slice(0, 2);
   const html = '<div style="font-family:Arial,sans-serif;max-width:640px">'
-    + '<h2 style="margin:0 0 8px">Climb Coach: a round is ready to check</h2>'
-    + '<p><b>' + going.length + '</b> members would get their email (' + going.filter(p => p.lang === 'fr').length + ' in French, ' + going.filter(p => p.lang === 'en').length + ' in English). '
+    + '<h2 style="margin:0 0 8px">Climb Coach: ' + batch.length + ' emails to check</h2>'
+    + '<p><b>' + batch.length + '</b> members would get an email (' + batch.filter(m => m.lang === 'fr').length + ' in French, ' + batch.filter(m => m.lang === 'en').length + ' in English). '
     + offList.length + ' turned the emails off. ' + noEmail.length + ' have no email on file.</p>'
-    + '<p>Nothing has been sent to members. Read the samples below. If they look right, approve and the emails go out within a few minutes. If something is wrong, skip this round and tell whoever maintains the script.</p>'
+    + '<p><b>Nothing has been sent.</b> The attached file (opens in Excel or Google Sheets) has every email: who, subject and full text. '
+    + 'To leave someone out, click the link in the last column of their row. When everything looks right, approve: exactly these emails go out within a few minutes.</p>'
     + '<p>' + btn(link('approve'), 'Approve and send', true) + btn(link('skip'), 'Skip this round', false) + '</p>'
-    + '<p style="font-size:13px;color:#57504a">Points are read again at sending time, so a member who checks in after this email will see the newer numbers.</p>'
-    + picks.map(p => { const m = build(ctx, p); return '<hr style="margin:24px 0"><p style="font-size:13px;color:#57504a;margin:0 0 4px">Sample for <b>' + esc(p.name) + '</b> (' + p.lang.toUpperCase() + ') · subject: <b>' + esc(m.subject) + '</b></p>'
-      + '<div style="border:1px solid #ddd;border-radius:12px">' + m.html + '</div>'; }).join('')
+    + sample.map(m => '<hr style="margin:24px 0"><p style="font-size:13px;color:#57504a;margin:0 0 4px">How it looks, for <b>' + esc(m.name) + '</b> (' + m.lang.toUpperCase() + ') · subject: <b>' + esc(m.subject) + '</b></p>'
+      + '<div style="border:1px solid #ddd;border-radius:12px">' + m.html + '</div>').join('')
     + '</div>';
-  MailApp.sendEmail({ to: REVIEWERS.join(','), subject: 'To check: Climb Coach round for ' + going.length + ' members', htmlBody: html, name: FROM_NAME });
+  MailApp.sendEmail({ to: REVIEWERS.join(','), subject: 'To check: ' + batch.length + ' Climb Coach emails (' + day + ')', htmlBody: html, name: FROM_NAME,
+    attachments: [Utilities.newBlob(csv, 'text/csv', 'climb-coach-' + day + '.csv')] });
+}
+// the email as plain text, for the review file
+function toText(html) {
+  return String(html).replace(/<li[^>]*>/g, '\n- ').replace(/<\/p>|<\/ul>|<br\s*\/?>/g, '\n').replace(/<a [^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g, '$2 ($1)')
+    .replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/\n\s*\n+/g, '\n').trim();
+}
+// the round's emails, kept in the script's properties (compressed, in pieces) between the review and the sending
+function saveBatch(batch) {
+  const data = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(JSON.stringify(batch), 'application/json')).getBytes());
+  const old = Number(P.getProperty('BATCH_N') || 0); for (let i = 0; i < old; i++) P.deleteProperty('BATCH_' + i);
+  const size = 8000, n = Math.ceil(data.length / size);
+  for (let i = 0; i < n; i++) P.setProperty('BATCH_' + i, data.slice(i * size, (i + 1) * size));
+  P.setProperty('BATCH_N', String(n));
+}
+function loadBatch() {
+  const n = Number(P.getProperty('BATCH_N') || 0); if (!n) return [];
+  let data = ''; for (let i = 0; i < n; i++) data += P.getProperty('BATCH_' + i) || '';
+  return JSON.parse(Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(data), 'application/x-gzip')).getDataAsString());
 }
 
 function isDaily(t) { return P.getProperty('DAILY_TRIGGER') === t.getUniqueId(); }
@@ -178,6 +202,7 @@ const TEXT = {
       mentoring: v => v + ' mentoring sessions', seasons_active: v => 'Be active ' + v + ' seasons' },
     ideas: {
       first_check_in: 'Come this Thursday and type the session code on the Mountain: that check-in is your first point.',
+      starter: (st, bs) => 'Quick points on the Mountain: set up your camp, visit the <a href="' + SITE + '/village">Village board</a>, open a mission and ask someone to be your buddy (+' + st + ' each). Then come on a Thursday with your buddy: +' + bs + ' each time you both check in.',
       points: (cert, badge) => 'Pick one: a professional certification (+' + cert + '), a skill badge on <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a> (+' + badge + '), or a mission on the <a href="' + SITE + '/village">Village board</a>.',
       compete_enter: 'Take part in a club competition when one is announced (WhatsApp or the Schedule page). Organizers record who took part: there is nothing to send.',
       talk: 'Give a lightning talk (10 minutes or less) at a Thursday session, about something you built or learned. Ask an organizer for a slot: they record it.',
@@ -211,6 +236,7 @@ const TEXT = {
       mentoring: v => v + ' séances de mentorat', seasons_active: v => 'Être actif ' + v + ' saisons' },
     ideas: {
       first_check_in: 'Venez ce jeudi et tapez le code de la séance sur la Montagne : ce pointage est votre premier point.',
+      starter: (st, bs) => 'Des points rapides sur la Montagne : installez votre camp, visitez le <a href="' + SITE + '/village">Village board</a>, ouvrez une mission et proposez un binôme (+' + st + ' chacun). Puis venez un jeudi avec votre binôme : +' + bs + ' chaque fois que vous pointez tous les deux.',
       points: (cert, badge) => 'Au choix : une certification professionnelle (+' + cert + '), un badge de compétence sur <a href="https://www.cloudskillsboost.google/">Google Cloud Skills Boost</a> (+' + badge + '), ou une mission du <a href="' + SITE + '/village">Village board</a>.',
       compete_enter: 'Participez à une compétition du club dès qu’elle est annoncée (WhatsApp ou la page Programme). Les organisateurs enregistrent les participants : rien à envoyer.',
       talk: 'Faites une présentation éclair (10 minutes maximum) lors d’une séance du jeudi, sur un projet ou quelque chose que vous avez appris. Demandez un créneau à un organisateur : il l’enregistre.',
@@ -251,6 +277,7 @@ function build(ctx, p) {
   else if (has('talk_or_workshop')) ideas.push(I.talk);
   else if (has('ship_project_or_workshop') || has('workshop')) ideas.push(I.ship);
   else if (has('mentoring')) ideas.push(I.mentoring);
+  else if (has('lifetime_points') && s.rank === 'white' && ctx.pts('starter')) ideas.push(I.starter(ctx.pts('starter'), ctx.pts('buddy_session') || 2));
   else if (has('lifetime_points')) ideas.push(I.points(ctx.pts('certification') || 15, ctx.pts('skill_badge') || 3));
   const fav = (p.interests || []).find(k => I[k]); if (fav) ideas.push(I[fav]);
   // ideas are our own text with links (no member data in them), so they are not escaped
@@ -292,13 +319,18 @@ function doGet(e) {
 // an organizer clicked "Approve and send" or "Skip this round" in the review email
 function roundAnswer(q) {
   const page = (msg) => HtmlService.createHtmlOutput('<div style="font-family:Arial,sans-serif;max-width:480px;margin:60px auto;font-size:17px;line-height:1.5"><p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6b625b">Climb Coach</p><p>' + msg + '</p></div>').setTitle('Climb Coach');
-  const act = q.act === 'skip' ? 'skip' : 'approve';
+  const act = ['skip', 'exclude'].includes(q.act) ? q.act : 'approve', uid = String(q.u || '');
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const cycle = JSON.parse(P.getProperty('CYCLE') || 'null');
-    if (!cycle || cycle.token !== q.round || q.s !== sign(act + ':' + q.round)) return page('This link is not valid, or a newer round has replaced it.');
+    if (!cycle || cycle.token !== q.round || q.s !== sign(act + ':' + q.round + (act === 'exclude' ? ':' + uid : ''))) return page('This link is not valid, or a newer round has replaced it.');
     if (cycle.finished) return page('This round is already finished.');
     if (cycle.approved) return page('This round is already approved: the emails are going out.');
+    if (act === 'exclude') {
+      cycle.excluded = (cycle.excluded || []).filter(x => x !== uid).concat([uid]); save(cycle);
+      const m = loadBatch().find(x => x.uid === uid);
+      return page('Done: ' + esc(m ? m.name + ' (' + m.email + ')' : 'this member') + ' will not get an email in this round. ' + cycle.excluded.length + ' left out so far.');
+    }
     if (act === 'skip') { cycle.finished = true; cycle.skippedRound = true; save(cycle); return page('Skipped: no emails will go out for this round. The next round comes in ' + EVERY_DAYS + ' days.'); }
     cycle.approved = true; cycle.approvedAt = Date.now(); save(cycle);
   } finally { lock.releaseLock(); }

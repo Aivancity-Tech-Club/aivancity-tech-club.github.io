@@ -90,6 +90,28 @@ rules:
     trigger_fr: "Un nouveau membre vous indique comme parrain à son premier enregistrement."
     limit_fr: "Une fois par nouveau membre."
 
+  - id: starter
+    category: show_up
+    name: "Take a getting-started step"
+    points: 1
+    trigger: "Set up your camp, visit the Village board, open a mission, or ask someone to be your buddy."
+    recorded_by: automatic
+    limit: "Once per step (4 steps)."
+    name_fr: "Faire une étape de démarrage"
+    trigger_fr: "Installer votre camp, visiter le Village board, ouvrir une mission, ou proposer un binôme."
+    limit_fr: "Une fois par étape (4 étapes)."
+
+  - id: buddy_session
+    category: show_up
+    name: "Come with your buddy"
+    points: 2
+    trigger: "You and your Renkei buddy both check in at the same session."
+    recorded_by: automatic
+    limit: "Once per session."
+    name_fr: "Venir avec votre binôme"
+    trigger_fr: "Vous et votre binôme Renkei pointez à la même séance."
+    limit_fr: "Une fois par séance."
+
   # ---------- Compete ----------
   - id: compete_enter
     category: compete
@@ -338,9 +360,9 @@ verification:
 multipliers:
   - id: double_event
     factor: 2
-    applies_to: [compete_enter, compete_place_solo, compete_place_team]
-    trigger: "Event marked as double-points on the schedule BEFORE it starts."
-    trigger_fr: "Événement indiqué « points doubles » au programme AVANT son début."
+    applies_to: [attend, compete_enter, compete_place_solo, compete_place_team]
+    trigger: "Event or session announced as double points BEFORE it starts (for a session: the check-in code is made with double points on)."
+    trigger_fr: "Événement ou séance annoncé « points doubles » AVANT son début (pour une séance : le code de présence est créé avec les points doubles)."
 
 # --------------------------------------------------------------
 # RANKS (BANDANAS)
@@ -355,7 +377,7 @@ ranks:
   - id: yellow
     name: "Debugger"
     bandana: "#f9ab00"
-    requires: { lifetime_points: 10 }
+    requires: { lifetime_points: 6 }
   - id: green
     name: "Builder"
     bandana: "#34a853"
