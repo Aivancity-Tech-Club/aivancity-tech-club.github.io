@@ -25,12 +25,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261111k">
-  <link rel="stylesheet" href="assets/schedule.css?v=20261111k">
-  <link rel="stylesheet" href="assets/village.css?v=20261111k">
-  <script src="assets/i18n.js?v=20261111k"></script>
-  <script src="assets/analytics.js?v=20261111k" defer></script>
-  <script src="assets/halloween.js?v=20261111k" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261111l">
+  <link rel="stylesheet" href="assets/schedule.css?v=20261111l">
+  <link rel="stylesheet" href="assets/village.css?v=20261111l">
+  <script src="assets/i18n.js?v=20261111l"></script>
+  <script src="assets/analytics.js?v=20261111l" defer></script>
+  <script src="assets/halloween.js?v=20261111l" defer></script>
 </head>
 <body data-i18n-title="vb.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -206,13 +206,13 @@
       <p class="made"><span data-i18n="footer.love">Built with love by the Tech Club</span> <svg class="heart" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.1 4.3 2.4.8-1.3 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></p>
     </div>
   </footer>
-  <script src="assets/js-yaml.min.js?v=20261111k"></script>
-  <script src="assets/schedule.js?v=20261111k"></script>
-  <script src="assets/sessions.js?v=20261111k"></script>
-  <script src="assets/platform/config.js?v=20261111k"></script>
-  <script src="assets/platform/engine.js?v=20261111k"></script>
-  <script src="assets/platform/signin.js?v=20261111k"></script>
-  <script src="assets/platform/data.js?v=20261111k"></script>
+  <script src="assets/js-yaml.min.js?v=20261111l"></script>
+  <script src="assets/schedule.js?v=20261111l"></script>
+  <script src="assets/sessions.js?v=20261111l"></script>
+  <script src="assets/platform/config.js?v=20261111l"></script>
+  <script src="assets/platform/engine.js?v=20261111l"></script>
+  <script src="assets/platform/signin.js?v=20261111l"></script>
+  <script src="assets/platform/data.js?v=20261111l"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -343,10 +343,11 @@
       ].map(x => `<li>${x}</li>`).join("");
     }
     function renderFilters() {
-      const n = (kind) => posts.filter(p => visible(p) && (kind === "week" ? pastWeek(p) : !pastWeek(p)) && (!kind || p.kind === kind)).length;
+      // tabs show what is still live; anything that has ended (past event, closed or done mission, past theme) lives under Past
+      const n = (kind) => posts.filter(p => visible(p) && (kind === "past" ? ended(p) : !ended(p) && (!kind || p.kind === kind))).length;
       const k = (v, label) => `<button type="button" class="vb-tab" data-kind="${v}" aria-pressed="${F.kind === v}">${esc(label)} <small>${n(v)}</small></button>`;
       $("filters").setAttribute("aria-label", T("vb.title"));
-      $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) + (n("week") || F.kind === "week" ? k("week", T("vb.f.week")) : "");
+      $("filters").innerHTML = k("", T("vb.f.all")) + k("mission", T("vb.f.mission")) + k("event", T("vb.f.event")) + k("oss", T("vb.f.oss")) + (n("past") || F.kind === "past" ? k("past", T("vb.f.past")) : "");
       const showSub = !F.kind || F.kind === "mission";
       $("subfilters").hidden = !showSub;
       const m = (v, label) => `<button type="button" class="fchip" data-mtype="${v}" aria-pressed="${F.mtype === v}">${esc(label)}</button>`;
@@ -356,6 +357,8 @@
     // expiry is worked out from the date on every visit, so nothing has to run on a server to close a post
     const expired = (p) => p.kind !== "week" && !!p.expires && today > p.expires && (p.kind !== "mission" || p.status === "open");
     const pastWeek = (p) => p.kind === "week" && weekState(p) === "past";
+    const ended = (p) => expired(p) || p.status === "closed" || p.status === "done" || pastWeek(p) || (p.kind === "event" && !!p.date && p.date < today);
+    const endedAt = (p) => Math.max(p.at || 0, p.doneAtMs || 0, p.confirmedAtMs || 0, p.date ? Date.parse(p.date + "T12:00") : 0, p.expires ? Date.parse(p.expires + "T12:00") : 0);
     const visible = (p) => (isOrg || p.by === me.uid || p.reportCount < AUTO_HIDE)
       && ((p.status !== "closed" && !expired(p)) || p.by === me.uid || isOrg);
     function statusLine(p) {
@@ -502,13 +505,15 @@
       const q = F.q.toLowerCase();
       const list = posts.filter(p => p.id !== active && (!pin || p.id !== pin.id) && !held.has(p.id))
         .filter(visible)
-        .filter(p => !F.kind || p.kind === F.kind)
-        .filter(p => (F.kind === "week") === pastWeek(p) || (p.kind !== "week"))
+        .filter(p => F.kind === "past" ? ended(p) : !ended(p) && (!F.kind || p.kind === F.kind))
         .filter(p => !F.openOnly || (p.kind === "mission" && p.status === "open" && !expired(p)))
         .filter(p => !F.mtype || (p.kind === "mission" && p.mtype === F.mtype))
         .filter(p => !q || [p.title, p.body, p.title_fr, p.body_fr, p.outcome, (p.skills || []).join(" ")].join(" ").toLowerCase().includes(q));
       $("count").textContent = F.q || F.kind || F.openOnly || F.mtype ? T("vb.count", { n: list.length }) : "";
-      list.sort((a, b) => b.at - a.at);   // newest first
+      // live posts: newest first, but events by date, soonest first; Past: most recently ended first
+      if (F.kind === "past") list.sort((a, b) => endedAt(b) - endedAt(a));
+      else if (F.kind === "event") list.sort((a, b) => (a.date || "9999") < (b.date || "9999") ? -1 : (a.date || "9999") > (b.date || "9999") ? 1 : b.at - a.at);
+      else list.sort((a, b) => b.at - a.at);
       $("posts").innerHTML = list.map(p => cardHTML(p, flash.has(p.id) ? "is-new" : "")).join("") || `<p class="vb-empty">${esc(T(F.q ? "vb.noresults" : "vb.empty"))}</p>`;
       const n = [...held].filter(id => posts.some(p => p.id === id && visible(p))).length;
       $("newPill").hidden = !n; if (n) $("newPill").textContent = "↑ " + T(n === 1 ? "vb.new.one" : "vb.new.many", { n });
