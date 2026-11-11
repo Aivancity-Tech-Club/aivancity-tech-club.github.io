@@ -533,4 +533,13 @@ button[aria-busy="true"].link-btn { display: inline-flex; align-items: center; g
 .proj-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
 .proj-more { margin: 28px 0 0; color: var(--ink-soft); }
 .proj-body h3 { margin: 0; font-size: 1.5rem; }
+.proj-cover.pj-cover .name.pj-name { font-size: clamp(1.5rem, 4vw, 2.1rem); line-height: 1.1; overflow-wrap: anywhere; }
+.proj-cover.has-img { padding: 0; min-height: 0; background: #0c090a; }
+.pj-img { display: block; width: 100%; height: 220px; object-fit: cover; }
+.pj-bar { margin: 24px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.pj-form { margin-top: 18px; background: var(--surface); border: var(--stroke) solid var(--line); border-radius: var(--radius); padding: 22px 24px; display: grid; gap: 14px; }
+.pj-form h2 { margin: 0; font-size: 1.4rem; }
+.pj-two { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px 18px; }
+.pj-two .field { margin: 0; }
+.pj-pub { align-self: end; }
 .about-projects .lede { margin: 0 0 20px; }

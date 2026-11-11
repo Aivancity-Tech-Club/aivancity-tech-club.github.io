@@ -23,10 +23,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261111o">
-  <script src="assets/i18n.js?v=20261111o"></script>
-  <script src="assets/analytics.js?v=20261111o" defer></script>
-  <script src="assets/halloween.js?v=20261111o" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261111p">
+  <script src="assets/i18n.js?v=20261111p"></script>
+  <script src="assets/analytics.js?v=20261111p" defer></script>
+  <script src="assets/halloween.js?v=20261111p" defer></script>
 </head>
 <body data-i18n-title="nav.projects">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -80,6 +80,33 @@
               </p>
             </div>
           </article>
+          <div id="siteProjects" style="display:contents"></div>
+        </div>
+        <div id="pjAdmin" hidden>
+          <p class="pj-bar"><button type="button" class="btn btn-primary" id="pjAdd" data-i18n="pj.add">Add a project</button> <span class="help" data-i18n="pj.admin">You see this because you're an organizer.</span></p>
+          <form id="pjForm" class="pj-form" hidden novalidate>
+            <h2 id="pjFormH"></h2>
+            <div class="pj-two">
+              <div class="field"><label for="pjTitle" data-i18n="pj.f.title">Title (English)</label><input class="input" id="pjTitle" maxlength="100" required></div>
+              <div class="field"><label for="pjTitleFr" data-i18n="pj.f.title.fr">Title (French)</label><input class="input" id="pjTitleFr" maxlength="100" lang="fr"></div>
+              <div class="field"><label for="pjDesc" data-i18n="pj.f.desc">What it is (English)</label><textarea class="textarea" id="pjDesc" maxlength="600" rows="4"></textarea></div>
+              <div class="field"><label for="pjDescFr" data-i18n="pj.f.desc.fr">What it is (French)</label><textarea class="textarea" id="pjDescFr" maxlength="600" rows="4" lang="fr"></textarea></div>
+              <div class="field"><label for="pjMeta" data-i18n="pj.f.meta">Details line (English)</label><input class="input" id="pjMeta" maxlength="140" data-i18n-attr="placeholder:pj.f.meta.ph"></div>
+              <div class="field"><label for="pjMetaFr" data-i18n="pj.f.meta.fr">Details line (French)</label><input class="input" id="pjMetaFr" maxlength="140" lang="fr"></div>
+              <div class="field"><label for="pjLink" data-i18n="pj.f.link">Link to try it (https://)</label><input class="input" id="pjLink" type="url" maxlength="500" placeholder="https://"></div>
+              <div class="field"><label for="pjRepo" data-i18n="pj.f.repo">Code repository (https://, optional)</label><input class="input" id="pjRepo" type="url" maxlength="500" placeholder="https://github.com/…"></div>
+              <div class="field"><label for="pjLinkText" data-i18n="pj.f.linktext">Button text (English)</label><input class="input" id="pjLinkText" maxlength="40" data-i18n-attr="placeholder:pj.open"></div>
+              <div class="field"><label for="pjLinkTextFr" data-i18n="pj.f.linktext.fr">Button text (French)</label><input class="input" id="pjLinkTextFr" maxlength="40" lang="fr"></div>
+              <div class="field"><label for="pjTags" data-i18n="pj.f.tags">Skills, separated by commas</label><input class="input" id="pjTags" maxlength="250" placeholder="Python, Flutter, Firebase"></div>
+              <div class="field"><label for="pjImage" data-i18n="pj.f.image">Cover image link (https://, optional)</label><input class="input" id="pjImage" type="url" maxlength="500" placeholder="https://"></div>
+              <div class="field"><label for="pjDate" data-i18n="pj.f.date">Date</label><input class="input" id="pjDate" type="date"></div>
+              <label class="check pj-pub"><input type="checkbox" id="pjPub" checked><span data-i18n="pj.f.pub">Show it on the page</span></label>
+            </div>
+            <p class="notice bad" id="pjMsg" role="alert" hidden></p>
+            <p class="proj-actions"><button type="submit" class="btn btn-primary" id="pjSave" data-i18n="pj.save">Save</button>
+              <button type="button" class="btn btn-ghost" id="pjCancel" data-i18n="pj.cancel">Cancel</button>
+              <button type="button" class="btn btn-ghost" id="pjDel" hidden></button></p>
+          </form>
         </div>
         <p class="proj-more" data-i18n="projects.more">Built something with the club? Tell us on Thursday and it goes here.</p>
       </div>
@@ -95,5 +122,8 @@
   </footer>
 
   <script>document.getElementById("yr").textContent = new Date().getFullYear();</script>
+  <script src="assets/platform/config.js?v=20261111p"></script>
+  <script src="assets/platform/data.js?v=20261111p"></script>
+  <script src="assets/projects.js?v=20261111p"></script>
 </body>
 </html>

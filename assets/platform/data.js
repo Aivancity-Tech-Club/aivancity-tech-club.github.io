@@ -30,6 +30,16 @@ const tr = (k, en, v) => { if (window.I18N) { const x = I18N.t(k, v); if (x !== 
 const PHONE_RE = /^\+?[0-9 ().-]{6,20}$/;
 /* Events made on the site by organizers (events/{id}). Only these fields are saved. */
 const EVENT_FORMATS = ['workshop', 'hackathon', 'competition', 'talk', 'trip', 'career', 'build', 'social', 'other'];
+// a project shown on /projects (added by organizers on the site)
+function cleanProject(p) {
+  const t = (v, n) => String(v == null ? '' : v).trim().slice(0, n), url = (v) => (/^https:\/\/\S+$/.test(t(v, 500)) ? t(v, 500) : '');
+  return {
+    title: t(p.title, 100), title_fr: t(p.title_fr, 100), desc: t(p.desc, 600), desc_fr: t(p.desc_fr, 600),
+    meta: t(p.meta, 140), meta_fr: t(p.meta_fr, 140), tags: (Array.isArray(p.tags) ? p.tags : String(p.tags || '').split(',')).map(x => t(x, 30)).filter(Boolean).slice(0, 8),
+    link: url(p.link), linkText: t(p.linkText, 40), linkText_fr: t(p.linkText_fr, 40), repo: url(p.repo), image: url(p.image),
+    date: /^\d{4}-\d{2}-\d{2}$/.test(p.date || '') ? p.date : '', published: p.published !== false,
+  };
+}
 function cleanEvent(e) {
   const t = (v, n) => String(v == null ? '' : v).trim().slice(0, n), day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : '');
   return {
@@ -255,6 +265,10 @@ function demoBackend() {
       saveExtra(X); return { ok: true };
     },
     async loadPendingRegistrations() { return (extra().regs || demoRegs()).filter(r => r.status === 'pending'); },
+    async loadProjects(all) { return (extra().projects || []).filter(p => all || p.published); },
+    async saveProject(p) { const X = extra(); X.projects = X.projects || []; const id = p.id || 'pr' + Date.now(), doc = { id, ...cleanProject(p) };
+      const i = X.projects.findIndex(x => x.id === id); if (i >= 0) X.projects[i] = doc; else X.projects.push(doc); saveExtra(X); return { ok: true, id }; },
+    async deleteProject(id) { const X = extra(); X.projects = (X.projects || []).filter(p => p.id !== id); saveExtra(X); return { ok: true }; },
     // ---------- events made on the site, and registrations ----------
     async loadEvents(all) { return (extra().events || demoEvents()).filter(e => all || e.published); },
     async getEvent(id) { return (extra().events || demoEvents()).find(e => e.id === id) || null; },
@@ -918,6 +932,20 @@ function firebaseBackend() {
       return s.size;
     },
     // ---------- events made on the site (events/{id}) and registrations (registrations/{eventId}_{uid}) ----------
+    // ---------- projects on /projects: anyone sees published ones, organizers add and edit them ----------
+    async loadProjects(all) {
+      const q = all ? db.collection('projects') : db.collection('projects').where('published', '==', true);
+      const s = await q.get(); return s.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+    async saveProject(p) {
+      const ref = p.id ? db.collection('projects').doc(p.id) : db.collection('projects').doc(), doc = cleanProject(p);
+      try {
+        if (p.id) await ref.update({ ...doc, updatedAt: FV().serverTimestamp() });
+        else await ref.set({ ...doc, createdBy: auth.currentUser.uid, createdAt: FV().serverTimestamp(), updatedAt: FV().serverTimestamp() });
+        return { ok: true, id: ref.id };
+      } catch (e) { return fail(e); }
+    },
+    async deleteProject(id) { try { await db.collection('projects').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
     async loadEvents(all) {
       const q = all ? db.collection('events') : db.collection('events').where('published', '==', true);
       const s = await q.get(); return s.docs.map(d => ({ id: d.id, ...d.data() }));
