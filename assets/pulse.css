@@ -87,7 +87,7 @@
 @media (max-width: 560px) { .pm-detail { padding-left: 4px; } }
 
 /* Folding cards */
-.p-foldbar { display: flex; justify-content: flex-end; margin: 0 0 -4px; }
+.p-foldbar { display: flex; justify-content: flex-end; margin: 0 0 14px; position: relative; z-index: 1; }
 .p-card[data-sec] { position: relative; padding-right: calc(clamp(16px, 3vw, 24px) + 40px); }
 .p-card[data-sec] h2.p-top, .p-card[data-sec] .p-top h2 { cursor: pointer; }
 .p-fold { position: absolute; top: clamp(12px, 2.4vw, 20px); right: clamp(10px, 2vw, 16px); width: 36px; height: 36px; display: grid; place-items: center;
@@ -97,3 +97,7 @@
 .p-card.is-folded > :not(.p-top):not(.p-fold) { display: none !important; }
 .p-card.is-folded .p-fold svg { transform: rotate(-90deg); }
 @media (prefers-reduced-motion: reduce) { .p-fold svg { transition: none; } }
+.pm-list summary .chip { font-size: .78rem; }
+.pm-follow { padding: 0 2px 12px 32px; }
+.pm-follow .row-actions { justify-content: flex-start; }
+@media (max-width: 560px) { .pm-follow { padding-left: 4px; } }

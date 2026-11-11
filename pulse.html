@@ -16,12 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261111h">
-  <link rel="stylesheet" href="assets/village.css?v=20261111h">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261111h">
-  <script src="assets/i18n.js?v=20261111h"></script>
-  <script src="assets/analytics.js?v=20261111h" defer></script>
-  <script src="assets/halloween.js?v=20261111h" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261111j">
+  <link rel="stylesheet" href="assets/village.css?v=20261111j">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261111j">
+  <script src="assets/i18n.js?v=20261111j"></script>
+  <script src="assets/analytics.js?v=20261111j" defer></script>
+  <script src="assets/halloween.js?v=20261111j" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -104,14 +104,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261111h"></script>
+  <script src="assets/schedule.js?v=20261111j"></script>
 
-  <script src="assets/sessions.js?v=20261111h"></script>
-  <script src="assets/js-yaml.min.js?v=20261111h"></script>
-  <script src="assets/platform/config.js?v=20261111h"></script>
-  <script src="assets/platform/engine.js?v=20261111h"></script>
-  <script src="assets/platform/signin.js?v=20261111h"></script>
-  <script src="assets/platform/data.js?v=20261111h"></script>
+  <script src="assets/sessions.js?v=20261111j"></script>
+  <script src="assets/js-yaml.min.js?v=20261111j"></script>
+  <script src="assets/platform/config.js?v=20261111j"></script>
+  <script src="assets/platform/engine.js?v=20261111j"></script>
+  <script src="assets/platform/signin.js?v=20261111j"></script>
+  <script src="assets/platform/data.js?v=20261111j"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -145,7 +145,7 @@
     }
 
     let undoSure = null;   // the pair whose "Undo" was tapped once
-    let rejectOpen = null, pmQuery = "", paFilter = "all", paMore = 60, result = null, rulebook = null;
+    let rejectOpen = null, pmQuery = "", pmFilter = "all", paFilter = "all", paMore = 60, result = null, rulebook = null;
     const pmOpen = new Set();
     const PROOF_TYPES = ["ship_project", "open_source", "skill_badge", "certification", "mentoring"];
     const BAND = { white: "#f4f4f4", yellow: "#f9ab00", green: "#34a853", blue: "#4285f4", red: "#ea4335", black: "#2d2d2f" };
@@ -238,7 +238,10 @@
 
       /* ---------- members: bandana, points, and each person's climb ---------- */
       const R = result ? result.byUid : {};
-      const memberRows = members.map(m => ({ m, s: R[m.uid] || { rank: "white", lifetime: 0, history: [], checklist: [], counts: {}, isMember: false } }))
+      const blankS = { rank: "white", lifetime: 0, history: [], checklist: [], counts: {}, isMember: false };
+      const hasProfile = new Set(members.map(m => m.uid));
+      const memberRows = [...members, ...requests.filter(r => !hasProfile.has(r.uid)).map(r => ({ uid: r.uid, name: r.name, noProfile: true }))]
+        .map(m => ({ m, s: R[m.uid] || blankS }))
         .sort((a, b) => b.s.lifetime - a.s.lifetime || String(a.m.name || "").localeCompare(String(b.m.name || "")));
       const buddyLine = (uid) => buddies.filter(b => b.users.includes(uid)).map(b => {
         const o = b.a === uid ? b.b : b.a;
@@ -255,14 +258,31 @@
           <h3 class="p-sub">${esc(T("pm.hist"))}</h3><ul class="pm-hist">${hist || `<li>${esc(T("pm.none"))}</li>`}</ul>
           <p><a href="/camp?u=${encodeURIComponent(m.uid)}">${esc(T("pm.camp"))} →</a></p></div>`;
       };
-      const membersHTML = `<section class="p-card" id="pmCard" data-sec="members"><div class="p-head"><h2>${esc(T("pm.h"))} <small>${members.length}</small></h2>
+      // follow-up in one place: who is drifting away, who signed up but never came, which newcomers have no buddy yet
+      const driftBy = Object.fromEntries(drifting.map(p => [p.uid, p])), neverBy = Object.fromEntries(never.map(p => [p.uid, p]));
+      const lonely = new Set(newcomers.filter(p => !p.buddies.length).map(p => p.uid)), newBy = Object.fromEntries(newcomers.map(p => [p.uid, p]));
+      const order = { drift: drifting.map(p => p.uid), never: never.map(p => p.uid), nobuddy: newcomers.filter(p => !p.buddies.length).map(p => p.uid) };
+      const pmCounts = { all: memberRows.length, drift: drifting.length, never: never.length, nobuddy: lonely.size, pairs: pairs.length };
+      const rowsShown = pmFilter === "all" ? memberRows : (order[pmFilter] || []).map(u => memberRows.find(r => r.m.uid === u) || { m: { uid: u, name: name(u) }, s: blankS });
+      const tags = (u) => [
+        driftBy[u] ? `<span class="chip st-stale">${esc(T("pm.tag.drift", { d: fmt(driftBy[u].last) }))}</span>` : "",
+        neverBy[u] ? `<span class="chip st-stale">${esc(T("pm.tag.never", { n: neverBy[u].since }))}</span>` : "",
+        lonely.has(u) ? `<span class="chip">${esc(T("pm.tag.nobuddy"))}</span>` : "",
+        !lonely.has(u) && newBy[u] ? `<span class="chip st-done">${esc(T("pm.tag.new"))}</span>` : "",
+      ].join("");
+      const followUp = (u) => driftBy[u] ? contactBtns(driftBy[u], "drift") : neverBy[u] ? contactBtns({ ...neverBy[u], name: neverBy[u].name || name(u) }, "never") : "";
+      const pairsHTML = list(pairs, T("pulse.buddy.nopairs"), b => `<li><div><b>${esc(name(b.a))} 🤝 ${esc(name(b.b))}</b>${b.acceptedAt ? `<small>${esc(fmt(new Date(b.acceptedAt).toISOString().slice(0, 10)))}</small>` : ""}${b.endBy ? ` <span class="chip st-stale">${esc(T("pulse.buddy.ending"))}</span>` : ""}</div>
+            <div class="row-actions"><button type="button" class="btn btn-ghost${undoSure === b.id ? " btn-danger" : ""}" data-undo="${esc(b.id)}">${esc(T(undoSure === b.id ? "pulse.buddy.sure" : "pulse.buddy.remove"))}</button></div></li>`);
+      const membersHTML = `<section class="p-card${drifting.length || never.length || lonely.size ? " p-alert" : ""}" id="pmCard" data-sec="members"><div class="p-head"><h2>${esc(T("pm.h"))} <small>${memberRows.length}</small></h2>
             <button type="button" class="btn btn-ghost" id="pmCsv">${esc(T("pm.csv"))}</button></div>
           <p class="help">${esc(T("pm.p"))}</p>
-          <label class="sr-only" for="pmSearch">${esc(T("pm.search"))}</label><input id="pmSearch" class="pm-search" type="search" placeholder="${esc(T("pm.search"))}" value="${esc(pmQuery)}">
-          <ul class="pm-list">${memberRows.map(({ m, s }) => `<li data-pm="${esc(fold(m.name))}"${pmQuery && !fold(m.name).includes(fold(pmQuery)) ? " hidden" : ""}>
+          <div class="pa-filters" role="group" aria-label="${esc(T("pm.h"))}">${["all", "drift", "never", "nobuddy", "pairs"].map(k => `<button type="button" class="chip" data-pm-f="${k}" aria-pressed="${pmFilter === k}">${esc(T("pm.f." + k))} · ${pmCounts[k]}</button>`).join("")}</div>
+          ${pmFilter !== "all" ? `<p class="help">${esc(T("pm.f.help." + pmFilter))}</p>` : ""}
+          ${pmFilter === "pairs" ? pairsHTML : `<label class="sr-only" for="pmSearch">${esc(T("pm.search"))}</label><input id="pmSearch" class="pm-search" type="search" placeholder="${esc(T("pm.search"))}" value="${esc(pmQuery)}">
+          ${rowsShown.length ? `<ul class="pm-list">${rowsShown.map(({ m, s }) => `<li data-pm="${esc(fold(m.name))}"${pmQuery && !fold(m.name).includes(fold(pmQuery)) ? " hidden" : ""}>
             <details data-open="${esc(m.uid)}"${pmOpen.has(m.uid) ? " open" : ""}><summary><span class="pm-band" style="background:${BAND[s.isMember ? s.rank : "white"]}"></span><b>${esc(m.name || "—")}</b>
-              <small>${esc(s.isMember ? T("rank." + s.rank) : T("pm.notyet"))} · ${esc(T("pm.pts", { n: s.lifetime }))}${s.waiting ? " · " + esc(T("pm.waiting")) : ""}</small></summary>
-            ${pmOpen.has(m.uid) ? memberDetail(m, s) : ""}</details></li>`).join("")}</ul>
+              <small>${esc(s.isMember ? T("rank." + s.rank) : T("pm.notyet"))} · ${esc(T("pm.pts", { n: s.lifetime }))}${s.waiting ? " · " + esc(T("pm.waiting")) : ""}</small>${tags(m.uid)}</summary>
+            ${pmOpen.has(m.uid) ? memberDetail(m, s) : ""}</details>${followUp(m.uid) ? `<div class="pm-follow">${followUp(m.uid)}</div>` : ""}</li>`).join("")}</ul>` : `<p class="help">${esc(T("pm.f.none"))}</p>`}`}
         </section>`;
 
       /* ---------- club activity: everything that happened, newest first ---------- */
@@ -328,26 +348,6 @@
           ${going.length ? `<p class="help">${esc(T("pulse.going.names", { names: going.map(r => name(r.uid)).join(", ") }))}</p>` : ""}
         </section>
 
-        <section class="p-card" data-sec="drift"><h2>${esc(T("pulse.drift.h"))} <small>${drifting.length}</small></h2>
-          <p class="help">${esc(T("pulse.drift.p"))}</p>
-          ${list(drifting, T("pulse.drift.none"), p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.drift.row", { n: p.n, d: fmt(p.last) }))}</small></div>${contactBtns(p, "drift")}</li>`)}
-        </section>
-
-        <section class="p-card" data-sec="never"><h2>${esc(T("pulse.never.h"))} <small>${never.length}</small></h2>
-          <p class="help">${esc(T("pulse.never.p"))}</p>
-          ${list(never, T("pulse.never.none"), p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.never.row", { n: p.since }))}</small></div>${contactBtns(p, "never")}</li>`)}
-        </section>
-
-        <section class="p-card" data-sec="buddy"><h2>${esc(T("pulse.buddy.h"))} <small>${newcomers.filter(p => !p.buddies.length).length}</small></h2>
-          <p class="help">${esc(T("pulse.buddy.p"))}</p>
-          <h3 class="p-sub">${esc(T("pulse.buddy.newh"))}</h3>
-          ${list(newcomers, T("pulse.buddy.none"), p => `<li><div><b>${esc(p.name)}</b><small>${esc(T("pulse.buddy.row", { n: p.n }))}</small></div>
-            <div class="row-actions"><span class="chip${p.buddies.length ? " st-done" : ""}">${esc(p.buddies.length ? T("pulse.buddy.is", { name: p.buddies.map(name).join(", ") }) : T("pulse.buddy.no"))}</span></div></li>`)}
-          <h3 class="p-sub">${esc(T("pulse.buddy.pairs", { n: pairs.length }))}</h3>
-          ${list(pairs, T("pulse.buddy.nopairs"), b => `<li><div><b>${esc(name(b.a))} 🤝 ${esc(name(b.b))}</b>${b.acceptedAt ? `<small>${esc(fmt(new Date(b.acceptedAt).toISOString().slice(0, 10)))}</small>` : ""}${b.endBy ? ` <span class="chip st-stale">${esc(T("pulse.buddy.ending"))}</span>` : ""}</div>
-            <div class="row-actions"><button type="button" class="btn btn-ghost${undoSure === b.id ? " btn-danger" : ""}" data-undo="${esc(b.id)}">${esc(T(undoSure === b.id ? "pulse.buddy.sure" : "pulse.buddy.remove"))}</button></div></li>`)}
-        </section>
-
         ${membersHTML}
         ${activityHTML}
 
@@ -359,11 +359,9 @@
       show("pulse"); $("dataCheck").hidden = false; $("pFoldAll").hidden = false; drawErasePicker(); folds();
     }
 
-    /* ---------- every card can be folded away; the choice is remembered on this browser ---------- */
-    const FOLD_KEY = "pulse.folded";
-    let folded = new Set();
-    try { folded = new Set(JSON.parse(localStorage.getItem(FOLD_KEY) || "[]")); } catch (e) {}
-    const saveFolds = () => { try { localStorage.setItem(FOLD_KEY, JSON.stringify([...folded])); } catch (e) {} };
+    /* ---------- every card starts folded when the page opens (titles and counts stay visible); open what you need ---------- */
+    const opened = new Set();   // cards opened during this visit (they stay open when the page redraws)
+    try { localStorage.removeItem("pulse.folded"); } catch (e) {}
     function folds() {
       document.querySelectorAll("section.p-card[data-sec]").forEach(sec => {
         const h = sec.querySelector("h2"); if (!h) return;
@@ -371,7 +369,7 @@
         top.classList.add("p-top");
         let b = sec.querySelector(":scope > .p-fold");
         if (!b) { b = document.createElement("button"); b.type = "button"; b.className = "p-fold"; b.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; sec.prepend(b); }
-        const shut = folded.has(sec.dataset.sec);
+        const shut = !opened.has(sec.dataset.sec);
         sec.classList.toggle("is-folded", shut);
         b.setAttribute("aria-expanded", String(!shut));
         b.setAttribute("aria-label", T(shut ? "pc.open" : "pc.close", { s: (h.firstChild && h.firstChild.textContent || h.textContent).trim() }));
@@ -382,12 +380,12 @@
     document.querySelector(".pulse-sec").addEventListener("click", (e) => {
       const b = e.target.closest(".p-fold, h2.p-top, .p-top h2");
       if (b) { const sec = b.closest("section.p-card[data-sec]"); if (!sec || e.target.closest("a, button:not(.p-fold)")) return;
-        const k = sec.dataset.sec; folded.has(k) ? folded.delete(k) : folded.add(k); saveFolds(); folds();
+        const k = sec.dataset.sec; opened.has(k) ? opened.delete(k) : opened.add(k); folds();
         if (b.classList.contains("p-fold")) b.focus(); return; }
       const all = e.target.closest("#pFoldAll");
       if (all) { const shut = !!all.dataset.shut;
-        document.querySelectorAll("section.p-card[data-sec]:not([hidden])").forEach(x => shut ? folded.add(x.dataset.sec) : folded.delete(x.dataset.sec));
-        saveFolds(); folds(); }
+        document.querySelectorAll("section.p-card[data-sec]:not([hidden])").forEach(x => shut ? opened.delete(x.dataset.sec) : opened.add(x.dataset.sec));
+        folds(); }
     });
     addEventListener("langchange", () => folds());
 
@@ -558,6 +556,8 @@
         const r = await data.directoryEdit([x.contact.trim().toLowerCase()], true);
         if (r.ok) { await data.closeFeedback(x.id); await load(); $("pMsg").textContent = T("ax.added", { email: x.contact }); } else { axAdd.disabled = false; $("pMsg").textContent = T(r.code || "err.generic"); } return; }
       if (axDone) { axDone.disabled = true; await data.closeFeedback(axDone.dataset.axDone); await load(); return; }
+      const pmf = e.target.closest("[data-pm-f]");
+      if (pmf) { pmFilter = pmf.dataset.pmF; render(); const b = document.querySelector(`[data-pm-f="${pmFilter}"]`); if (b) b.focus(); return; }
       const pa = e.target.closest("[data-pa]");
       if (pa) { paFilter = pa.dataset.pa; paMore = 60; render(); const b = document.querySelector(`[data-pa="${paFilter}"]`); if (b) b.focus(); return; }
       if (e.target.closest("#paMore")) { paMore += 100; render(); return; }
