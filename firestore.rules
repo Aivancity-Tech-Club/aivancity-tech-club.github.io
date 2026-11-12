@@ -400,6 +400,63 @@ service cloud.firestore {
         && d.get('desc', '') is string && d.get('desc', '').size() <= 600 && d.get('desc_fr', '') is string && d.get('desc_fr', '').size() <= 600
         && d.get('tags', []) is list && d.get('tags', []).size() <= 8 && d.published is bool && d.get('removed', false) is bool;
     }
+    // NOX game night (/nox-night). Players sign in anonymously (a separate Firebase app on that page), so these rules
+    // never rely on school accounts. Answers are not stored: rewards/{id} is keyed by a hash of game|team|level|answer.
+    match /night/{gid} {
+      function nightPlayer() { return /databases/$(db)/documents/night/$(gid)/players/$(request.auth.uid); }
+      function inTeam(team) { return signedIn() && exists(nightPlayer()) && get(nightPlayer()).data.team == team; }
+      function reward(id) { return get(/databases/$(db)/documents/night/$(gid)/rewards/$(id)).data; }
+      allow read: if true;
+      allow write: if isOrganizer();
+      match /players/{uid} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['name', 'team', 'at'])
+          && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 30
+          && request.resource.data.team in ['ravens', 'bats', 'ghosts', 'spiders']
+          && request.resource.data.at == request.time
+          && get(/databases/$(db)/documents/night/$(gid)).data.status != 'ended';
+        allow update, delete: if isOrganizer();
+      }
+      match /roles/{uid} {
+        allow get: if (signedIn() && request.auth.uid == uid) || isOrganizer();
+        allow list, write: if isOrganizer();
+      }
+      match /rewards/{id} {
+        allow get: if true;
+        allow list, write: if isOrganizer();
+      }
+      match /votes/{uid} {
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['team', 'pick']) && request.resource.data.pick is string
+          && inTeam(request.resource.data.team);
+        allow read, delete: if isOrganizer();
+      }
+      match /teams/{team} {
+        allow read: if true;
+        allow create, delete: if isOrganizer();
+        allow update: if isOrganizer() || (inTeam(team) && get(/databases/$(db)/documents/night/$(gid)).data.status == 'running' && (
+          // a wrong answer: +1 minute, nothing else
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['wrong'])
+            && request.resource.data.wrong == resource.data.get('wrong', 0) + 1)
+          // the next level, only with its solve written in the same batch
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['level', 'at'])
+            && request.resource.data.level == resource.data.get('level', 0) + 1 && request.resource.data.at == request.time
+            && existsAfter(/databases/$(db)/documents/night/$(gid)/teams/$(team)/solves/$(string(request.resource.data.level))))
+        ));
+        match /solves/{lv} {
+          allow read: if isOrganizer() || inTeam(team);
+          allow create: if inTeam(team)
+            && request.resource.data.keys().hasOnly(['proof', 'text', 'at', 'by'])
+            && request.resource.data.by == request.auth.uid && request.resource.data.at == request.time
+            && reward(request.resource.data.proof).team == team
+            && string(reward(request.resource.data.proof).level) == lv
+            && request.resource.data.text == reward(request.resource.data.proof).text;
+          allow update, delete: if isOrganizer();
+        }
+      }
+    }
+
     match /projects/{id} {
       allow read: if resource.data.published == true || isOrganizer();
       allow create, update: if isOrganizer() && projectOk(request.resource.data);

@@ -11,7 +11,7 @@
 #   - A change can never remove points or a bandana already earned.
 # ==============================================================
 
-version: "1.4.0"
+version: "1.5.0"   # 1.5.0 (12/11/2026): Build and Club work missions count now, decided by the organizers
 effective_from: "2026-10-15"     # first Thursday session of Fall 2026
 
 # --------------------------------------------------------------
@@ -268,29 +268,23 @@ rules:
     category: build
     name: "Build together (Village Board mission)"
     points: 5
-    from: "2027-02-01"          # new rule: starts with the next season (see GOVERNANCE.md)
     trigger: "A member finishes a Build mission on someone else's project, and the member who posted it confirms."
     recorded_by: member
     limit: "Max 2 per calendar month."
     name_fr: "Construire ensemble (mission du Tableau du village)"
     trigger_fr: "Un membre termine une mission Construire sur le projet de quelqu'un d'autre, et le membre qui l'a publiée confirme."
     limit_fr: "2 maximum par mois."
-    notes: "Counts from Spring 2027."
-    notes_fr: "Compte à partir du printemps 2027."
 
   - id: club_quest
     category: help
     name: "Club work (Village Board mission)"
     points: 4
-    from: "2027-02-01"          # new rule: starts with the next season (see GOVERNANCE.md)
     trigger: "A member finishes a Club work mission (content, events, audits for the club), and the member who posted it confirms."
     recorded_by: member
     limit: "Max 2 per calendar month."
     name_fr: "Travail pour le club (mission du Tableau du village)"
     trigger_fr: "Un membre termine une mission Travail pour le club (contenu, événements, audits), et le membre qui l'a publiée confirme."
     limit_fr: "2 maximum par mois."
-    notes: "Counts from Spring 2027."
-    notes_fr: "Compte à partir du printemps 2027."
 
 # --------------------------------------------------------------
 # VILLAGE BOARD MISSIONS
