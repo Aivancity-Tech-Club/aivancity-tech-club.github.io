@@ -14,8 +14,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261111q">
-  <link rel="stylesheet" href="assets/village.css?v=20261111q">
+  <link rel="stylesheet" href="assets/styles.css?v=20261112b">
+  <link rel="stylesheet" href="assets/village.css?v=20261112b">
   <style>
     .ci-wrap { padding: 8px 0 56px; }
     .ci-start { display: grid; gap: 16px; max-width: 560px; }
@@ -35,8 +35,8 @@
     .ci-screen .btn-ghost { color: #fff; border-color: #fff; }
     .ci-closed .ci-code { opacity: .35; text-decoration: line-through; }
   </style>
-  <script src="assets/i18n.js?v=20261111q"></script>
-  <script src="assets/analytics.js?v=20261111q" defer></script>
+  <script src="assets/i18n.js?v=20261112b"></script>
+  <script src="assets/analytics.js?v=20261112b" defer></script>
 </head>
 <body data-i18n-title="ci.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -80,6 +80,7 @@
               <option value="60" selected data-i18n="ci.m60">1 hour</option>
               <option value="90" data-i18n="ci.m90">1 hour 30</option>
               <option value="180" data-i18n="ci.m180">3 hours (events)</option>
+              <option value="day" data-i18n="ci.mday">The rest of today (to print)</option>
             </select>
           </div>
           <label class="check"><input type="checkbox" id="double"><span data-i18n="ci.double">Double points today (once a month, announce it beforehand)</span></label>
@@ -104,12 +105,12 @@
     </section>
   </main>
 
-  <script src="assets/schedule.js?v=20261111q"></script>
+  <script src="assets/schedule.js?v=20261112b"></script>
 
-  <script src="assets/sessions.js?v=20261111q"></script>
-  <script src="assets/platform/config.js?v=20261111q"></script>
-  <script src="assets/platform/signin.js?v=20261111q"></script>
-  <script src="assets/platform/data.js?v=20261111q"></script>
+  <script src="assets/sessions.js?v=20261112b"></script>
+  <script src="assets/platform/config.js?v=20261112b"></script>
+  <script src="assets/platform/signin.js?v=20261112b"></script>
+  <script src="assets/platform/data.js?v=20261112b"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -130,7 +131,7 @@
       const left = Math.max(0, cur.until - Date.now()), closed = left <= 0;
       $("screen").classList.toggle("ci-closed", closed);
       const m = Math.floor(left / 60e3), sec = Math.floor(left / 1e3) % 60;
-      $("sLeft").innerHTML = closed ? T("ci.closed") : T("ci.left", { t: `<b>${m}:${String(sec).padStart(2, "0")}</b>` });
+      $("sLeft").innerHTML = closed ? T("ci.closed") : T("ci.left", { t: `<b>${m >= 60 ? Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") : m + ":" + String(sec).padStart(2, "0")}</b>` });
       show("screen");
     }
     async function count() { try { const n = await data.countCheckins(today); $("sCount").innerHTML = T("ci.count", { n: `<b>${n}</b>` }); } catch (e) {} }
@@ -141,7 +142,9 @@
     }
     async function start() {
       $("go").disabled = true; $("newCode").disabled = true;
-      const r = await data.createCheckinCode(+$("minutes").value || 60, $("double").checked);
+      const v = $("minutes").value, eod = new Date(); eod.setHours(23, 59, 0, 0);
+      const mins = v === "day" ? Math.max(1, Math.floor((eod - Date.now()) / 60e3)) : (+v || 60);   // "day": until 23:59 tonight
+      const r = await data.createCheckinCode(mins, $("double").checked);
       $("go").disabled = false; $("newCode").disabled = false;
       if (!r.ok) { $("startMsg").className = "notice bad form-msg"; $("startMsg").textContent = T(r.code || "err.generic"); return; }
       cur = r; $("sDouble").hidden = !r.double; run();
