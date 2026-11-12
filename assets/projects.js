@@ -1,7 +1,9 @@
 /* /projects: the club's projects. NOX is written in the page; the rest come from the database (projects/{id}),
-   and organizers add and edit them here. */
+   and organizers add and edit them here. The About page uses this file too, read-only (it has no organizer form). */
 (function () {
-  const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
+  const READONLY = !document.getElementById('pjForm'), stubs = {};
+  // on a read-only page, the organizer controls don't exist: hand back a detached element so the code below stays simple
+  const $ = (id) => document.getElementById(id) || stubs[id] || (stubs[id] = document.createElement(/Title|Tags|Pub|Link|Repo|Image|Date|Meta|Desc|Text/.test(id) ? 'input' : 'div')), T = (k, v) => I18N.t(k, v);
   const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const pick = (p, f) => I18N.pick(p, f) || p[f] || '';
   let data, projects = [], isOrg = false, editing = null, delSure = false;
@@ -100,7 +102,7 @@
       if (!u || !u.verified) return;
       const prof = await (data.getProfile ? data.getProfile(u.uid).catch(() => null) : null);
       const org = !!(prof && prof.role === 'organizer') || (data.mode === 'demo' && new URLSearchParams(location.search).has('elder'));
-      if (org && !isOrg) { isOrg = true; $('pjAdmin').hidden = false; load(); }
+      if (org && !isOrg && !READONLY) { isOrg = true; $('pjAdmin').hidden = false; load(); }
     });
   }).catch(() => {});
 })();

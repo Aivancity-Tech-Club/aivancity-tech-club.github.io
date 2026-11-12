@@ -498,7 +498,7 @@
         if (!isOrg) return render();
       }
       await connect(MODE === 'host');
-    } catch (e) { console.error(e); gameErr = L('NOX could not connect. Check your connection and reload.', 'NOX ne peut pas se connecter. Vérifiez la connexion et rechargez.'); return render(); }
+    } catch (e) { console.error(e); gameErr = e && e.code === 'auth/admin-restricted-operation' ? L('Organizers: turn on Anonymous sign-in in Firebase (Authentication → Sign-in method), then reload.', 'Organisateurs : activez la connexion anonyme dans Firebase (Authentication → Sign-in method), puis rechargez.') : L('NOX could not connect. Check your connection and reload.', 'NOX ne peut pas se connecter. Vérifiez la connexion et rechargez.'); return render(); }
     S.watch(P(), g => {
       game = g;
       if (g) { const c = g.cue || { n: 0 }; if (MODE === 'screen') screenCue(c); else if (MODE === 'player') { const p = myPlayer(); playCue(c, p && p.team); } }
