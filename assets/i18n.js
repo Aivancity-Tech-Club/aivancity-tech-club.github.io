@@ -938,7 +938,7 @@ en: {
   'pj.f.link': 'Link to try it (https://)', 'pj.f.repo': 'Code repository (https://, optional)', 'pj.f.linktext': 'Button text (English)', 'pj.f.linktext.fr': 'Button text (French)',
   'pj.f.tags': 'Skills, separated by commas', 'pj.f.image': 'Cover image link (https://, optional)', 'pj.f.date': 'Date', 'pj.f.pub': 'Show it on the page',
   'pj.save': 'Save', 'pj.cancel': 'Cancel', 'pj.delete': 'Delete', 'pj.delete.sure': 'Click again to delete', 'pj.edit': 'Edit',
-  'pj.open': 'Open it', 'pj.code': 'See the code', 'pj.skills': 'Skills used', 'pj.hidden': 'Hidden',
+  'pj.open': 'Open it', 'pj.code': 'See the code', 'pj.skills': 'Skills used', 'pj.hidden': 'Hidden', 'pj.removed': 'NOX is removed from the page.', 'pj.restore': 'Bring it back',
   'pj.err.title': 'Give the project a title.', 'pj.err.url': 'Links must start with https://',
   'err.generic': 'Something went wrong. Try again in a moment.', 'err.level': 'Pick your coding level.',
 
@@ -1949,7 +1949,7 @@ fr: {
   'pj.f.link': 'Lien pour l\'essayer (https://)', 'pj.f.repo': 'Dépôt de code (https://, facultatif)', 'pj.f.linktext': 'Texte du bouton (anglais)', 'pj.f.linktext.fr': 'Texte du bouton (français)',
   'pj.f.tags': 'Compétences, séparées par des virgules', 'pj.f.image': 'Lien de l\'image de couverture (https://, facultatif)', 'pj.f.date': 'Date', 'pj.f.pub': 'Afficher sur la page',
   'pj.save': 'Enregistrer', 'pj.cancel': 'Annuler', 'pj.delete': 'Supprimer', 'pj.delete.sure': 'Cliquez encore pour supprimer', 'pj.edit': 'Modifier',
-  'pj.open': 'Ouvrir', 'pj.code': 'Voir le code', 'pj.skills': 'Compétences utilisées', 'pj.hidden': 'Masqué',
+  'pj.open': 'Ouvrir', 'pj.code': 'Voir le code', 'pj.skills': 'Compétences utilisées', 'pj.hidden': 'Masqué', 'pj.removed': 'NOX est retiré de la page.', 'pj.restore': 'Le remettre',
   'pj.err.title': 'Donnez un titre au projet.', 'pj.err.url': 'Les liens doivent commencer par https://',
   'err.generic': 'Une erreur est survenue. Réessayez dans un instant.', 'err.level': 'Choisissez votre niveau en code.',
 

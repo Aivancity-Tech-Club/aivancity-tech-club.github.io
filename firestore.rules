@@ -395,10 +395,10 @@ service cloud.firestore {
     // ---------- Projects on /projects (projects/{id}): public when published; organizers add, edit and remove them ----------
     function projectOk(d) {
       return d.keys().hasOnly(['title', 'title_fr', 'desc', 'desc_fr', 'meta', 'meta_fr', 'tags', 'link', 'linkText', 'linkText_fr', 'repo', 'image',
-          'date', 'published', 'createdBy', 'createdAt', 'updatedAt'])
+          'date', 'published', 'removed', 'createdBy', 'createdAt', 'updatedAt'])
         && d.title is string && d.title.size() > 1 && d.title.size() <= 100
         && d.get('desc', '') is string && d.get('desc', '').size() <= 600 && d.get('desc_fr', '') is string && d.get('desc_fr', '').size() <= 600
-        && d.get('tags', []) is list && d.get('tags', []).size() <= 8 && d.published is bool;
+        && d.get('tags', []) is list && d.get('tags', []).size() <= 8 && d.published is bool && d.get('removed', false) is bool;
     }
     match /projects/{id} {
       allow read: if resource.data.published == true || isOrganizer();

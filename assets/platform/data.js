@@ -37,7 +37,7 @@ function cleanProject(p) {
     title: t(p.title, 100), title_fr: t(p.title_fr, 100), desc: t(p.desc, 600), desc_fr: t(p.desc_fr, 600),
     meta: t(p.meta, 140), meta_fr: t(p.meta_fr, 140), tags: (Array.isArray(p.tags) ? p.tags : String(p.tags || '').split(',')).map(x => t(x, 30)).filter(Boolean).slice(0, 8),
     link: url(p.link), linkText: t(p.linkText, 40), linkText_fr: t(p.linkText_fr, 40), repo: url(p.repo), image: url(p.image),
-    date: /^\d{4}-\d{2}-\d{2}$/.test(p.date || '') ? p.date : '', published: p.published !== false,
+    date: /^\d{4}-\d{2}-\d{2}$/.test(p.date || '') ? p.date : '', published: p.published !== false, ...(p.removed ? { removed: true } : {}),
   };
 }
 function cleanEvent(e) {
@@ -940,7 +940,7 @@ function firebaseBackend() {
     async saveProject(p) {
       const ref = p.id ? db.collection('projects').doc(p.id) : db.collection('projects').doc(), doc = cleanProject(p);
       try {
-        if (p.id) await ref.update({ ...doc, updatedAt: FV().serverTimestamp() });
+        if (p.id) await ref.set({ ...doc, updatedAt: FV().serverTimestamp() }, { merge: !p.removed });
         else await ref.set({ ...doc, createdBy: auth.currentUser.uid, createdAt: FV().serverTimestamp(), updatedAt: FV().serverTimestamp() });
         return { ok: true, id: ref.id };
       } catch (e) { return fail(e); }

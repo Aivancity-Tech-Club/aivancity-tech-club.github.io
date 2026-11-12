@@ -21,14 +21,19 @@
         <p class="proj-actions">
           ${p.link ? `<a class="btn btn-primary" href="${esc(p.link)}" target="_blank" rel="noopener">${esc(pick(p, 'linkText') || T('pj.open'))} →</a>` : ''}
           ${p.repo ? `<a class="btn btn-ghost" href="${esc(p.repo)}" target="_blank" rel="noopener">${esc(T('pj.code'))}</a>` : ''}
-          ${isOrg ? `<button type="button" class="btn btn-ghost" data-pj-edit="${esc(p.id)}">${esc(T('pj.edit'))}</button>` : ''}
+          ${isOrg ? `<button type="button" class="btn btn-ghost" data-pj-edit="${esc(p.id)}">${esc(T('pj.edit'))}</button>
+          <button type="button" class="btn btn-ghost" data-pj-del="${esc(p.id)}">${esc(T('pj.delete'))}</button>` : ''}
         </p>
       </div>
     </article>`;
   }
   function render() {
-    const list = projects.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const list = projects.filter(p => !p.removed).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     $('siteProjects').innerHTML = list.map(card).join('');
+    // NOX is written in the page: a removal record (projects/nox, removed) hides it
+    const noxGone = projects.some(p => p.id === 'nox' && p.removed);
+    $('pjNox').hidden = noxGone; $('pjRemoved').hidden = !(isOrg && noxGone);
+    document.querySelectorAll('#pjNox [data-pj-del]').forEach(b => { b.hidden = !isOrg; });
   }
   async function load() {
     try { projects = await data.loadProjects(isOrg); } catch (e) { projects = []; }
@@ -65,6 +70,22 @@
     closeForm(); await load();
     const c = $('pj_' + r.id); if (c) c.closest('.proj').scrollIntoView({ block: 'center' });
   });
+  // Delete straight from a card: first click asks, second click deletes
+  let armed = null;
+  async function remove(id) {
+    const r = id === 'nox' ? await data.saveProject({ id: 'nox', title: 'NOX: The Deadline', published: true, removed: true }) : await data.deleteProject(id);
+    $('pjNote').hidden = r.ok; if (!r.ok) { $('pjNote').textContent = T(r.code || 'err.generic'); return; }
+    if (editing === id) closeForm();
+    await load();
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pj-del]');
+    if (armed && armed !== b) { armed.textContent = T('pj.delete'); armed.classList.remove('btn-danger'); armed = null; }
+    if (!b) return;
+    if (armed !== b) { armed = b; b.textContent = T('pj.delete.sure'); b.classList.add('btn-danger'); return; }
+    armed = null; b.disabled = true; remove(b.dataset.pjDel);
+  });
+  $('pjRestore').addEventListener('click', async () => { const r = await data.deleteProject('nox'); if (r.ok) load(); });
   $('pjDel').addEventListener('click', async () => {
     if (!delSure) { delSure = true; $('pjDel').textContent = T('pj.delete.sure'); $('pjDel').classList.add('btn-danger'); return; }
     const r = await data.deleteProject(editing);
