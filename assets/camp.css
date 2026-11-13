@@ -91,3 +91,23 @@
 .camp-wins li span { min-width: 0; overflow-wrap: anywhere; }
 .camp-pts-total { margin: 8px 2px 0; font-weight: 700; text-align: right; }
 @media (max-width: 520px) { .camp-wins li { flex-direction: column; gap: 2px; } }
+/* pages of the points list: "1–10 of 45", then Previous · 1 2 3 … 9 · Next */
+.camp-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-top: 12px; }
+.camp-pager-info { margin: 0; font-family: var(--mono); font-size: .85rem; color: var(--ink-soft); }
+.camp-pager-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.camp-pg { min-width: 40px; min-height: 40px; padding: 0 12px; white-space: nowrap; border-radius: 999px; border: var(--stroke) solid var(--line); background: var(--surface); color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.camp-pg:hover:not(:disabled) { background: color-mix(in srgb, var(--line) 10%, var(--surface)); }
+.camp-pg[aria-current="page"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.camp-pg:disabled { opacity: .4; cursor: default; }
+.camp-pg-gap { padding: 0 2px; color: var(--ink-soft); }
+.camp-pts-h:focus { outline: none; }
+.camp-pts-h:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 4px; }
+.camp-pg-now { display: none; font-weight: 600; white-space: nowrap; }
+/* phones: Previous · Page 3 of 8 · Next on one line (the page numbers would wrap) */
+@media (max-width: 520px) {
+  .camp-pager { flex-direction: column; align-items: stretch; }
+  .camp-pager-btns { flex-wrap: nowrap; justify-content: space-between; }
+  .camp-pager-btns > .camp-pg:not(.camp-pg-step), .camp-pg-gap { display: none; }
+  .camp-pg-now { display: inline; font-size: .92rem; }
+  .camp-pg-step { padding: 0 10px; font-size: .92rem; }
+}

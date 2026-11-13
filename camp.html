@@ -19,12 +19,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261114a">
-  <link rel="stylesheet" href="assets/village.css?v=20261114a">
-  <link rel="stylesheet" href="assets/camp.css?v=20261114a">
-  <script src="assets/i18n.js?v=20261114a"></script>
-  <script src="assets/analytics.js?v=20261114a" defer></script>
-  <script src="assets/halloween.js?v=20261114a" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261114d">
+  <link rel="stylesheet" href="assets/village.css?v=20261114d">
+  <link rel="stylesheet" href="assets/camp.css?v=20261114d">
+  <script src="assets/i18n.js?v=20261114d"></script>
+  <script src="assets/analytics.js?v=20261114d" defer></script>
+  <script src="assets/halloween.js?v=20261114d" defer></script>
 </head>
 <body data-i18n-title="camp.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -116,13 +116,13 @@
     </div>
   </footer>
 
-  <script src="assets/js-yaml.min.js?v=20261114a"></script>
-  <script src="assets/schedule.js?v=20261114a"></script>
-  <script src="assets/sessions.js?v=20261114a"></script>
-  <script src="assets/platform/config.js?v=20261114a"></script>
-  <script src="assets/platform/engine.js?v=20261114a"></script>
-  <script src="assets/platform/signin.js?v=20261114a"></script>
-  <script src="assets/platform/data.js?v=20261114a"></script>
+  <script src="assets/js-yaml.min.js?v=20261114d"></script>
+  <script src="assets/schedule.js?v=20261114d"></script>
+  <script src="assets/sessions.js?v=20261114d"></script>
+  <script src="assets/platform/config.js?v=20261114d"></script>
+  <script src="assets/platform/engine.js?v=20261114d"></script>
+  <script src="assets/platform/signin.js?v=20261114d"></script>
+  <script src="assets/platform/data.js?v=20261114d"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -145,7 +145,15 @@
     const DARK = ["night", "forest"];
     // every line that earned points, with what it was for, so anyone can see where someone's points come from
     const STEP = { camp: "camp.st.camp", village: "camp.st.village", mission: "camp.st.mission", buddy: "camp.st.buddy" };
-    let showAllPts = false;
+    const PTS_PER = 10;
+    let ptsPage = 0;   // which page of the points list is showing (newest first)
+    // page numbers to show: all of them when there are few, otherwise the first, the last and the ones around the current page
+    function pageNums(cur, total) {
+      if (total <= 7) return [...Array(total).keys()];
+      const set = new Set([0, total - 1, cur - 1, cur, cur + 1].filter(i => i >= 0 && i < total)), out = [];
+      [...set].sort((a, b) => a - b).forEach((i, k, arr) => { if (k && i - arr[k - 1] > 1) out.push(null); out.push(i); });
+      return out;
+    }
     function ptsLine(h) {
       const f = h.fact, key = f.type === "buddy_session" ? "camp.f.buddy_session" : "fact." + f.type;
       const label = T(key, { n: f.place }) !== key ? T(key, { n: f.place }) : (h.rule || f.type);
@@ -210,7 +218,9 @@
       const first = (member.name || "").split(" ")[0];
       const rep = !!(c.reports || {})[me.uid], hidden = !!c.hidden;
       const filled = c.working || c.dream || c.askMe || c.about || (c.proud || []).length || c.song;
-      const earned = s.history.filter(h => h.points > 0), PTS_MAX = 10;
+      const earned = s.history.filter(h => h.points > 0), pages = Math.max(1, Math.ceil(earned.length / PTS_PER));
+      ptsPage = Math.min(Math.max(0, ptsPage), pages - 1);
+      const from = ptsPage * PTS_PER, shown = earned.slice(from, from + PTS_PER);
       const missions = (s.counts.mentoring || 0) + (s.counts.collab || 0) + (s.counts.club_quest || 0);
       const song = c.song ? songEmbed(c.song) : null;
       const paired = buddies.filter(b => b.status === "paired");
@@ -259,9 +269,17 @@
             <div><b>${missions}</b><span>${esc(T("camp.missions"))}</span></div>
             <div><b>${s.badges.length}</b><span>${esc(T("m.badges.h"))}</span></div>
           </div>
-          <h3 class="camp-pts-h">${esc(T("camp.pts.h"))}</h3>
-          ${earned.length ? `<ul class="camp-wins" id="ptsList">${(showAllPts ? earned : earned.slice(0, PTS_MAX)).map(ptsLine).join("")}</ul>
-            ${earned.length > PTS_MAX && !showAllPts ? `<p style="margin:8px 0 0"><button type="button" class="linkbtn" data-act="pts-all">${esc(T("camp.pts.all", { n: earned.length }))}</button></p>` : ""}
+          <h3 class="camp-pts-h" id="ptsH" tabindex="-1">${esc(T("camp.pts.h"))}</h3>
+          ${earned.length ? `<ul class="camp-wins" id="ptsList" aria-labelledby="ptsH">${shown.map(ptsLine).join("")}</ul>
+            ${pages > 1 ? `<nav class="camp-pager" aria-label="${esc(T("camp.pts.pages"))}">
+              <p class="camp-pager-info" aria-live="polite">${esc(T("camp.pts.range", { a: from + 1, b: from + shown.length, n: earned.length }))}</p>
+              <div class="camp-pager-btns">
+                <button type="button" class="camp-pg camp-pg-step" data-act="pts-page" data-page="${ptsPage - 1}"${ptsPage === 0 ? " disabled" : ""}><span aria-hidden="true">‹</span> ${esc(T("camp.pts.prev"))}</button>
+                ${pageNums(ptsPage, pages).map(i => i === null ? `<span class="camp-pg-gap" aria-hidden="true">…</span>`
+                  : `<button type="button" class="camp-pg" data-act="pts-page" data-page="${i}" aria-label="${esc(T("camp.pts.page", { n: i + 1 }))}"${i === ptsPage ? ' aria-current="page"' : ""}>${i + 1}</button>`).join("")}
+                <span class="camp-pg-now">${esc(T("camp.pts.now", { n: ptsPage + 1, t: pages }))}</span>
+                <button type="button" class="camp-pg camp-pg-step" data-act="pts-page" data-page="${ptsPage + 1}"${ptsPage >= pages - 1 ? " disabled" : ""}>${esc(T("camp.pts.next"))} <span aria-hidden="true">›</span></button>
+              </div></nav>` : ""}
             <p class="camp-pts-total">${esc(T("camp.pts.total", { n: s.lifetime }))}</p>`
             : `<p class="help">${esc(T(own ? "camp.wins.none.own" : "camp.wins.none", { name: first }))}</p>`}
           <p class="help" style="margin:10px 0 0"><a href="/rules" data-i18n="m.rules.link">${esc(T("m.rules.link"))}</a></p>
@@ -323,7 +341,16 @@
       const b = e.target.closest("[data-act]"); if (!b) return;
       const act = b.dataset.act;
       if (act === "edit") openEdit();
-      if (act === "pts-all") { showAllPts = true; render(); const l = document.querySelector("#ptsList li:nth-child(11) b"); if (l) { l.tabIndex = -1; l.focus(); } return; }
+      if (act === "pts-page") {   // another page of points: keep the keyboard on the same control and the list in view
+        const go = +b.dataset.page; if (!(go >= 0)) return;
+        const step = b.classList.contains("camp-pg-step") ? (go < ptsPage ? "prev" : "next") : null;
+        ptsPage = go; render();
+        const again = step ? document.querySelectorAll(".camp-pg-step")[step === "prev" ? 0 : 1] : document.querySelector(`.camp-pg[data-page="${go}"]:not(.camp-pg-step)`);
+        const target = again && !again.disabled ? again : $("ptsH");
+        target.focus({ preventScroll: true });
+        const h = $("ptsH"); if (h && h.getBoundingClientRect().top < 0) h.scrollIntoView({ block: "start" });
+        return;
+      }
       if (act === "bd-open" || act === "bd-close") { asking = act === "bd-open"; render(); const f = asking ? $("askNote") : document.querySelector('[data-act="bd-open"]'); if (f) f.focus(); return; }
       if (act && act.startsWith("bd-")) {
         const rel = buddies.find(x => x.users.includes(me.uid));
