@@ -28,6 +28,7 @@ function ruleFor(rb, fact) {
 }
 function basePoints(rule, fact) {
   if (!rule) return 0;
+  if (rule.points_max) return Math.max(0, Math.min(rule.points_max, Math.round(Number(fact.points) || 0)));   // the organizer sets the amount
   if (typeof rule.points === 'number') return rule.points;
   return Number(rule.points[fact.place] || rule.points[String(fact.place)] || 0);
 }
@@ -93,7 +94,7 @@ function computeMember(rb, uid, facts, regularSessions, today) {
   const cap = (rb.sessions && rb.sessions.point_cap_per_regular_session) || Infinity;
   const regular = new Set(regularSessions);
   const byDate = {};
-  for (const h of history) if (h.points > 0 && regular.has(h.fact.date) && !h.fact.double) (byDate[h.fact.date] = byDate[h.fact.date] || []).push(h);
+  for (const h of history) if (h.points > 0 && regular.has(h.fact.date) && !h.fact.double && h.fact.type !== 'event_bonus') (byDate[h.fact.date] = byDate[h.fact.date] || []).push(h);
   for (const list of Object.values(byDate)) {
     let total = 0;
     for (const h of list) { const room = Math.max(0, cap - total); if (h.points > room) { h.note = `Session cap of ${cap} reached`; h.points = room; } total += h.points; }

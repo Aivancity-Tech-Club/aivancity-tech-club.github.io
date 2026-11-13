@@ -239,6 +239,7 @@ function demoBackend() {
     async removeBuddy(id) { const X = extra(); (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_undone', uid: 'you', other: ((demoBuddies(X).find(x => x.id === id) || { users: [] }).users).join(' '), at: Date.now() }); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
     async loadActivity() { return (extra().activity || []).slice().sort((a, b) => b.at - a.at); },
     async awardStarter(step, pair) { if (state.facts.some(f => f.id === 'you_st_' + step)) return { ok: false }; state.facts.push({ id: 'you_st_' + step, uid: 'you', type: 'starter', step, date: todayStr(), status: 'approved', pair }); save(); return { ok: true }; },
+    async giveBonus(uids, date, points, reason) { uids.forEach(u => state.facts.push({ id: 'b' + Math.random().toString(36).slice(2, 9), uid: u, type: 'event_bonus', date, points, reason, status: 'approved', recordedBy: 'you' })); save(); return { ok: true }; },
     async markAttended(uids, date, double) { uids.forEach(u => { if (!state.facts.some(f => f.id === u + '_' + date)) state.facts.push({ id: u + '_' + date, uid: u, type: 'attend', date, status: 'approved', recordedBy: 'you', ...(double ? { double: true } : {}) }); }); save(); return { ok: true }; },
     async awardBuddySession(date, pair) { if (state.facts.some(f => f.id === 'you_bs_' + date)) return { ok: false }; state.facts.push({ id: 'you_bs_' + date, uid: 'you', type: 'buddy_session', date, pair, status: 'approved' }); save(); return { ok: true }; },
     async markTour(key) { const m = state.members.find(x => x.uid === 'you'); m.tour = { ...(m.tour || {}), [key]: true }; save(); return { ok: true }; },
@@ -877,6 +878,15 @@ function firebaseBackend() {
       const uid = auth.currentUser.uid, doc = { uid, type: 'starter', step, date: todayStr(), status: 'approved', createdAt: FV().serverTimestamp() };
       if (pair) doc.pair = pair;
       try { await db.collection('facts').doc(uid + '_st_' + step).set(doc); return { ok: true }; } catch (e) { return fail(e); }
+    },
+    // an organizer gives points for something someone did at or for an event (rule event_bonus, up to 10 per award)
+    async giveBonus(uids, date, points, reason) {
+      const by = auth.currentUser.uid;
+      try {
+        const b = db.batch();
+        uids.forEach(u => b.set(db.collection('facts').doc(), { uid: u, type: 'event_bonus', date, points, reason: String(reason).slice(0, 120), status: 'approved', recordedBy: by, createdAt: FV().serverTimestamp() }));
+        await b.commit(); return { ok: true };
+      } catch (e) { return fail(e); }
     },
     // an organizer marks people as present at a session (fact id = uid_date, like a check-in, so nobody counts twice)
     async markAttended(uids, date, double) {

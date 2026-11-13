@@ -11,7 +11,7 @@
 #   - A change can never remove points or a bandana already earned.
 # ==============================================================
 
-version: "1.5.0"   # 1.5.0 (12/11/2026): Build and Club work missions count now, decided by the organizers
+version: "1.6.0"   # 1.6.0 (13/11/2026): organizers can give event-contribution points (up to 10 per award)
 effective_from: "2026-10-15"     # first Thursday session of Fall 2026
 
 # --------------------------------------------------------------
@@ -187,6 +187,20 @@ rules:
     trigger_fr: "Le membre est indiqué comme organisateur d'un événement au programme publié."
     conditions_fr:
       - "Au moins 10 enregistrements à l'événement (à distance compris)."
+
+  - id: event_bonus
+    category: share
+    name: "Help make an event happen"
+    points: 0
+    points_max: 10
+    trigger: "An organizer gives points for something you did at or for an event: solving a riddle, filming, food, clean-up, building, posting…"
+    recorded_by: organizer
+    conditions:
+      - "Each award says what it was for. Up to 10 points per award."
+    name_fr: "Contribuer à un événement"
+    trigger_fr: "Un organisateur donne des points pour ce que vous avez fait pendant ou pour un événement : résoudre une énigme, filmer, la nourriture, le rangement, construire, publier…"
+    conditions_fr:
+      - "Chaque attribution dit pourquoi. Jusqu'à 10 points par attribution."
 
   # ---------- Build ----------
   - id: ship_project
