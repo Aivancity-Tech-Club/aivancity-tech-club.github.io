@@ -16,12 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261113m">
-  <link rel="stylesheet" href="assets/village.css?v=20261113m">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261113m">
-  <script src="assets/i18n.js?v=20261113m"></script>
-  <script src="assets/analytics.js?v=20261113m" defer></script>
-  <script src="assets/halloween.js?v=20261113m" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261113n">
+  <link rel="stylesheet" href="assets/village.css?v=20261113n">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261113n">
+  <script src="assets/i18n.js?v=20261113n"></script>
+  <script src="assets/analytics.js?v=20261113n" defer></script>
+  <script src="assets/halloween.js?v=20261113n" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -84,32 +84,35 @@
           </form>
           <p class="help" id="dirMsg" role="status"></p>
         </section>
-        <section class="p-card dc" id="markAtt" data-sec="markAtt" hidden aria-labelledby="maH">
-          <h2 id="maH" data-i18n="ma.h">Mark people as present</h2>
-          <p class="help" data-i18n="ma.p">For when the check-in code wasn't shared: paste the emails of the people who came. It counts exactly like a check-in.</p>
-          <form id="maForm" class="dir-form" novalidate>
-            <div class="field"><label for="maDate" data-i18n="ma.date">Session date</label><input class="input" id="maDate" type="date" style="max-width:220px"></div>
-            <div class="field"><label for="maText" data-i18n="ma.paste">Emails of the people who came</label>
-              <textarea class="textarea" id="maText" rows="5" placeholder="j.dupont@aivancity.education&#10;a.martin@aivancity.education"></textarea></div>
-            <label class="check"><input type="checkbox" id="maDouble"><span data-i18n="ma.double">Double points session</span></label>
-            <div class="row-actions"><button type="submit" class="btn btn-ghost" data-i18n="ma.find">Find them</button></div>
-          </form>
-          <div id="maOut" aria-live="polite"></div>
-        </section>
-        <section class="p-card dc" id="bonus" data-sec="bonus" hidden aria-labelledby="bnH">
-          <h2 id="bnH" data-i18n="bn.h">Give points for what someone did</h2>
-          <p class="help" data-i18n="bn.p">One line per award: email, then points (or a competition word), then what for. Someone who did several things gets several lines. Each award shows its reason in the person’s history.</p>
-          <div class="bn-guide" id="bnGuide"></div>
-          <form id="bnForm" class="dir-form" novalidate>
-            <div class="field"><label for="bnText" data-i18n="bn.who">One award per line: email, points, what for</label><textarea class="textarea" id="bnText" rows="6" data-i18n-attr="placeholder:bn.who.ph" aria-describedby="bnCheck"></textarea><small class="help" data-i18n="bn.who.help">You can paste from a spreadsheet. A line with only an email gets the points and reason below.</small><div id="bnCheck" aria-live="polite"></div></div>
-            <div class="dir-row" style="flex-wrap:wrap;gap:12px">
-              <div class="field" style="flex:2;min-width:220px"><label for="bnWhy" data-i18n="bn.why">For what (lines without one)</label><input class="input" id="bnWhy" maxlength="120" data-i18n-attr="placeholder:bn.why.ph"></div>
-              <div class="field" style="flex:1;min-width:110px"><label for="bnPts" data-i18n="bn.pts">Points (lines without)</label><input class="input" id="bnPts" type="number" min="1" max="10" value="2"></div>
-              <div class="field" style="flex:1;min-width:150px"><label for="bnDate" data-i18n="ma.date">Session date</label><input class="input" id="bnDate" type="date"></div>
+        <section class="p-card dc" id="record" data-sec="record" hidden aria-labelledby="rsH">
+          <h2 id="rsH" data-i18n="rs.h">Record a session</h2>
+          <p class="help" data-i18n="rs.p">Who came, and points for what people did. Pick the date and what happened, add the people, check the list, then save.</p>
+          <form id="rsForm" class="dir-form rs-form" novalidate>
+            <div class="dir-row rs-top">
+              <div class="field"><label for="rsDate" data-i18n="ma.date">Session date</label><input class="input" id="rsDate" type="date"></div>
+              <div class="field"><label for="rsWhat" data-i18n="rs.what">What happened?</label><select class="select" id="rsWhat"></select></div>
             </div>
-            <div class="row-actions"><button type="submit" class="btn btn-ghost" data-i18n="ma.find">Find them</button></div>
+            <label class="check" id="rsDoubleRow"><input type="checkbox" id="rsDouble"><span data-i18n="ma.double">Double points session</span></label>
+            <label class="check" id="rsTeamRow" hidden><input type="checkbox" id="rsTeam" checked><span data-i18n="rs.team">Team competition</span></label>
+            <div class="dir-row">
+              <div class="field" id="rsPtsRow" hidden style="flex:0 1 140px"><label for="rsPts" data-i18n="rs.pts">Points</label><input class="input" id="rsPts" type="number" min="1" max="10" value="2" inputmode="numeric"></div>
+              <div class="field" id="rsWhyRow" hidden style="flex:1 1 240px"><label for="rsWhy" data-i18n="rs.why">What for</label><input class="input" id="rsWhy" maxlength="120"></div>
+            </div>
+            <div class="rs-scale help" id="rsScale" hidden></div>
+            <p class="rs-each" id="rsEach" aria-live="polite"></p>
+            <div class="field rs-find"><label for="rsFind" data-i18n="rs.find">Who? Type a name, email or phone number</label>
+              <input class="input" id="rsFind" type="search" autocomplete="off" spellcheck="false" aria-controls="rsSug">
+              <ul class="rs-sug" id="rsSug"></ul>
+              <ul class="rs-who" id="rsWho" aria-live="polite"></ul></div>
+            <details class="rs-paste"><summary data-i18n="rs.paste">Or paste a list of emails</summary>
+              <label class="sr-only" for="rsPaste" data-i18n="rs.paste">Or paste a list of emails</label>
+              <textarea class="textarea" id="rsPaste" rows="4" placeholder="j.dupont@aivancity.education&#10;a.martin@aivancity.education"></textarea>
+              <p class="row-actions"><button type="button" class="btn btn-ghost" id="rsPasteAdd" data-i18n="rs.paste.btn">Add these people</button></p>
+              <div id="rsPasteMsg" aria-live="polite"></div></details>
+            <div class="row-actions"><button type="submit" class="btn btn-primary" data-i18n="rs.add">Add to the list</button></div>
+            <p class="help" id="rsMsg" role="status"></p>
           </form>
-          <div id="bnOut" aria-live="polite"></div>
+          <div id="rsList"></div>
         </section>
         <section class="p-card dc" id="erase" data-sec="erase" hidden aria-labelledby="erH">
           <h2 id="erH" data-i18n="er.h">Delete someone's data</h2>
@@ -131,14 +134,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261113m"></script>
+  <script src="assets/schedule.js?v=20261113n"></script>
 
-  <script src="assets/sessions.js?v=20261113m"></script>
-  <script src="assets/js-yaml.min.js?v=20261113m"></script>
-  <script src="assets/platform/config.js?v=20261113m"></script>
-  <script src="assets/platform/engine.js?v=20261113m"></script>
-  <script src="assets/platform/signin.js?v=20261113m"></script>
-  <script src="assets/platform/data.js?v=20261113m"></script>
+  <script src="assets/sessions.js?v=20261113n"></script>
+  <script src="assets/js-yaml.min.js?v=20261113n"></script>
+  <script src="assets/platform/config.js?v=20261113n"></script>
+  <script src="assets/platform/engine.js?v=20261113n"></script>
+  <script src="assets/platform/signin.js?v=20261113n"></script>
+  <script src="assets/platform/data.js?v=20261113n"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -496,26 +499,13 @@
       pending.forEach(p => { const u = p.uid || p.id; out[u] = { uid: u, name: (out[u] || {}).name || p.name, email: (out[u] || {}).email || p.email }; });
       return Object.values(out).filter(p => !orgs.has(p.uid) && p.uid !== data.currentUid()).sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
     }
-    // what to write in the Give points box, with the numbers straight from the rulebook (so it never drifts)
-    function drawBonusGuide() {
-      const R = (rulebook && rulebook.rules) || [], rule = (id) => R.find(r => r.id === id) || {};
-      const eb = rule("event_bonus"), enter = rule("compete_enter").points, team = rule("compete_place_team").points || {}, solo = rule("compete_place_solo").points || {};
-      const scale = (I18N.pick(eb, "conditions") || []).slice(0, 3);
-      const ex = (mid, why) => `<code>prenom.nom@aivancity.education, ${esc(mid)}, ${esc(why)}</code>`;
-      const cond = (id) => (I18N.pick(rule(id), "conditions") || []).join(" ");
-      $("bnGuide").innerHTML = `<p>${T("bn.g.format")}</p><ul>
-        <li>${ex(T("bn.g.num.w"), T("bn.g.num.ex"))}<br>${T("bn.g.num", { max: eb.points_max || 10 })}${scale.length ? `<ul>${scale.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</li>
-        ${enter ? `<li>${ex(T("bn.g.played.w"), T("bn.g.comp.ex"))}<br>${T("bn.g.played", { n: enter })}</li>` : ""}
-        ${team[1] ? `<li>${ex(T("bn.g.podium.w"), T("bn.g.comp.ex"))}<br>${T("bn.g.podium", { a: team[1], b: team[2], c: team[3], x: solo[1], y: solo[2], z: solo[3] })}</li>` : ""}
-        <li>${ex(T("bn.g.talk.w"), T("bn.g.talk.ex"))}<br>${T("bn.g.talk", { t: rule("talk_lightning").points, w: rule("workshop").points, h: rule("host_event").points })} <span class="soft">${esc(cond("talk_lightning"))}</span></li>
-        <li>${T("bn.g.not")} <a href="/rules">${esc(T("bn.g.rules"))} →</a></li></ul>`;
-    }
     function drawErasePicker() {
       const sel = $("erWho"), cur = sel.value;
       sel.innerHTML = `<option value="">${esc(T("er.pick"))}</option>` + erasePeople().map(p => `<option value="${esc(p.uid)}"${p.uid === cur ? " selected" : ""}>${esc((p.name || "—") + (p.email ? " · " + p.email : ""))}</option>`).join("");
-      $("erase").hidden = false; $("markAtt").hidden = false; $("bonus").hidden = false; drawBonusGuide(); if (!$("maDate").value) $("maDate").value = pastThu[pastThu.length - 1] || ClubData.todayStr(); if (!$("bnDate").value) $("bnDate").value = $("maDate").value; drawDir(); folds();
+      $("erase").hidden = false; $("record").hidden = false; rsInit(); drawDir(); folds();
     }
-    /* ---------- mark people as present (the code wasn't shared, a phone died…) ---------- */
+    /* ---------- record a session: who came, and points for what people did. Nothing to remember:
+       pick the date and what happened, add people by name, email or phone (or paste emails), check the list, save. ---------- */
     // school emails → accounts (join form, approval list, then profiles)
     async function emailMap(emails) {
       const { members, requests, pending } = S, byEmail = {};
@@ -525,112 +515,164 @@
       if (missing.length && emails.some(x => !byEmail[x])) { try { const w = await data.whoAre(missing); Object.entries(w).forEach(([u, v]) => { if (v && v.email) byEmail[v.email.toLowerCase()] = byEmail[v.email.toLowerCase()] || u; }); } catch (x) {} }
       return byEmail;
     }
-    let bnPlan = null;
-    // Reads the Give points box. Each line: email, then a number (1 to 10) or one of the words, then what for.
-    // A line with only an email uses the two fields below the box. Returns the awards and every problem, by line number.
-    const BN_WORDS = { played: [0], "joué": [0], "jouée": [0], "1st": [1], first: [1], "1er": [1], "1re": [1], "2nd": [2], second: [2], "2e": [2], "3rd": [3], third: [3], "3e": [3],
-      talk: "talk_lightning", "lightning talk": "talk_lightning", demo: "talk_lightning", "présentation": "talk_lightning", workshop: "workshop", atelier: "workshop",
-      host: "host_event", hosted: "host_event", "organisé": "host_event", organisateur: "host_event" };
-    function bnParse(text, defPts, defWhy) {
-      const awards = [], errors = [], seen = {};
-      text.split(/\r?\n/).forEach((line, i) => {
-        const n = i + 1, raw = line.trim(); if (!raw) return;
-        const ems = line.match(DIR_RE) || [];
-        if (!ems.length) { errors.push(T("bn.e.email", { n })); return; }
-        if (ems.length > 1) { errors.push(T("bn.e.two", { n })); return; }
-        const em = ems[0].toLowerCase();
-        const fields = line.replace(ems[0], "").split(/[,;\t]/).map(x => x.trim().replace(/^"+|"+$/g, "").trim()).filter(Boolean);
-        let mid, why;
-        if (!fields.length) { mid = String(defPts || ""); why = defWhy; if (!defWhy || !(defPts >= 1 && defPts <= 10)) { errors.push(T("bn.e.defaults", { n })); return; } }
-        else { mid = fields[0].replace(/^\+/, ""); why = fields.slice(1).join(", "); }
-        const w = mid.toLowerCase(), solo = / solo$/.test(w), word = BN_WORDS[w.replace(/ solo$/, "")];
-        let award;
-        if (/^\d+$/.test(mid)) {
-          const pts = +mid; if (pts < 1 || pts > 10) { errors.push(T("bn.e.range", { n, w: mid })); return; }
-          award = { kind: "bonus", pts };
-        } else if (Array.isArray(word)) award = { kind: "compete", place: word[0], team: !solo };
-        else if (word && !solo) award = { kind: "fixed", type: word };
-        else { errors.push(T("bn.e.word", { n, w: mid })); return; }
-        why = (why || "").trim();
-        if (!why) { errors.push(T("bn.e.why", { n })); return; }
-        if (why.length > 120) { errors.push(T("bn.e.long", { n })); return; }
-        const key = [em, award.kind, award.pts || award.place || award.type || "", why.toLowerCase()].join("|");
-        if (seen[key]) { errors.push(T("bn.e.dup", { n, m: seen[key] })); return; }
-        seen[key] = n; awards.push({ email: em, why, line: n, ...award });
+    const RS_KINDS = ["present", "played", "p1", "p2", "p3", "talk_lightning", "workshop", "host_event", "bonus"];
+    const RS_PLACE = { p1: 1, p2: 2, p3: 3 };
+    let rsWho = [], rsRows = [], rsReady = false, rsSugAt = 0;
+    const rsRule = (id) => (((rulebook && rulebook.rules) || []).find(r => r.id === id) || {});
+    const rsMax = () => rsRule("event_bonus").points_max || 10;
+    const rsKind = () => $("rsWhat").value || "present";
+    const rsHas = (id) => S.facts.some(f => f.id === id);
+    const rsName = (u) => (S.members.find(m => m.uid === u) || {}).name || "—";
+    // points one line gives, straight from the rulebook (so the form never drifts from the rules)
+    function rsPoints(kind, team, pts, uid, date) {
+      if (kind === "present") return (rsRule("attend").points || 1) * ($("rsDouble").checked ? 2 : 1);
+      if (kind === "bonus") return pts;
+      if (kind === "played") return rsRule("compete_enter").points || 0;
+      if (RS_PLACE[kind]) { const place = (rsRule(team ? "compete_place_team" : "compete_place_solo").points || {})[RS_PLACE[kind]] || 0;
+        return place + (uid && date && rsHas(uid + "_ce_" + date) ? 0 : rsRule("compete_enter").points || 0); }
+      return rsRule(kind).points || 0;
+    }
+    function rsLabel(r) {
+      const what = T("rs.k." + r.kind) + (RS_PLACE[r.kind] ? " · " + T(r.team ? "rs.team.short" : "rs.solo.short") : "");
+      return r.why ? what + " · " + r.why : what;
+    }
+    function rsInit() {
+      if (!$("rsDate").value) $("rsDate").value = pastThu[pastThu.length - 1] || ClubData.todayStr();
+      rsDraw();
+      if (rsReady) return; rsReady = true;
+      $("rsWhat").addEventListener("change", rsFields);
+      ["rsTeam", "rsDouble", "rsPts"].forEach(id => $(id).addEventListener("input", rsFields));
+      $("rsDate").addEventListener("input", rsList);
+      $("rsDouble").addEventListener("change", rsList);
+      $("rsFind").addEventListener("input", rsSuggest);
+      $("rsFind").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); const first = $("rsSug").querySelector("button[data-rs-add]"); if (first) rsAddWho(first.dataset.rsAdd); }
+        else if (e.key === "ArrowDown") { const first = $("rsSug").querySelector("button"); if (first) { e.preventDefault(); first.focus(); } }
+        else if (e.key === "Escape") { $("rsFind").value = ""; rsSuggest(); }
       });
-      return { awards, errors };
+      $("rsSug").addEventListener("keydown", (e) => {
+        const btns = [...$("rsSug").querySelectorAll("button")], i = btns.indexOf(document.activeElement); if (i < 0) return;
+        if (e.key === "ArrowDown" && btns[i + 1]) { e.preventDefault(); btns[i + 1].focus(); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); (btns[i - 1] || $("rsFind")).focus(); }
+      });
+      $("record").addEventListener("click", (e) => {
+        const add = e.target.closest("[data-rs-add]"); if (add) { rsAddWho(add.dataset.rsAdd); return; }
+        const rm = e.target.closest("[data-rs-rm]"); if (rm) { rsWho = rsWho.filter(u => u !== rm.dataset.rsRm); rsDrawWho(); rsSuggest(); $("rsFind").focus(); return; }
+        const rr = e.target.closest("[data-rs-row]"); if (rr) { rsRows.splice(+rr.dataset.rsRow, 1); rsList(); const next = $("rsList").querySelector("[data-rs-row]") || $("rsFind"); next.focus(); return; }
+        if (e.target.closest("#rsClear")) { rsRows = []; rsList(); $("rsFind").focus(); return; }
+        if (e.target.closest("#rsSave")) rsSave();
+      });
+      $("rsPasteAdd").addEventListener("click", rsPasteAdd);
+      $("rsForm").addEventListener("submit", (e) => { e.preventDefault(); rsAddRows(); });
     }
-    // checks the box while you type, so mistakes show up before anything is looked up or given
-    function bnCheck() {
-      const text = $("bnText").value, box = $("bnCheck"); if (!text.trim()) { box.innerHTML = ""; return null; }
-      const r = bnParse(text, Math.round(+$("bnPts").value), $("bnWhy").value.trim()), date = $("bnDate").value;
-      const errs = r.errors.slice(); if (!date || date > ClubData.todayStr()) errs.unshift(T("bn.e.date"));
-      box.innerHTML = errs.length ? `<div class="notice bad"><b>${esc(T("bn.e.h", { n: errs.length }))}</b><ul>${errs.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`
-        : `<p class="notice ok">${esc(T("bn.e.ok", { n: r.awards.length }))}</p>`;
-      return errs.length ? null : r;
+    // everything that depends on the language or the rulebook
+    function rsDraw() {
+      const sel = $("rsWhat"), cur = sel.value || "present";
+      sel.innerHTML = RS_KINDS.map(k => `<option value="${k}"${k === cur ? " selected" : ""}>${esc(T("rs.k." + k))}</option>`).join("");
+      $("rsWhy").placeholder = T("rs.why.ph"); $("rsMsg").textContent = ""; $("rsPasteMsg").innerHTML = "";
+      rsFields(); rsDrawWho(); rsList();
     }
-    let bnTimer = null;
-    ["bnText", "bnPts", "bnWhy", "bnDate"].forEach(id => $(id).addEventListener("input", () => { clearTimeout(bnTimer); bnTimer = setTimeout(bnCheck, 250); $("bnOut").innerHTML = ""; }));
-    $("bnForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const out = $("bnOut"), date = $("bnDate").value;
-      if (!$("bnText").value.trim()) { out.innerHTML = `<p class="help">${esc(T("bn.none"))}</p>`; return; }
-      const parsed = bnCheck(); if (!parsed) { out.innerHTML = `<p class="help">${esc(T("bn.e.fix"))}</p>`; $("bnCheck").scrollIntoView({ block: "nearest" }); return; }
-      const awards = parsed.awards;
-      // someone listed both as "played" and on the podium for the same competition: one entry, with their best place
-      for (let i = awards.length - 1; i >= 0; i--) { const a = awards[i]; if (a.kind !== "compete") continue;
-        const j = awards.findIndex((x, n) => n < i && x.kind === "compete" && x.email === a.email);
-        if (j >= 0) { const x = awards[j]; if (a.place && (!x.place || a.place < x.place)) { x.place = a.place; x.team = a.team; } awards.splice(i, 1); } }
-      const byEmail = await emailMap(awards.map(a => a.email)), { members, facts } = S, isMem = new Set(members.map(m => m.uid)), nameOf = (u) => (members.find(m => m.uid === u) || {}).name || u.slice(0, 8) + "…";
-      // competition points come from the rulebook: taking part, plus the podium for the top 3
-      const rule = (id) => ((rulebook && rulebook.rules) || []).find(r => r.id === id) || {};
-      const has = new Set(facts.map(f => f.id));
-      const give = [], notMember = [], unknown = [], mine = [], already = [];
-      awards.forEach(a => { const u = byEmail[a.email]; if (!u) unknown.push(a.email); else if (u === data.currentUid() && a.kind === "bonus") mine.push(a.email); else if (!isMem.has(u)) notMember.push(a.email);
-        else if (a.kind === "compete" && has.has(u + "_ce_" + date) && (!a.place || has.has(u + "_cp_" + date))) already.push(nameOf(u));
-        else if (a.kind === "fixed" && has.has(u + "_" + a.type + "_" + date)) already.push(nameOf(u));
-        else { if (a.kind === "fixed") a.pts = rule(a.type).points || 0;
-          if (a.kind === "compete") a.pts = (has.has(u + "_ce_" + date) ? 0 : rule("compete_enter").points || 0) + (a.place ? (rule(a.team ? "compete_place_team" : "compete_place_solo").points || {})[a.place] || 0 : 0);
-          give.push({ ...a, uid: u, name: nameOf(u) }); } });
-      // an email with no account is almost always a typo: stop here so it gets fixed, rather than giving the others and losing that line
-      if (unknown.length) { out.innerHTML = `<div class="notice bad"><b>${esc(T("bn.e.unknown", { n: [...new Set(unknown)].length }))}</b> ${esc([...new Set(unknown)].join(", "))}</div>`; return; }
-      bnPlan = { date, give };
-      const uniq = (x) => [...new Set(x)];
-      const list = (k, items) => items.length ? `<p class="help"><b>${esc(T(k, { n: uniq(items).length }))}</b> ${esc(uniq(items).join(", "))}</p>` : "";
-      const what = (g) => g.kind === "compete" ? T(g.place ? "fact.compete_place" : "fact.compete_enter", { n: g.place }) + " · " + g.why : g.kind === "fixed" ? T("fact." + g.type) + " · " + g.why : g.why;
-      out.innerHTML = (give.length ? `<p><b>${esc(T("bn.will", { d: fmt(date) }))}</b></p><ul class="p-list">${give.map(g => `<li><div><b>${esc(g.name)}</b><small>${esc(what(g))} · ${esc(g.email)}</small></div><span class="mono">+${g.pts}</span></li>`).join("")}</ul><p><button type="button" class="btn btn-primary" id="bnGo">${esc(T("bn.go", { n: give.length }))}</button></p>` : `<p class="help">${esc(T("ma.nobody"))}</p>`)
-        + list("bn.mine", mine) + list("bn.already", already) + list("ma.notmember", notMember) + list("ma.unknown", unknown);
-      const go = $("bnGo"); if (go) go.onclick = async () => {
-        go.disabled = true;
-        const r = await data.giveAwards(bnPlan.give.map(g => g.kind === "fixed" ? { uid: g.uid, kind: "fixed", type: g.type, reason: g.why } : g.kind === "compete" ? { uid: g.uid, kind: "compete", place: g.place, team: g.team, reason: g.why, enter: !has.has(g.uid + "_ce_" + date) } : { uid: g.uid, points: g.pts, reason: g.why }), bnPlan.date);
-        out.innerHTML = `<p class="${r.ok ? "notice ok" : "notice bad"}">${esc(r.ok ? T("bn.ok", { n: bnPlan.give.length }) : T(r.code || "err.generic"))}</p>`;
-        if (r.ok) { $("bnWhy").value = ""; $("bnText").value = ""; $("bnCheck").innerHTML = ""; load(); }
-      };
-    });
-    let maPlan = null;
-    $("maForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const out = $("maOut"), date = $("maDate").value, emails = [...new Set(($("maText").value.match(DIR_RE) || []).map(x => x.toLowerCase()))];
-      if (!date || !emails.length) { out.innerHTML = `<p class="help">${esc(T("ma.none"))}</p>`; return; }
-      const { members, requests, pending, facts } = S, byEmail = {};
-      requests.forEach(r => { if (r.email) byEmail[r.email.toLowerCase()] = r.uid; });
-      pending.forEach(p => { if (p.email) byEmail[p.email.toLowerCase()] = byEmail[p.email.toLowerCase()] || p.uid || p.id; });
-      const missing = members.map(m => m.uid).filter(u => !Object.values(byEmail).includes(u));
-      if (missing.length && emails.some(x => !byEmail[x])) { try { const w = await data.whoAre(missing); Object.entries(w).forEach(([u, v]) => { if (v && v.email) byEmail[v.email.toLowerCase()] = byEmail[v.email.toLowerCase()] || u; }); } catch (x) {} }
-      const isMem = new Set(members.map(m => m.uid)), nameOf = (u) => (members.find(m => m.uid === u) || {}).name || u.slice(0, 8) + "…";
-      const done = new Set(facts.filter(f => f.type === "attend" && f.date === date).map(f => f.uid));
-      const mark = [], already = [], notMember = [], unknown = [];
-      emails.forEach(em => { const u = byEmail[em]; if (!u) unknown.push(em); else if (!isMem.has(u)) notMember.push(em); else if (done.has(u)) already.push(nameOf(u)); else mark.push({ uid: u, name: nameOf(u), email: em }); });
-      maPlan = { date, double: $("maDouble").checked, uids: mark.map(m => m.uid) };
+    // only the fields the chosen kind needs
+    function rsFields() {
+      const k = rsKind(), team = $("rsTeam").checked, eb = rsRule("event_bonus");
+      $("rsDoubleRow").hidden = k !== "present";
+      $("rsTeamRow").hidden = !RS_PLACE[k];
+      $("rsPtsRow").hidden = k !== "bonus"; $("rsPts").max = rsMax();
+      $("rsWhyRow").hidden = k === "present";
+      $("rsWhy").placeholder = T(k === "bonus" ? "rs.why.ph" : k === "played" || RS_PLACE[k] ? "rs.why.ph.comp" : "rs.why.ph.talk");
+      const scale = k === "bonus" ? (I18N.pick(eb, "conditions") || []) : ["talk_lightning", "workshop", "host_event"].includes(k) ? (I18N.pick(rsRule(k), "conditions") || []) : [];
+      $("rsScale").hidden = !scale.length; $("rsScale").innerHTML = scale.length ? `<ul>${scale.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
+      const pts = k === "bonus" ? Math.round(+$("rsPts").value) || 0 : rsPoints(k, team);
+      $("rsEach").textContent = T(RS_PLACE[k] ? "rs.each.podium" : "rs.each", { n: pts });
+    }
+    // the people search: name, school email (when known) or phone number written any way
+    function rsPeople() {
+      const reqBy = Object.fromEntries(S.requests.map(r => [r.uid, r]));
+      return S.members.map(m => ({ uid: m.uid, name: m.name || "—", nameF: fold(m.name), email: String((reqBy[m.uid] || {}).email || "").toLowerCase(), phone: digits((reqBy[m.uid] || {}).phone) }));
+    }
+    function rsSuggest() {
+      const q = $("rsFind").value.trim(), box = $("rsSug");
+      if (!q) { box.innerHTML = ""; return; }
+      const qf = fold(q), hits = rsPeople().filter(p => !rsWho.includes(p.uid) && (pmMatch(p.nameF, p.phone, q) || (p.email && p.email.includes(qf))))
+        .sort((a, b) => (b.nameF.startsWith(qf) - a.nameF.startsWith(qf)) || a.name.localeCompare(b.name)).slice(0, 6);
+      box.innerHTML = hits.length ? hits.map(p => `<li><button type="button" class="rs-pick" data-rs-add="${esc(p.uid)}"><b>${esc(p.name)}</b>${p.phone ? `<small>…${esc(p.phone.slice(-4))}</small>` : ""}</button></li>`).join("")
+        : `<li class="help">${esc(T("rs.find.none"))}</li>`;
+    }
+    function rsAddWho(uid) {
+      if (!rsWho.includes(uid)) rsWho.push(uid);
+      $("rsFind").value = ""; rsSuggest(); rsDrawWho(); $("rsFind").focus();
+    }
+    function rsDrawWho() {
+      $("rsWho").innerHTML = rsWho.map(u => `<li class="chip">${esc(rsName(u))} <button type="button" class="rs-x" data-rs-rm="${esc(u)}" aria-label="${esc(T("rs.remove", { name: rsName(u) }))}">×</button></li>`).join("");
+    }
+    async function rsPasteAdd() {
+      const emails = [...new Set(($("rsPaste").value.match(DIR_RE) || []).map(x => x.toLowerCase()))], out = $("rsPasteMsg");
+      if (!emails.length) { out.innerHTML = `<p class="help">${esc(T("rs.paste.none"))}</p>`; return; }
+      const byEmail = await emailMap(emails), isMem = new Set(S.members.map(m => m.uid)), unknown = [], notMember = []; let n = 0;
+      emails.forEach(em => { const u = byEmail[em]; if (!u) unknown.push(em); else if (!isMem.has(u)) notMember.push(em); else if (!rsWho.includes(u)) { rsWho.push(u); n++; } });
       const list = (k, items) => items.length ? `<p class="help"><b>${esc(T(k, { n: items.length }))}</b> ${esc(items.join(", "))}</p>` : "";
-      out.innerHTML = (mark.length ? `<p><b>${esc(T("ma.will", { n: mark.length, d: fmt(date) }))}</b></p><ul class="p-list">${mark.map(m => `<li><div><b>${esc(m.name)}</b><small>${esc(m.email)}</small></div></li>`).join("")}</ul><p><button type="button" class="btn btn-primary" id="maGo">${esc(T("ma.go", { n: mark.length }))}</button></p>` : `<p class="help">${esc(T("ma.nobody"))}</p>`)
-        + list("ma.already", already) + list("ma.notmember", notMember) + list("ma.unknown", unknown);
-      const go = $("maGo"); if (go) go.onclick = async () => {
-        go.disabled = true; const r = await data.markAttended(maPlan.uids, maPlan.date, maPlan.double);
-        out.innerHTML = `<p class="${r.ok ? "notice ok" : "notice bad"}">${esc(r.ok ? T("ma.ok", { n: maPlan.uids.length }) : T(r.code || "err.generic"))}</p>`;
-        if (r.ok) { $("maText").value = ""; load(); }
-      };
-    });
+      out.innerHTML = `<p class="help">${esc(T("rs.paste.ok", { n }))}</p>` + list("ma.notmember", notMember) + list("ma.unknown", unknown);
+      if (!unknown.length && !notMember.length) $("rsPaste").value = "";
+      rsDrawWho();
+    }
+    // "Add to the list": one line per person for what was picked
+    function rsAddRows() {
+      const k = rsKind(), why = $("rsWhy").value.trim(), pts = Math.round(+$("rsPts").value), msg = $("rsMsg");
+      if (!rsWho.length) { msg.textContent = T("rs.e.who"); $("rsFind").focus(); return; }
+      if (k === "bonus" && !(pts >= 1 && pts <= rsMax())) { msg.textContent = T("rs.e.pts", { max: rsMax() }); $("rsPts").focus(); return; }
+      if (k !== "present" && !why) { msg.textContent = T("rs.e.why"); $("rsWhy").focus(); return; }
+      let n = 0;
+      rsWho.forEach(uid => {
+        const row = { uid, kind: k, team: $("rsTeam").checked, pts: k === "bonus" ? pts : 0, why: k === "present" ? "" : why };
+        if (rsRows.some(r => r.uid === uid && r.kind === k && r.why.toLowerCase() === row.why.toLowerCase())) return;
+        rsRows.push(row); n++;
+      });
+      rsWho = []; $("rsWhy").value = ""; rsDrawWho(); rsList();
+      msg.textContent = T("rs.added", { n });
+      $("rsFind").focus();
+    }
+    // why a line will be skipped (already saved, not allowed, or covered by another line), or "" when it will be saved
+    function rsSkip(r, i, date) {
+      if (r.kind === "present") return S.facts.some(f => f.type === "attend" && f.uid === r.uid && f.date === date) ? "rs.st.already" : "";
+      if (r.kind === "bonus") return r.uid === data.currentUid() ? "rs.st.mine" : "";
+      const earlier = rsRows.slice(0, i).some(x => x.uid === r.uid && x.kind === r.kind);   // one record per person, kind and date
+      if (r.kind === "played") return rsHas(r.uid + "_ce_" + date) ? "rs.st.already" : rsRows.some(x => x.uid === r.uid && RS_PLACE[x.kind]) ? "rs.st.inpodium" : earlier ? "rs.st.dup" : "";
+      if (RS_PLACE[r.kind]) {
+        if (rsHas(r.uid + "_cp_" + date)) return "rs.st.already";
+        const best = rsRows.findIndex(x => x.uid === r.uid && RS_PLACE[x.kind] && (RS_PLACE[x.kind] < RS_PLACE[r.kind] || (RS_PLACE[x.kind] === RS_PLACE[r.kind] && rsRows.indexOf(x) < i)));
+        return best >= 0 && best !== i ? "rs.st.dup" : "";
+      }
+      return rsHas(r.uid + "_" + r.kind + "_" + date) ? "rs.st.already" : earlier ? "rs.st.dup" : "";
+    }
+    function rsList() {
+      const box = $("rsList"), date = $("rsDate").value;
+      if (!rsRows.length) { box.innerHTML = ""; return; }
+      const rows = rsRows.map((r, i) => ({ r, i, skip: rsSkip(r, i, date) })), go = rows.filter(x => !x.skip).length;
+      box.innerHTML = `<h3 class="p-sub">${esc(T("rs.list", { n: rsRows.length, d: date ? fmt(date) : "—" }))}</h3>
+        <ul class="p-list rs-rows">${rows.map(({ r, i, skip }) => `<li${skip ? ' class="rs-skip"' : ""}><div><b>${esc(rsName(r.uid))}</b><small>${esc(rsLabel(r))}</small>${skip ? `<small class="chip">${esc(T(skip))}</small>` : ""}</div>
+          <div class="row-actions">${skip ? "" : `<span class="mono">+${rsPoints(r.kind, r.team, r.pts, r.uid, date)}</span>`}<button type="button" class="btn btn-ghost" data-rs-row="${i}" aria-label="${esc(T("rs.remove", { name: rsName(r.uid) + " · " + rsLabel(r) }))}">${esc(T("rs.rm"))}</button></div></li>`).join("")}</ul>
+        <p class="row-actions"><button type="button" class="btn btn-primary" id="rsSave"${go ? "" : " disabled"}>${esc(T("rs.save", { n: go }))}</button><button type="button" class="btn btn-ghost" id="rsClear">${esc(T("rs.clear"))}</button></p>
+        <div id="rsOut" aria-live="polite"></div>`;
+    }
+    async function rsSave() {
+      const date = $("rsDate").value, out = $("rsOut"), btn = $("rsSave");
+      if (!date || date > ClubData.todayStr()) { out.innerHTML = `<p class="notice bad">${esc(T("bn.e.date"))}</p>`; $("rsDate").focus(); return; }
+      const keep = rsRows.filter((r, i) => !rsSkip(r, i, date)); if (!keep.length) return;
+      const present = keep.filter(r => r.kind === "present").map(r => r.uid);
+      const awards = keep.filter(r => r.kind !== "present").map(r =>
+        r.kind === "bonus" ? { uid: r.uid, points: r.pts, reason: r.why }
+        : r.kind === "played" ? { uid: r.uid, kind: "compete", place: 0, team: r.team, reason: r.why, enter: true }
+        : RS_PLACE[r.kind] ? { uid: r.uid, kind: "compete", place: RS_PLACE[r.kind], team: r.team, reason: r.why, enter: !rsHas(r.uid + "_ce_" + date) }
+        : { uid: r.uid, kind: "fixed", type: r.kind, reason: r.why });
+      btn.disabled = true; btn.setAttribute("aria-busy", "true");
+      const res = [];
+      if (present.length) res.push(await data.markAttended(present, date, $("rsDouble").checked));
+      if (awards.length) res.push(await data.giveAwards(awards, date));
+      const bad = res.find(r => !r.ok);
+      if (bad) { btn.disabled = false; btn.removeAttribute("aria-busy"); out.innerHTML = `<p class="notice bad">${esc(T(bad.code || "err.generic"))}</p>`; return; }
+      rsRows = []; await load();
+      $("rsMsg").textContent = ""; $("rsList").innerHTML = `<p class="notice ok" role="status">${esc(T("rs.ok", { n: keep.length, d: fmt(date) }))}</p>`;
+    }
 
     /* ---------- the school's student list ---------- */
     const DIR_RE = /[a-z0-9._%+-]+@(?:aivancity\.education|ccclx\.tech)/gi;
@@ -787,7 +829,7 @@
     // coming back to this page (back button, other tab): show fresh data
     addEventListener("pageshow", (e) => { if (e.persisted && S) load(); });
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S && !undoSure && !rejectOpen) load(); });
-    addEventListener("langchange", () => { if (S) render(); if (!$("bonus").hidden) drawBonusGuide(); });
+    addEventListener("langchange", () => { if (S) render(); if (!$("record").hidden) rsDraw(); });
 
     data.onAuth(async (u) => {
       try {
