@@ -16,12 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261113c">
-  <link rel="stylesheet" href="assets/village.css?v=20261113c">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261113c">
-  <script src="assets/i18n.js?v=20261113c"></script>
-  <script src="assets/analytics.js?v=20261113c" defer></script>
-  <script src="assets/halloween.js?v=20261113c" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261113d">
+  <link rel="stylesheet" href="assets/village.css?v=20261113d">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261113d">
+  <script src="assets/i18n.js?v=20261113d"></script>
+  <script src="assets/analytics.js?v=20261113d" defer></script>
+  <script src="assets/halloween.js?v=20261113d" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -100,10 +100,10 @@
           <h2 id="bnH" data-i18n="bn.h">Give points for what someone did</h2>
           <p class="help" data-i18n="bn.p">Solved a riddle, filmed, brought food, cleaned up, built something… Up to 10 points per award; give several awards for several things. Each one shows its reason on /pulse.</p>
           <form id="bnForm" class="dir-form" novalidate>
-            <div class="field"><label for="bnText" data-i18n="bn.who">Emails of the people</label><textarea class="textarea" id="bnText" rows="3" placeholder="j.dupont@aivancity.education"></textarea></div>
+            <div class="field"><label for="bnText" data-i18n="bn.who">One award per line: email, points, what for</label><textarea class="textarea" id="bnText" rows="6" data-i18n-attr="placeholder:bn.who.ph"></textarea><small class="help" data-i18n="bn.who.help">You can paste from a spreadsheet. A line with only an email gets the points and reason below.</small></div>
             <div class="dir-row" style="flex-wrap:wrap;gap:12px">
-              <div class="field" style="flex:2;min-width:220px"><label for="bnWhy" data-i18n="bn.why">For what</label><input class="input" id="bnWhy" maxlength="120" data-i18n-attr="placeholder:bn.why.ph"></div>
-              <div class="field" style="flex:1;min-width:110px"><label for="bnPts" data-i18n="bn.pts">Points (1–10)</label><input class="input" id="bnPts" type="number" min="1" max="10" value="2"></div>
+              <div class="field" style="flex:2;min-width:220px"><label for="bnWhy" data-i18n="bn.why">For what (lines without one)</label><input class="input" id="bnWhy" maxlength="120" data-i18n-attr="placeholder:bn.why.ph"></div>
+              <div class="field" style="flex:1;min-width:110px"><label for="bnPts" data-i18n="bn.pts">Points (lines without)</label><input class="input" id="bnPts" type="number" min="1" max="10" value="2"></div>
               <div class="field" style="flex:1;min-width:150px"><label for="bnDate" data-i18n="ma.date">Session date</label><input class="input" id="bnDate" type="date"></div>
             </div>
             <div class="row-actions"><button type="submit" class="btn btn-ghost" data-i18n="ma.find">Find them</button></div>
@@ -130,14 +130,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261113c"></script>
+  <script src="assets/schedule.js?v=20261113d"></script>
 
-  <script src="assets/sessions.js?v=20261113c"></script>
-  <script src="assets/js-yaml.min.js?v=20261113c"></script>
-  <script src="assets/platform/config.js?v=20261113c"></script>
-  <script src="assets/platform/engine.js?v=20261113c"></script>
-  <script src="assets/platform/signin.js?v=20261113c"></script>
-  <script src="assets/platform/data.js?v=20261113c"></script>
+  <script src="assets/sessions.js?v=20261113d"></script>
+  <script src="assets/js-yaml.min.js?v=20261113d"></script>
+  <script src="assets/platform/config.js?v=20261113d"></script>
+  <script src="assets/platform/engine.js?v=20261113d"></script>
+  <script src="assets/platform/signin.js?v=20261113d"></script>
+  <script src="assets/platform/data.js?v=20261113d"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -505,20 +505,30 @@
     let bnPlan = null;
     $("bnForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const out = $("bnOut"), date = $("bnDate").value, why = $("bnWhy").value.trim(), pts = Math.round(+$("bnPts").value);
-      const emails = [...new Set(($("bnText").value.match(DIR_RE) || []).map(x => x.toLowerCase()))];
-      if (!date || !emails.length || !why || !(pts >= 1 && pts <= 10)) { out.innerHTML = `<p class="help">${esc(T("bn.none"))}</p>`; return; }
-      const byEmail = await emailMap(emails), { members } = S, isMem = new Set(members.map(m => m.uid)), nameOf = (u) => (members.find(m => m.uid === u) || {}).name || u.slice(0, 8) + "…";
-      const give = [], notMember = [], unknown = [];
-      emails.forEach(em => { const u = byEmail[em]; if (!u) unknown.push(em); else if (!isMem.has(u)) notMember.push(em); else give.push({ uid: u, name: nameOf(u), email: em }); });
-      bnPlan = { date, why, pts, uids: give.map(g => g.uid) };
-      const list = (k, items) => items.length ? `<p class="help"><b>${esc(T(k, { n: items.length }))}</b> ${esc(items.join(", "))}</p>` : "";
-      out.innerHTML = (give.length ? `<p><b>${esc(T("bn.will", { pts, why, d: fmt(date) }))}</b></p><ul class="p-list">${give.map(g => `<li><div><b>${esc(g.name)}</b><small>${esc(g.email)}</small></div><span class="mono">+${pts}</span></li>`).join("")}</ul><p><button type="button" class="btn btn-primary" id="bnGo">${esc(T("bn.go", { n: give.length }))}</button></p>` : `<p class="help">${esc(T("ma.nobody"))}</p>`)
-        + list("ma.notmember", notMember) + list("ma.unknown", unknown);
+      const out = $("bnOut"), date = $("bnDate").value, defWhy = $("bnWhy").value.trim(), defPts = Math.round(+$("bnPts").value);
+      // each line: an email, then points and what for, in any order (commas, semicolons or tabs from a spreadsheet)
+      const awards = [], bad = [];
+      $("bnText").value.split(/\r?\n/).forEach(line => {
+        const em = (line.match(DIR_RE) || [])[0]; if (!em) { if (line.trim()) bad.push(line.trim()); return; }
+        // fields split by commas, semicolons or tabs: the one that is only a number is the points, the rest is what for
+        const fields = line.replace(em, "").split(/[,;\t]/).map(x => x.trim().replace(/^"+|"+$/g, "").trim()).filter(Boolean);
+        const k = fields.findIndex(x => /^\d{1,2}$/.test(x)), pts = k >= 0 ? +fields[k] : defPts;
+        const why = fields.filter((x, i) => i !== k).join(", ").slice(0, 120) || defWhy;
+        if (!why || !(pts >= 1 && pts <= 10)) bad.push(line.trim()); else awards.push({ email: em.toLowerCase(), pts, why });
+      });
+      if (!date || (!awards.length && !bad.length)) { out.innerHTML = `<p class="help">${esc(T("bn.none"))}</p>`; return; }
+      const byEmail = await emailMap(awards.map(a => a.email)), { members } = S, isMem = new Set(members.map(m => m.uid)), nameOf = (u) => (members.find(m => m.uid === u) || {}).name || u.slice(0, 8) + "…";
+      const give = [], notMember = [], unknown = [], mine = [];
+      awards.forEach(a => { const u = byEmail[a.email]; if (!u) unknown.push(a.email); else if (u === data.currentUid()) mine.push(a.email); else if (!isMem.has(u)) notMember.push(a.email); else give.push({ ...a, uid: u, name: nameOf(u) }); });
+      bnPlan = { date, give };
+      const uniq = (x) => [...new Set(x)];
+      const list = (k, items) => items.length ? `<p class="help"><b>${esc(T(k, { n: uniq(items).length }))}</b> ${esc(uniq(items).join(", "))}</p>` : "";
+      out.innerHTML = (give.length ? `<p><b>${esc(T("bn.will", { d: fmt(date) }))}</b></p><ul class="p-list">${give.map(g => `<li><div><b>${esc(g.name)}</b><small>${esc(g.why)} · ${esc(g.email)}</small></div><span class="mono">+${g.pts}</span></li>`).join("")}</ul><p><button type="button" class="btn btn-primary" id="bnGo">${esc(T("bn.go", { n: give.length }))}</button></p>` : `<p class="help">${esc(T("ma.nobody"))}</p>`)
+        + list("bn.mine", mine) + list("ma.notmember", notMember) + list("ma.unknown", unknown) + list("bn.bad", bad);
       const go = $("bnGo"); if (go) go.onclick = async () => {
-        go.disabled = true; const r = await data.giveBonus(bnPlan.uids, bnPlan.date, bnPlan.pts, bnPlan.why);
-        out.innerHTML = `<p class="${r.ok ? "notice ok" : "notice bad"}">${esc(r.ok ? T("bn.ok", { n: bnPlan.uids.length, pts: bnPlan.pts, why: bnPlan.why }) : T(r.code || "err.generic"))}</p>`;
-        if (r.ok) { $("bnWhy").value = ""; load(); }
+        go.disabled = true; const r = await data.giveAwards(bnPlan.give.map(g => ({ uid: g.uid, points: g.pts, reason: g.why })), bnPlan.date);
+        out.innerHTML = `<p class="${r.ok ? "notice ok" : "notice bad"}">${esc(r.ok ? T("bn.ok", { n: bnPlan.give.length }) : T(r.code || "err.generic"))}</p>`;
+        if (r.ok) { $("bnWhy").value = ""; $("bnText").value = ""; load(); }
       };
     });
     let maPlan = null;
