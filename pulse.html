@@ -16,12 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261113j">
-  <link rel="stylesheet" href="assets/village.css?v=20261113j">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261113j">
-  <script src="assets/i18n.js?v=20261113j"></script>
-  <script src="assets/analytics.js?v=20261113j" defer></script>
-  <script src="assets/halloween.js?v=20261113j" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261113l">
+  <link rel="stylesheet" href="assets/village.css?v=20261113l">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261113l">
+  <script src="assets/i18n.js?v=20261113l"></script>
+  <script src="assets/analytics.js?v=20261113l" defer></script>
+  <script src="assets/halloween.js?v=20261113l" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -131,14 +131,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261113j"></script>
+  <script src="assets/schedule.js?v=20261113l"></script>
 
-  <script src="assets/sessions.js?v=20261113j"></script>
-  <script src="assets/js-yaml.min.js?v=20261113j"></script>
-  <script src="assets/platform/config.js?v=20261113j"></script>
-  <script src="assets/platform/engine.js?v=20261113j"></script>
-  <script src="assets/platform/signin.js?v=20261113j"></script>
-  <script src="assets/platform/data.js?v=20261113j"></script>
+  <script src="assets/sessions.js?v=20261113l"></script>
+  <script src="assets/js-yaml.min.js?v=20261113l"></script>
+  <script src="assets/platform/config.js?v=20261113l"></script>
+  <script src="assets/platform/engine.js?v=20261113l"></script>
+  <script src="assets/platform/signin.js?v=20261113l"></script>
+  <script src="assets/platform/data.js?v=20261113l"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -180,6 +180,14 @@
     const factLabel = (f) => { const k = "fact." + f.type, v = T(k, { n: f.place }); return (v !== k ? v : f.type) + (f.reason ? " · " + f.reason + (f.points ? " (+" + f.points + ")" : "") : ""); };
     const safeUrl = (u) => (/^https?:\/\//i.test(String(u)) ? String(u) : "#");
     const fold = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    // members search: a name, or a phone number written any way ("06 12 34…", "+33 6 12…", "612 34")
+    const digits = (x) => String(x || "").replace(/\D/g, "");
+    const pmMatch = (nameF, phoneD, query) => {
+      const q = fold(query); if (!q) return true;
+      if (nameF.includes(q)) return true;
+      const d = digits(query); if (d.length < 3 || !phoneD || /[a-z]/.test(q)) return false;
+      return phoneD.includes(d) || (d[0] === "0" && phoneD.includes(d.slice(1)));
+    };
     const shortUrl = (u) => String(u).replace(/^https?:\/\/(www\.)?/i, "").slice(0, 60);
 
     function render() {
@@ -306,7 +314,7 @@
           <div class="pa-filters" role="group" aria-label="${esc(T("pm.h"))}">${["all", "drift", "never", "nobuddy", "pairs"].map(k => `<button type="button" class="chip" data-pm-f="${k}" aria-pressed="${pmFilter === k}">${esc(T("pm.f." + k))} · ${pmCounts[k]}</button>`).join("")}</div>
           ${pmFilter !== "all" ? `<p class="help">${esc(T("pm.f.help." + pmFilter))}</p>` : ""}
           ${pmFilter === "pairs" ? pairsHTML : `<label class="sr-only" for="pmSearch">${esc(T("pm.search"))}</label><input id="pmSearch" class="pm-search" type="search" placeholder="${esc(T("pm.search"))}" value="${esc(pmQuery)}">
-          ${rowsShown.length ? `<ul class="pm-list">${rowsShown.map(({ m, s }) => `<li data-pm="${esc(fold(m.name))}"${pmQuery && !fold(m.name).includes(fold(pmQuery)) ? " hidden" : ""}>
+          ${rowsShown.length ? `<ul class="pm-list">${rowsShown.map(({ m, s }) => `<li data-pm="${esc(fold(m.name))}" data-ph="${esc(digits((reqBy[m.uid] || {}).phone))}"${pmMatch(fold(m.name), digits((reqBy[m.uid] || {}).phone), pmQuery) ? "" : " hidden"}>
             <details data-open="${esc(m.uid)}"${pmOpen.has(m.uid) ? " open" : ""}><summary><span class="pm-band" style="background:${BAND[s.isMember ? s.rank : "white"]}"></span><b>${esc(m.name || "—")}</b>
               <small>${esc(s.isMember ? T("rank." + s.rank) : T("pm.notyet"))} · ${esc(T("pm.pts", { n: s.lifetime }))}${s.waiting ? " · " + esc(T("pm.waiting")) : ""}</small>${tags(m.uid)}</summary>
             ${pmOpen.has(m.uid) ? memberDetail(m, s) : ""}</details>${followUp(m.uid) ? `<div class="pm-follow">${followUp(m.uid)}</div>` : ""}</li>`).join("")}</ul>` : `<p class="help">${esc(T("pm.f.none"))}</p>`}`}
@@ -759,8 +767,8 @@
     }, true);
     $("pulse").addEventListener("input", (e) => {
       if (e.target.id !== "pmSearch") return;
-      pmQuery = e.target.value.trim(); const q = fold(pmQuery);
-      document.querySelectorAll(".pm-list > li").forEach(li => (li.hidden = !!q && !li.dataset.pm.includes(q)));
+      pmQuery = e.target.value.trim();
+      document.querySelectorAll(".pm-list > li").forEach(li => (li.hidden = !pmMatch(li.dataset.pm, li.dataset.ph, pmQuery)));
     });
     function downloadCsv() {
       const R = result ? result.byUid : {}, nm = (uid) => (S.members.find(m => m.uid === uid) || {}).name || "";
