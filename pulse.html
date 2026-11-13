@@ -152,6 +152,14 @@
     const today = ClubData.todayStr();
     const fmt = (d) => new Date(d + "T12:00").toLocaleDateString(I18N.locale(), { day: "numeric", month: "short" });
     const daysAgo = (ms) => Math.floor((Date.now() - ms) / DAY);
+    // a member's "joined" is a database timestamp (older profiles: a "YYYY-MM-DD" text): always give "YYYY-MM-DD", or "" if unknown
+    const dayOf = (v) => {
+      if (!v) return "";
+      if (typeof v === "string") return /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : "";
+      const ms = typeof v.toMillis === "function" ? v.toMillis() : typeof v.seconds === "number" ? v.seconds * 1000 : typeof v === "number" ? v : NaN;
+      if (!isFinite(ms)) return "";
+      const d = new Date(ms); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    };
     const thursdays = SESSIONS.filter(s => s.track !== "break" && parseDate(s.date).getDay() === 4).map(s => s.date).sort();
     const pastThu = thursdays.filter(d => d <= today), nextSession = SESSIONS.filter(s => s.track !== "break" && s.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0];
 
@@ -289,7 +297,7 @@
         const hist = (s.history || []).slice(0, 40).map(h => `<li><span>${esc(factLabel(h.fact))}${h.fact.title ? " · " + esc(h.fact.title) : ""}<small>${esc(fmt(h.fact.date))}${h.note ? " · " + esc(h.note) : ""}${h.fact.status === "rejected" && h.fact.reason ? " · " + esc(h.fact.reason) : ""}</small></span><span class="pts${h.points ? "" : " pending"}">${h.points ? "+" + h.points : "·"}</span></li>`).join("");
         const bl = buddyLine(m.uid), regs = S.allRegs.filter(r => r.uid === m.uid && r.status !== "cancelled");
         return `<div class="pm-detail">
-          <p class="help">${esc(T("pm.sum", { pts: s.lifetime, season: s.season || 0, n: (s.counts && s.counts.attend) || 0 }))}${m.joined ? " · " + esc(T("pm.joined", { d: fmt(m.joined) })) : ""}${m.role === "organizer" ? ` <span class="chip">${esc(T("pm.org"))}</span>` : ""}</p>
+          <p class="help">${esc(T("pm.sum", { pts: s.lifetime, season: s.season || 0, n: (s.counts && s.counts.attend) || 0 }))}${dayOf(m.joined) ? " · " + esc(T("pm.joined", { d: fmt(dayOf(m.joined)) })) : ""}${m.role === "organizer" ? ` <span class="chip">${esc(T("pm.org"))}</span>` : ""}</p>
           ${s.next ? `<h3 class="p-sub">${esc(T("pm.next", { rank: T("rank." + s.next) }))}</h3><ul class="pm-check">${(s.checklist || []).map(c => `<li class="${c.done ? "done" : ""}">${c.done ? "✓" : "○"} ${esc(T("req." + c.key, { v: c.v }))}</li>`).join("") || `<li>${esc(T("pm.pointsonly"))}</li>`}</ul>` : ""}
           <h3 class="p-sub">${esc(T("pm.buddies"))}</h3><p class="help">${esc(bl.join(" · ") || T("pm.none"))}</p>
           <h3 class="p-sub">${esc(T("pm.regs"))}</h3><p class="help">${esc(regs.map(r => sessionTitle(r.event) + " (" + (T("pm.st." + r.status) !== "pm.st." + r.status ? T("pm.st." + r.status) : r.status) + ")").join(" · ") || T("pm.none"))}</p>
@@ -820,7 +828,7 @@
         const s = R[m.uid] || {}, mine = S.facts.filter(f => f.uid === m.uid && PROOF_TYPES.includes(f.type));
         const bd = S.buddies.filter(b => b.status === "paired" && b.users.includes(m.uid)).map(b => nm(b.a === m.uid ? b.b : b.a)).join(" / ");
         return [m.name, s.isMember ? s.rank : "", s.lifetime || 0, s.season || 0, (s.counts && s.counts.attend) || 0,
-          mine.filter(f => f.status === "approved").length, mine.filter(f => f.status === "pending").length, bd, m.joined || "", m.role || "member"];
+          mine.filter(f => f.status === "approved").length, mine.filter(f => f.status === "pending").length, bd, dayOf(m.joined), m.role || "member"];
       });
       const csv = "﻿" + [head, ...rows].map(r => r.map(cell).join(",")).join("\n");
       const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
