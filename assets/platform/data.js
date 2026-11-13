@@ -240,7 +240,11 @@ function demoBackend() {
     async loadActivity() { return (extra().activity || []).slice().sort((a, b) => b.at - a.at); },
     async awardStarter(step, pair) { if (state.facts.some(f => f.id === 'you_st_' + step)) return { ok: false }; state.facts.push({ id: 'you_st_' + step, uid: 'you', type: 'starter', step, date: todayStr(), status: 'approved', pair }); save(); return { ok: true }; },
     async giveBonus(uids, date, points, reason) { uids.forEach(u => state.facts.push({ id: 'b' + Math.random().toString(36).slice(2, 9), uid: u, type: 'event_bonus', date, points, reason, status: 'approved', recordedBy: 'you' })); save(); return { ok: true }; },
-    async giveAwards(list, date) { list.forEach(a => state.facts.push({ id: 'b' + Math.random().toString(36).slice(2, 9), uid: a.uid, type: 'event_bonus', date, points: a.points, reason: a.reason, status: 'approved', recordedBy: 'you' })); save(); return { ok: true }; },
+    async giveAwards(list, date) { list.forEach(a => { const base = { uid: a.uid, date, reason: a.reason, status: 'approved', recordedBy: 'you' };
+      if (a.kind === 'fixed') { if (!state.facts.some(f => f.id === a.uid + '_' + a.type + '_' + date)) state.facts.push({ id: a.uid + '_' + a.type + '_' + date, type: a.type, ...base }); return; }
+      if (a.kind !== 'compete') { state.facts.push({ id: 'b' + Math.random().toString(36).slice(2, 9), type: 'event_bonus', points: a.points, ...base }); return; }
+      if (!state.facts.some(f => f.id === a.uid + '_ce_' + date)) state.facts.push({ id: a.uid + '_ce_' + date, type: 'compete_enter', ...base });
+      if (a.place && !state.facts.some(f => f.id === a.uid + '_cp_' + date)) state.facts.push({ id: a.uid + '_cp_' + date, type: 'compete_place', place: a.place, team: !!a.team, ...base }); }); save(); return { ok: true }; },
     async markAttended(uids, date, double) { uids.forEach(u => { if (!state.facts.some(f => f.id === u + '_' + date)) state.facts.push({ id: u + '_' + date, uid: u, type: 'attend', date, status: 'approved', recordedBy: 'you', ...(double ? { double: true } : {}) }); }); save(); return { ok: true }; },
     async awardBuddySession(date, pair) { if (state.facts.some(f => f.id === 'you_bs_' + date)) return { ok: false }; state.facts.push({ id: 'you_bs_' + date, uid: 'you', type: 'buddy_session', date, pair, status: 'approved' }); save(); return { ok: true }; },
     async markTour(key) { const m = state.members.find(x => x.uid === 'you'); m.tour = { ...(m.tour || {}), [key]: true }; save(); return { ok: true }; },
@@ -889,13 +893,21 @@ function firebaseBackend() {
         await b.commit(); return { ok: true };
       } catch (e) { return fail(e); }
     },
-    // several awards at once, each with its own points and reason (one per line on /pulse)
+    // several awards at once, one per line on /pulse: contribution points, or a competition (taking part + podium)
     async giveAwards(list, date) {
       const by = auth.currentUser.uid;
       try {
         for (let i = 0; i < list.length; i += 400) {
           const b = db.batch();
-          list.slice(i, i + 400).forEach(a => b.set(db.collection('facts').doc(), { uid: a.uid, type: 'event_bonus', date, points: Math.max(1, Math.min(10, Math.round(+a.points))), reason: String(a.reason).slice(0, 120), status: 'approved', recordedBy: by, createdAt: FV().serverTimestamp() }));
+          list.slice(i, i + 400).forEach(a => {
+            const base = { uid: a.uid, date, reason: String(a.reason).slice(0, 120), status: 'approved', recordedBy: by, createdAt: FV().serverTimestamp() };
+            // a talk, workshop or hosted event: fixed points from the rulebook, once per person per date
+            if (a.kind === 'fixed') { if (['talk_lightning', 'workshop', 'host_event'].includes(a.type)) b.set(db.collection('facts').doc(a.uid + '_' + a.type + '_' + date), { type: a.type, ...base }); return; }
+            if (a.kind !== 'compete') { b.set(db.collection('facts').doc(), { type: 'event_bonus', points: Math.max(1, Math.min(10, Math.round(+a.points))), ...base }); return; }
+            // a competition: taking part (uid_ce_date) and the podium (uid_cp_date), fixed ids so nobody counts twice
+            if (a.enter) b.set(db.collection('facts').doc(a.uid + '_ce_' + date), { type: 'compete_enter', ...base });
+            if (a.place >= 1 && a.place <= 3) b.set(db.collection('facts').doc(a.uid + '_cp_' + date), { type: 'compete_place', place: a.place, team: !!a.team, ...base });
+          });
           await b.commit();
         }
         return { ok: true };

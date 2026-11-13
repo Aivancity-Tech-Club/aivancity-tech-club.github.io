@@ -16,12 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261113d">
-  <link rel="stylesheet" href="assets/village.css?v=20261113d">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261113d">
-  <script src="assets/i18n.js?v=20261113d"></script>
-  <script src="assets/analytics.js?v=20261113d" defer></script>
-  <script src="assets/halloween.js?v=20261113d" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261113f">
+  <link rel="stylesheet" href="assets/village.css?v=20261113f">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261113f">
+  <script src="assets/i18n.js?v=20261113f"></script>
+  <script src="assets/analytics.js?v=20261113f" defer></script>
+  <script src="assets/halloween.js?v=20261113f" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -98,7 +98,8 @@
         </section>
         <section class="p-card dc" id="bonus" data-sec="bonus" hidden aria-labelledby="bnH">
           <h2 id="bnH" data-i18n="bn.h">Give points for what someone did</h2>
-          <p class="help" data-i18n="bn.p">Solved a riddle, filmed, brought food, cleaned up, built something… Up to 10 points per award; give several awards for several things. Each one shows its reason on /pulse.</p>
+          <p class="help" data-i18n="bn.p">One line per award: email, then points (or a competition word), then what for. Someone who did several things gets several lines. Each award shows its reason in the person’s history.</p>
+          <div class="bn-guide" id="bnGuide"></div>
           <form id="bnForm" class="dir-form" novalidate>
             <div class="field"><label for="bnText" data-i18n="bn.who">One award per line: email, points, what for</label><textarea class="textarea" id="bnText" rows="6" data-i18n-attr="placeholder:bn.who.ph"></textarea><small class="help" data-i18n="bn.who.help">You can paste from a spreadsheet. A line with only an email gets the points and reason below.</small></div>
             <div class="dir-row" style="flex-wrap:wrap;gap:12px">
@@ -130,14 +131,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261113d"></script>
+  <script src="assets/schedule.js?v=20261113f"></script>
 
-  <script src="assets/sessions.js?v=20261113d"></script>
-  <script src="assets/js-yaml.min.js?v=20261113d"></script>
-  <script src="assets/platform/config.js?v=20261113d"></script>
-  <script src="assets/platform/engine.js?v=20261113d"></script>
-  <script src="assets/platform/signin.js?v=20261113d"></script>
-  <script src="assets/platform/data.js?v=20261113d"></script>
+  <script src="assets/sessions.js?v=20261113f"></script>
+  <script src="assets/js-yaml.min.js?v=20261113f"></script>
+  <script src="assets/platform/config.js?v=20261113f"></script>
+  <script src="assets/platform/engine.js?v=20261113f"></script>
+  <script src="assets/platform/signin.js?v=20261113f"></script>
+  <script src="assets/platform/data.js?v=20261113f"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -487,10 +488,24 @@
       pending.forEach(p => { const u = p.uid || p.id; out[u] = { uid: u, name: (out[u] || {}).name || p.name, email: (out[u] || {}).email || p.email }; });
       return Object.values(out).filter(p => !orgs.has(p.uid) && p.uid !== data.currentUid()).sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
     }
+    // what to write in the Give points box, with the numbers straight from the rulebook (so it never drifts)
+    function drawBonusGuide() {
+      const R = (rulebook && rulebook.rules) || [], rule = (id) => R.find(r => r.id === id) || {};
+      const eb = rule("event_bonus"), enter = rule("compete_enter").points, team = rule("compete_place_team").points || {}, solo = rule("compete_place_solo").points || {};
+      const scale = (I18N.pick(eb, "conditions") || []).slice(0, 3);
+      const ex = (mid, why) => `<code>prenom.nom@aivancity.education, ${esc(mid)}, ${esc(why)}</code>`;
+      const cond = (id) => (I18N.pick(rule(id), "conditions") || []).join(" ");
+      $("bnGuide").innerHTML = `<p>${T("bn.g.format")}</p><ul>
+        <li>${ex(T("bn.g.num.w"), T("bn.g.num.ex"))}<br>${T("bn.g.num", { max: eb.points_max || 10 })}${scale.length ? `<ul>${scale.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</li>
+        ${enter ? `<li>${ex(T("bn.g.played.w"), T("bn.g.comp.ex"))}<br>${T("bn.g.played", { n: enter })}</li>` : ""}
+        ${team[1] ? `<li>${ex(T("bn.g.podium.w"), T("bn.g.comp.ex"))}<br>${T("bn.g.podium", { a: team[1], b: team[2], c: team[3], x: solo[1], y: solo[2], z: solo[3] })}</li>` : ""}
+        <li>${ex(T("bn.g.talk.w"), T("bn.g.talk.ex"))}<br>${T("bn.g.talk", { t: rule("talk_lightning").points, w: rule("workshop").points, h: rule("host_event").points })} <span class="soft">${esc(cond("talk_lightning"))} ${esc(T("bn.g.host.c"))} ${esc(cond("host_event"))}</span></li>
+        <li>${T("bn.g.not")} <a href="/rules">${esc(T("bn.g.rules"))} →</a></li></ul>`;
+    }
     function drawErasePicker() {
       const sel = $("erWho"), cur = sel.value;
       sel.innerHTML = `<option value="">${esc(T("er.pick"))}</option>` + erasePeople().map(p => `<option value="${esc(p.uid)}"${p.uid === cur ? " selected" : ""}>${esc((p.name || "—") + (p.email ? " · " + p.email : ""))}</option>`).join("");
-      $("erase").hidden = false; $("markAtt").hidden = false; $("bonus").hidden = false; if (!$("maDate").value) $("maDate").value = pastThu[pastThu.length - 1] || ClubData.todayStr(); if (!$("bnDate").value) $("bnDate").value = $("maDate").value; drawDir(); folds();
+      $("erase").hidden = false; $("markAtt").hidden = false; $("bonus").hidden = false; drawBonusGuide(); if (!$("maDate").value) $("maDate").value = pastThu[pastThu.length - 1] || ClubData.todayStr(); if (!$("bnDate").value) $("bnDate").value = $("maDate").value; drawDir(); folds();
     }
     /* ---------- mark people as present (the code wasn't shared, a phone died…) ---------- */
     // school emails → accounts (join form, approval list, then profiles)
@@ -506,27 +521,56 @@
     $("bnForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const out = $("bnOut"), date = $("bnDate").value, defWhy = $("bnWhy").value.trim(), defPts = Math.round(+$("bnPts").value);
-      // each line: an email, then points and what for, in any order (commas, semicolons or tabs from a spreadsheet)
+      // each line: an email, then points and what for (commas, semicolons or tabs from a spreadsheet).
+      // Instead of points, "played" records taking part in a competition, and "1st" / "2nd" / "3rd" the podium (add "solo" if it wasn't in teams).
+      const COMP = /^(played|joué|jouée|1st|2nd|3rd|1er|1re|2e|3e|2nd place|1st place|3rd place)( solo)?$/i;
       const awards = [], bad = [];
       $("bnText").value.split(/\r?\n/).forEach(line => {
         const em = (line.match(DIR_RE) || [])[0]; if (!em) { if (line.trim()) bad.push(line.trim()); return; }
-        // fields split by commas, semicolons or tabs: the one that is only a number is the points, the rest is what for
         const fields = line.replace(em, "").split(/[,;\t]/).map(x => x.trim().replace(/^"+|"+$/g, "").trim()).filter(Boolean);
+        const ROLE = { talk: "talk_lightning", "lightning talk": "talk_lightning", demo: "talk_lightning", "présentation": "talk_lightning", workshop: "workshop", atelier: "workshop", host: "host_event", hosted: "host_event", "organisé": "host_event", organisateur: "host_event" };
+        const r = fields.findIndex(x => ROLE[x.toLowerCase()]);
+        if (r >= 0) {
+          const why = fields.filter((x, i) => i !== r).join(", ").slice(0, 120) || defWhy;
+          if (!why) bad.push(line.trim()); else awards.push({ email: em.toLowerCase(), kind: "fixed", type: ROLE[fields[r].toLowerCase()], why });
+          return;
+        }
+        const c = fields.findIndex(x => COMP.test(x));
+        if (c >= 0) {
+          const t = fields[c].toLowerCase(), place = /^1/.test(t) ? 1 : /^2/.test(t) ? 2 : /^3/.test(t) ? 3 : 0;
+          const why = fields.filter((x, i) => i !== c).join(", ").slice(0, 80) || defWhy;
+          if (!why) bad.push(line.trim()); else awards.push({ email: em.toLowerCase(), kind: "compete", place, team: !/solo/.test(t), why });
+          return;
+        }
         const k = fields.findIndex(x => /^\d{1,2}$/.test(x)), pts = k >= 0 ? +fields[k] : defPts;
         const why = fields.filter((x, i) => i !== k).join(", ").slice(0, 120) || defWhy;
-        if (!why || !(pts >= 1 && pts <= 10)) bad.push(line.trim()); else awards.push({ email: em.toLowerCase(), pts, why });
+        if (!why || !(pts >= 1 && pts <= 10)) bad.push(line.trim()); else awards.push({ email: em.toLowerCase(), kind: "bonus", pts, why });
       });
+      // someone listed both as "played" and on the podium for the same competition: one entry, with their best place
+      for (let i = awards.length - 1; i >= 0; i--) { const a = awards[i]; if (a.kind !== "compete") continue;
+        const j = awards.findIndex((x, n) => n < i && x.kind === "compete" && x.email === a.email);
+        if (j >= 0) { const x = awards[j]; if (a.place && (!x.place || a.place < x.place)) { x.place = a.place; x.team = a.team; } awards.splice(i, 1); } }
       if (!date || (!awards.length && !bad.length)) { out.innerHTML = `<p class="help">${esc(T("bn.none"))}</p>`; return; }
-      const byEmail = await emailMap(awards.map(a => a.email)), { members } = S, isMem = new Set(members.map(m => m.uid)), nameOf = (u) => (members.find(m => m.uid === u) || {}).name || u.slice(0, 8) + "…";
-      const give = [], notMember = [], unknown = [], mine = [];
-      awards.forEach(a => { const u = byEmail[a.email]; if (!u) unknown.push(a.email); else if (u === data.currentUid()) mine.push(a.email); else if (!isMem.has(u)) notMember.push(a.email); else give.push({ ...a, uid: u, name: nameOf(u) }); });
+      const byEmail = await emailMap(awards.map(a => a.email)), { members, facts } = S, isMem = new Set(members.map(m => m.uid)), nameOf = (u) => (members.find(m => m.uid === u) || {}).name || u.slice(0, 8) + "…";
+      // competition points come from the rulebook: taking part, plus the podium for the top 3
+      const rule = (id) => ((rulebook && rulebook.rules) || []).find(r => r.id === id) || {};
+      const has = new Set(facts.map(f => f.id));
+      const give = [], notMember = [], unknown = [], mine = [], already = [];
+      awards.forEach(a => { const u = byEmail[a.email]; if (!u) unknown.push(a.email); else if (u === data.currentUid()) mine.push(a.email); else if (!isMem.has(u)) notMember.push(a.email);
+        else if (a.kind === "compete" && has.has(u + "_ce_" + date) && (!a.place || has.has(u + "_cp_" + date))) already.push(nameOf(u));
+        else if (a.kind === "fixed" && has.has(u + "_" + a.type + "_" + date)) already.push(nameOf(u));
+        else { if (a.kind === "fixed") a.pts = rule(a.type).points || 0;
+          if (a.kind === "compete") a.pts = (has.has(u + "_ce_" + date) ? 0 : rule("compete_enter").points || 0) + (a.place ? (rule(a.team ? "compete_place_team" : "compete_place_solo").points || {})[a.place] || 0 : 0);
+          give.push({ ...a, uid: u, name: nameOf(u) }); } });
       bnPlan = { date, give };
       const uniq = (x) => [...new Set(x)];
       const list = (k, items) => items.length ? `<p class="help"><b>${esc(T(k, { n: uniq(items).length }))}</b> ${esc(uniq(items).join(", "))}</p>` : "";
-      out.innerHTML = (give.length ? `<p><b>${esc(T("bn.will", { d: fmt(date) }))}</b></p><ul class="p-list">${give.map(g => `<li><div><b>${esc(g.name)}</b><small>${esc(g.why)} · ${esc(g.email)}</small></div><span class="mono">+${g.pts}</span></li>`).join("")}</ul><p><button type="button" class="btn btn-primary" id="bnGo">${esc(T("bn.go", { n: give.length }))}</button></p>` : `<p class="help">${esc(T("ma.nobody"))}</p>`)
-        + list("bn.mine", mine) + list("ma.notmember", notMember) + list("ma.unknown", unknown) + list("bn.bad", bad);
+      const what = (g) => g.kind === "compete" ? T(g.place ? "fact.compete_place" : "fact.compete_enter", { n: g.place }) + " · " + g.why : g.kind === "fixed" ? T("fact." + g.type) + " · " + g.why : g.why;
+      out.innerHTML = (give.length ? `<p><b>${esc(T("bn.will", { d: fmt(date) }))}</b></p><ul class="p-list">${give.map(g => `<li><div><b>${esc(g.name)}</b><small>${esc(what(g))} · ${esc(g.email)}</small></div><span class="mono">+${g.pts}</span></li>`).join("")}</ul><p><button type="button" class="btn btn-primary" id="bnGo">${esc(T("bn.go", { n: give.length }))}</button></p>` : `<p class="help">${esc(T("ma.nobody"))}</p>`)
+        + list("bn.mine", mine) + list("bn.already", already) + list("ma.notmember", notMember) + list("ma.unknown", unknown) + list("bn.bad", bad);
       const go = $("bnGo"); if (go) go.onclick = async () => {
-        go.disabled = true; const r = await data.giveAwards(bnPlan.give.map(g => ({ uid: g.uid, points: g.pts, reason: g.why })), bnPlan.date);
+        go.disabled = true;
+        const r = await data.giveAwards(bnPlan.give.map(g => g.kind === "fixed" ? { uid: g.uid, kind: "fixed", type: g.type, reason: g.why } : g.kind === "compete" ? { uid: g.uid, kind: "compete", place: g.place, team: g.team, reason: g.why, enter: !has.has(g.uid + "_ce_" + date) } : { uid: g.uid, points: g.pts, reason: g.why }), bnPlan.date);
         out.innerHTML = `<p class="${r.ok ? "notice ok" : "notice bad"}">${esc(r.ok ? T("bn.ok", { n: bnPlan.give.length }) : T(r.code || "err.generic"))}</p>`;
         if (r.ok) { $("bnWhy").value = ""; $("bnText").value = ""; load(); }
       };
@@ -711,7 +755,7 @@
     // coming back to this page (back button, other tab): show fresh data
     addEventListener("pageshow", (e) => { if (e.persisted && S) load(); });
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S && !undoSure && !rejectOpen) load(); });
-    addEventListener("langchange", () => { if (S) render(); });
+    addEventListener("langchange", () => { if (S) render(); if (!$("bonus").hidden) drawBonusGuide(); });
 
     data.onAuth(async (u) => {
       try {
