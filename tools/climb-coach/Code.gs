@@ -111,16 +111,18 @@ function toText(html) {
     .replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/\n\s*\n+/g, '\n').trim();
 }
 // the round's emails, kept in the script's properties (compressed, in pieces) between the review and the sending
-function saveBatch(batch) {
+function saveBatch(batch, key) {
+  key = key || 'BATCH';
   const data = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(JSON.stringify(batch), 'application/json')).getBytes());
-  const old = Number(P.getProperty('BATCH_N') || 0); for (let i = 0; i < old; i++) P.deleteProperty('BATCH_' + i);
+  const old = Number(P.getProperty(key + '_N') || 0); for (let i = 0; i < old; i++) P.deleteProperty(key + '_' + i);
   const size = 8000, n = Math.ceil(data.length / size);
-  for (let i = 0; i < n; i++) P.setProperty('BATCH_' + i, data.slice(i * size, (i + 1) * size));
-  P.setProperty('BATCH_N', String(n));
+  for (let i = 0; i < n; i++) P.setProperty(key + '_' + i, data.slice(i * size, (i + 1) * size));
+  P.setProperty(key + '_N', String(n));
 }
-function loadBatch() {
-  const n = Number(P.getProperty('BATCH_N') || 0); if (!n) return [];
-  let data = ''; for (let i = 0; i < n; i++) data += P.getProperty('BATCH_' + i) || '';
+function loadBatch(key) {
+  key = key || 'BATCH';
+  const n = Number(P.getProperty(key + '_N') || 0); if (!n) return [];
+  let data = ''; for (let i = 0; i < n; i++) data += P.getProperty(key + '_' + i) || '';
   return JSON.parse(Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(data), 'application/x-gzip')).getDataAsString());
 }
 
@@ -142,6 +144,147 @@ function digest(ctx, cycle) {
     + (cycle.skipped.length ? '<h3>No email on file</h3><p>' + cycle.skipped.map(esc).join(', ') + '</p>' : '')
     + '</div>';
   MailApp.sendEmail({ to: ADMIN, subject: 'Climb Coach: ' + moves.length + ' new bandana' + (moves.length === 1 ? '' : 's') + ' to celebrate', htmlBody: html, name: FROM_NAME });
+}
+
+/* ====================================================================================================================
+ * Points news: a short email when an organizer gives someone points (event points, attendance marked by hand,
+ * an approved proof, a confirmed mission). Points members earn by themselves (check-in code, starter steps) are not
+ * announced: they see those right away. Same review as the Climb Coach: nothing goes out until an organizer approves.
+ * Run pointsSetup once. It checks every day at POINTS_HOUR; when there is something new, the reviewers get it to check.
+ * ================================================================================================================== */
+const POINTS_HOUR = 18;          // the daily check, Paris time (late afternoon, after the day's entries)
+const FIRST_LOOKBACK_DAYS = 7;   // the first check also covers points given in the last 7 days
+
+function pointsPreview() {
+  const ctx = load(), items = pointsSince(ctx, Date.now() - FIRST_LOOKBACK_DAYS * 864e5, Date.now());
+  const people = ctx.people.filter(p => p.email && items[p.uid]).slice(0, 3);
+  if (!people.length) { Logger.log('No points given by organizers in the last ' + FIRST_LOOKBACK_DAYS + ' days.'); return; }
+  people.forEach(p => { const m = buildPoints(ctx, p, items[p.uid]); MailApp.sendEmail({ to: ADMIN, subject: '[Preview for ' + p.name + '] ' + m.subject, htmlBody: m.html, name: FROM_NAME }); });
+  Logger.log('Sent ' + people.length + ' previews to ' + ADMIN + '.');
+}
+
+function pointsSetup() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'pointsRun').forEach(t => ScriptApp.deleteTrigger(t));
+  const t = ScriptApp.newTrigger('pointsRun').timeBased().everyDays(1).atHour(POINTS_HOUR).inTimezone('Europe/Paris').create();
+  P.setProperty('PTS_TRIGGER', t.getUniqueId());
+  if (!P.getProperty('PTS_FROM')) P.setProperty('PTS_FROM', String(Date.now() - FIRST_LOOKBACK_DAYS * 864e5));
+  if (!P.getProperty('SECRET')) P.setProperty('SECRET', Utilities.getUuid() + Utilities.getUuid());
+  Logger.log('Ready. Every day around ' + POINTS_HOUR + ':00, if organizers gave points, the reviewers get the emails to check.');
+}
+
+// the timer runs this every day (and once, a minute after an organizer approves)
+function pointsRun() {
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(5000)) return;
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'pointsRun' && P.getProperty('PTS_TRIGGER') !== t.getUniqueId())
+    .forEach(t => { try { ScriptApp.deleteTrigger(t); } catch (x) {} });
+  try {
+    let r = JSON.parse(P.getProperty('PTS_CYCLE') || 'null');
+    if (r && !r.approved && !r.finished) return;     // a round is waiting for the reviewers: nothing new until they answer
+    if (!r || r.finished) {
+      const from = Number(P.getProperty('PTS_FROM') || 0), upTo = Date.now(), ctx = load(), items = pointsSince(ctx, from, upTo);
+      const going = ctx.people.filter(p => p.email && items[p.uid] && !P.getProperty('offpts:' + p.uid));
+      if (!going.length) { P.setProperty('PTS_FROM', String(upTo)); return; }   // nothing new: no email to anyone
+      const batch = going.map(p => { const m = buildPoints(ctx, p, items[p.uid]); return { uid: p.uid, name: p.name, email: p.email, lang: p.lang, subject: m.subject, html: m.html, lines: items[p.uid].map(i => '+' + i.points + ' ' + i.label) }; });
+      saveBatch(batch, 'PTS_BATCH');
+      r = { token: Utilities.getUuid(), upTo, approved: false, finished: false, done: [], excluded: [] };
+      P.setProperty('PTS_CYCLE', JSON.stringify(r));
+      pointsReview(batch, r); return;
+    }
+    // approved: send exactly what the reviewers read
+    for (const m of loadBatch('PTS_BATCH')) {
+      if (r.done.includes(m.uid)) continue;
+      if (MailApp.getRemainingDailyQuota() <= KEEP_FOR_OTHERS) { P.setProperty('PTS_CYCLE', JSON.stringify(r)); Logger.log('Daily limit: the rest go out tomorrow.'); return; }
+      if (!r.excluded.includes(m.uid) && !P.getProperty('offpts:' + m.uid)) {
+        try { MailApp.sendEmail({ to: m.email, subject: m.subject, htmlBody: m.html, name: FROM_NAME }); } catch (e) { Logger.log('Could not email ' + m.uid + ': ' + e); }
+      }
+      r.done.push(m.uid);
+    }
+    r.finished = true; P.setProperty('PTS_CYCLE', JSON.stringify(r)); P.setProperty('PTS_FROM', String(r.upTo));
+  } finally { lock.releaseLock(); }
+}
+
+// what each member got from an organizer between two moments: { uid: [{ points, label, date }] }
+function pointsSince(ctx, from, upTo) {
+  const SELF = ['starter', 'buddy_session', 'streak'];
+  const when = (f) => Date.parse(f.verifiedAt || f.createdAt || '') || 0;
+  const out = {};
+  Object.keys(ctx.res.byUid).forEach(uid => {
+    (ctx.res.byUid[uid].history || []).forEach(h => {
+      const f = h.fact, t = when(f);
+      if (h.points <= 0 || f.status !== 'approved' || SELF.includes(f.type) || t <= from || t > upTo) return;
+      if (f.type === 'attend' && !f.recordedBy) return;     // their own check-in with the code
+      if (f.recordedBy && f.recordedBy === uid) return;
+      (out[uid] = out[uid] || []).push({ points: h.points, fact: f, date: f.date });
+    });
+  });
+  return out;
+}
+
+const PTS_TEXT = {
+  en: { subj: n => '+' + n + ' point' + (n === 1 ? '' : 's') + ' on the Mountain', intro: 'An organizer just gave you points:',
+    total: (p, rank) => 'You now have <b>' + p + ' point' + (p === 1 ? '' : 's') + '</b>' + (rank ? ' and wear the <b>' + rank + ' bandana</b>' : '') + '.',
+    cta: 'Open my climb', off: 'You get this email when an organizer gives you points.', offLink: 'Turn these emails off' },
+  fr: { subj: n => '+' + n + ' point' + (n > 1 ? 's' : '') + ' sur la Montagne', intro: 'Un organisateur vient de vous attribuer des points :',
+    total: (p, rank) => 'Vous avez maintenant <b>' + p + ' point' + (p > 1 ? 's' : '') + '</b>' + (rank ? ' et portez le <b>bandana ' + rank + '</b>' : '') + '.',
+    cta: 'Voir mon ascension', off: 'Vous recevez cet e-mail quand un organisateur vous attribue des points.', offLink: 'Ne plus recevoir ces e-mails' },
+};
+
+function buildPoints(ctx, p, items) {
+  const L = PTS_TEXT[p.lang], s = ctx.res.byUid[p.uid] || { lifetime: 0, isMember: false };
+  const ruleName = (f) => { const r = (ctx.rb.rules || []).find(x => x.id === f.type) || {}; return (p.lang === 'fr' ? r.name_fr || r.name : r.name) || f.type; };
+  const day = (d) => Utilities.formatDate(new Date(d + 'T12:00:00Z'), 'Europe/Paris', p.lang === 'fr' ? 'dd/MM' : 'd MMM');
+  items.forEach(i => { const why = i.fact.reason || i.fact.title || ''; i.label = ruleName(i.fact) + (why ? ' (' + why + ')' : '') + ', ' + day(i.date); });
+  const sum = items.reduce((a, i) => a + i.points, 0);
+  const url = webappUrl(), offUrl = url ? url + '?k=pts&u=' + encodeURIComponent(p.uid) + '&s=' + sign('pts:' + p.uid) + '&l=' + p.lang : '';
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1e1e1e;font-size:15px;line-height:1.5">'
+    + '<p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6b625b;margin:0 0 12px">aivancity Tech Club · ' + (p.lang === 'fr' ? 'Montagne' : 'Mountain') + '</p>'
+    + '<p>' + TEXT[p.lang].hi(esc(String(p.name).split(' ')[0])) + '</p><p style="margin:0 0 6px">' + L.intro + '</p>'
+    + '<ul style="margin:0 0 16px;padding-left:20px">' + items.map(i => '<li style="margin:2px 0"><b>+' + i.points + '</b> ' + esc(i.label) + '</li>').join('') + '</ul>'
+    + '<p>' + L.total(s.lifetime, s.isMember ? ctx.rankName(s.rank, p.lang) : '') + '</p>'
+    + '<p style="margin:20px 0 28px"><a href="' + SITE + '/mountain#me" style="display:inline-block;background:#2e3a6e;color:#fff;text-decoration:none;font-weight:bold;padding:12px 20px;border-radius:999px">' + L.cta + ' →</a></p>'
+    + '<p style="font-size:12px;color:#8a817a;margin:0">' + L.off + (offUrl ? ' <a href="' + offUrl + '" style="color:#8a817a">' + L.offLink + '</a>' : '') + '</p></div>';
+  return { subject: L.subj(sum), html };
+}
+
+function pointsReview(batch, r) {
+  const link = (act, uid) => webappUrl() + '?k=pts&round=' + encodeURIComponent(r.token) + '&act=' + act + (uid ? '&u=' + encodeURIComponent(uid) : '')
+    + '&s=' + sign('pts:' + act + ':' + r.token + (uid ? ':' + uid : ''));
+  const btn = (href, label, main) => '<a href="' + href + '" style="display:inline-block;margin:0 8px 8px 0;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold;'
+    + (main ? 'background:#2e3a6e;color:#fff' : 'border:2px solid #2e3a6e;color:#2e3a6e') + '">' + label + '</a>';
+  const rows = batch.map(m => '<tr><td style="padding:6px;border-bottom:1px solid #ddd;vertical-align:top"><b>' + esc(m.name) + '</b><br><span style="font-size:12px;color:#57504a">' + esc(m.email) + ' · ' + m.lang.toUpperCase() + '</span></td>'
+    + '<td style="padding:6px;border-bottom:1px solid #ddd;vertical-align:top">' + m.lines.map(esc).join('<br>') + '</td>'
+    + '<td style="padding:6px;border-bottom:1px solid #ddd;vertical-align:top"><a href="' + link('exclude', m.uid) + '">Leave out</a></td></tr>').join('');
+  const html = '<div style="font-family:Arial,sans-serif;max-width:680px">'
+    + '<h2 style="margin:0 0 8px">Points news: ' + batch.length + ' email' + (batch.length === 1 ? '' : 's') + ' to check</h2>'
+    + '<p><b>Nothing has been sent.</b> These members got points from an organizer since the last emails. Check the lines. A wrong amount? Click <b>Leave out</b> for that person and fix it on Pulse: the corrected points come in the next check. '
+    + 'When it looks right, approve: exactly these emails go out within a few minutes.</p>'
+    + '<p>' + btn(link('approve'), 'Approve and send', true) + btn(link('skip'), 'Skip these', false) + '</p>'
+    + '<table style="border-collapse:collapse;width:100%;font-size:14px">' + rows + '</table>'
+    + '<hr style="margin:24px 0"><p style="font-size:13px;color:#57504a;margin:0 0 4px">How it looks, for <b>' + esc(batch[0].name) + '</b> · subject: <b>' + esc(batch[0].subject) + '</b></p>'
+    + '<div style="border:1px solid #ddd;border-radius:12px">' + batch[0].html + '</div></div>';
+  MailApp.sendEmail({ to: REVIEWERS.join(','), subject: 'To check: ' + batch.length + ' points email' + (batch.length === 1 ? '' : 's'), htmlBody: html, name: FROM_NAME });
+}
+
+// a reviewer clicked Approve, Skip or Leave out in the points review email
+function pointsAnswer(q) {
+  const page = (msg) => HtmlService.createHtmlOutput('<div style="font-family:Arial,sans-serif;max-width:480px;margin:60px auto;font-size:17px;line-height:1.5"><p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6b625b">Points news</p><p>' + msg + '</p></div>').setTitle('Points news');
+  const act = ['skip', 'exclude'].includes(q.act) ? q.act : 'approve', uid = String(q.u || '');
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const r = JSON.parse(P.getProperty('PTS_CYCLE') || 'null');
+    if (!r || r.token !== q.round || q.s !== sign('pts:' + act + ':' + q.round + (act === 'exclude' ? ':' + uid : ''))) return page('This link is not valid, or a newer check has replaced it.');
+    if (r.finished) return page('These emails are already done.');
+    if (r.approved) return page('Already approved: the emails are going out.');
+    if (act === 'exclude') {
+      r.excluded = r.excluded.filter(x => x !== uid).concat([uid]); P.setProperty('PTS_CYCLE', JSON.stringify(r));
+      const m = loadBatch('PTS_BATCH').find(x => x.uid === uid);
+      return page('Done: ' + esc(m ? m.name : 'this member') + ' will not get this email. ' + r.excluded.length + ' left out so far.');
+    }
+    if (act === 'skip') { r.finished = true; P.setProperty('PTS_CYCLE', JSON.stringify(r)); P.setProperty('PTS_FROM', String(r.upTo)); return page('Skipped: none of these emails will go out. Points given from now on come in the next check.'); }
+    r.approved = true; P.setProperty('PTS_CYCLE', JSON.stringify(r));
+  } finally { lock.releaseLock(); }
+  ScriptApp.newTrigger('pointsRun').timeBased().after(60 * 1000).create();
+  return page('Approved. The emails go out in the next few minutes.');
 }
 
 /* ---------- loading: the site's engine and rules, and the club's data ---------- */
@@ -175,7 +318,7 @@ function load() {
   const pts = (id) => { const r = (rb.rules || []).find(x => x.id === id); return r && typeof r.points === 'number' ? r.points : null; };
   const rankName = (id, lang) => (TEXT[lang].rank[id] || id);
   const nameOf = (uid) => (members.find(m => m.uid === uid) || {}).name || '';
-  return { rb, res, people, buddies, next, today, pts, rankName, nameOf };
+  return { rb, res, people, buddies, next, today, pts, rankName, nameOf, facts };
 }
 const byId = (list) => Object.fromEntries(list.map(x => [x.id, x]));
 
@@ -305,13 +448,16 @@ function build(ctx, p) {
 /* ---------- "turn these emails off" (deployed as a web app; the link is signed so nobody can turn off someone else) ---------- */
 function doGet(e) {
   const q0 = (e && e.parameter) || {};
+  if (q0.round && q0.k === 'pts') return pointsAnswer(q0);
   if (q0.round) return roundAnswer(q0);
-  const q = q0, uid = String(q.u || ''), fr = q.l === 'fr';
-  const ok = uid && q.s === sign(uid), on = q.on === '1';
-  if (ok) { if (on) P.deleteProperty('off:' + uid); else P.setProperty('off:' + uid, '1'); }
-  const url = webappUrl() + '?u=' + encodeURIComponent(uid) + '&s=' + q.s + '&l=' + (fr ? 'fr' : 'en');
+  const q = q0, uid = String(q.u || ''), fr = q.l === 'fr', pts = q.k === 'pts';
+  const flag = (pts ? 'offpts:' : 'off:') + uid;
+  const ok = uid && q.s === sign((pts ? 'pts:' : '') + uid), on = q.on === '1';
+  if (ok) { if (on) P.deleteProperty(flag); else P.setProperty(flag, '1'); }
+  const url = webappUrl() + '?u=' + encodeURIComponent(uid) + '&s=' + q.s + '&l=' + (fr ? 'fr' : 'en') + (pts ? '&k=pts' : '');
   const msg = !ok ? (fr ? 'Ce lien n’est pas valide.' : 'This link is not valid.')
-    : on ? (fr ? 'C’est noté : vous recevrez à nouveau les e-mails du Climb Coach.' : 'Done: you will get the Climb Coach emails again.')
+    : on ? (pts ? (fr ? 'C’est noté : vous serez à nouveau prévenu quand vous recevez des points.' : 'Done: you will be told again when you get points.')
+      : (fr ? 'C’est noté : vous recevrez à nouveau les e-mails du Climb Coach.' : 'Done: you will get the Climb Coach emails again.'))
     : (fr ? 'C’est noté : vous ne recevrez plus ces e-mails. <a href="' + url + '&on=1">Les réactiver</a>' : 'Done: you won’t get these emails any more. <a href="' + url + '&on=1">Turn them back on</a>');
   return HtmlService.createHtmlOutput('<div style="font-family:Arial,sans-serif;max-width:480px;margin:60px auto;font-size:17px;line-height:1.5">'
     + '<p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6b625b">aivancity Tech Club</p><p>' + msg + '</p></div>').setTitle('aivancity Tech Club');

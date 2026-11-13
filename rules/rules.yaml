@@ -11,7 +11,8 @@
 #   - A change can never remove points or a bandana already earned.
 # ==============================================================
 
-version: "1.6.0"   # 1.6.0 (13/11/2026): organizers can give event-contribution points (up to 10 per award)
+version: "1.7.0"   # 1.7.0 (13/11/2026): contribution points cover work for the club as well as events, with a published scale
+                   # 1.6.0 (13/11/2026): organizers can give event-contribution points (up to 10 per award)
 effective_from: "2026-10-15"     # first Thursday session of Fall 2026
 
 # --------------------------------------------------------------
@@ -52,7 +53,8 @@ sessions:
 # --------------------------------------------------------------
 # POINT RULES
 # Every rule names the FACT that triggers it and WHO records it.
-# Organizers record facts. They never choose point amounts.
+# Organizers record facts. They never choose point amounts,
+# with one exception: contribution points (event_bonus), given on the published scale below.
 # --------------------------------------------------------------
 rules:
 
@@ -188,19 +190,31 @@ rules:
     conditions_fr:
       - "Au moins 10 enregistrements à l'événement (à distance compris)."
 
-  - id: event_bonus
+  - id: event_bonus             # id kept so points already given stay valid
     category: share
-    name: "Help make an event happen"
+    name: "Contribute to the club or an event"
     points: 0
     points_max: 10
-    trigger: "An organizer gives points for something you did at or for an event: solving a riddle, filming, food, clean-up, building, posting…"
+    trigger: "An organizer gives you points for work you did for the club or for an event that no other rule covers: preparing food, filming, setting up or cleaning up, solving the riddles of a game, posting for the club, building or hosting something the club uses."
+    notes: "Each award is entered separately, with what it was for, and appears in your history on the Mountain."
     recorded_by: organizer
     conditions:
-      - "Each award says what it was for. Up to 10 points per award."
-    name_fr: "Contribuer à un événement"
-    trigger_fr: "Un organisateur donne des points pour ce que vous avez fait pendant ou pour un événement : résoudre une énigme, filmer, la nourriture, le rangement, construire, publier…"
+      - "1 to 2 points: a small help, up to about an hour (a useful suggestion, one riddle solved, filming, clean-up, sharing a post)."
+      - "3 to 5 points: a real task of a few hours (several riddles, a post or story made for the club, setting up a room, helping the host with part of an event's organization)."
+      - "6 to 10 points: a big piece of work, a day or more, or something the club keeps using (preparing the food for an event, building a platform or tool for the club)."
+      - "Up to 10 points per award. Several different contributions can each get their own award."
+      - "Not for what another rule already counts (attending, a talk or workshop, hosting the event, a competition, a Village Board mission)."
+      - "An organizer never gives these points to themself: another organizer does."
+    name_fr: "Contribuer au club ou à un événement"
+    trigger_fr: "Un organisateur vous attribue des points pour un travail fait pour le club ou pour un événement, qu'aucune autre règle ne couvre : préparer la nourriture, filmer, installer ou ranger, résoudre les énigmes d'un jeu, publier pour le club, construire ou héberger un outil que le club utilise."
+    notes_fr: "Chaque attribution est saisie à part, avec ce pour quoi elle est donnée, et apparaît dans votre historique sur la Montagne."
     conditions_fr:
-      - "Chaque attribution dit pourquoi. Jusqu'à 10 points par attribution."
+      - "1 à 2 points : une petite aide, jusqu'à environ une heure (une suggestion utile, une énigme résolue, filmer, ranger, partager une publication)."
+      - "3 à 5 points : une vraie tâche de quelques heures (plusieurs énigmes, une publication ou une story faite pour le club, installer une salle, aider l'organisateur sur une partie de l'événement)."
+      - "6 à 10 points : un gros travail, une journée ou plus, ou quelque chose que le club continue d'utiliser (préparer la nourriture d'un événement, construire une plateforme ou un outil pour le club)."
+      - "Jusqu'à 10 points par attribution. Plusieurs contributions différentes peuvent chacune avoir leur attribution."
+      - "Pas pour ce qu'une autre règle compte déjà (venir, une présentation ou un atelier, organiser l'événement, une compétition, une mission du Tableau du village)."
+      - "Un organisateur ne s'attribue jamais ces points lui-même : c'est un autre organisateur qui le fait."
 
   # ---------- Build ----------
   - id: ship_project
@@ -334,7 +348,7 @@ buddies:
 # Anything a member submits (rules marked "verified_by: organizer")
 # stays PENDING and earns nothing until an organizer verifies it.
 # Organizers only answer one question: "Does this proof match the rule?"
-# They never choose the number of points.
+# They never choose the number of points (contribution points are the one exception, see event_bonus).
 # --------------------------------------------------------------
 verification:
   applies_to: [ship_project, open_source, skill_badge, certification, mentoring]

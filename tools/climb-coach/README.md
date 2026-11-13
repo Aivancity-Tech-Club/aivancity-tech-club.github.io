@@ -52,3 +52,27 @@ Check it in **Triggers** (clock icon: a daily `run`) and **Executions**.
   `rules/rules.yaml`, `assets/platform/engine.js`, `assets/schedule.js`.
 - **Writes:** nothing in the database. It remembers what it sent, the last bandanas and who turned the emails off
   in the script's own properties.
+
+## Points news (a short email when an organizer gives points)
+
+Same script, same sender, same review. When an organizer gives someone points (Pulse → **Give points**,
+**Mark people present**, an approved proof, a confirmed Village board mission), that person gets a short email:
+what they got and why, their new total and bandana, in their language. Points members earn by themselves
+(check-in code, starter steps, buddy sessions) are not announced: they see those right away.
+
+- Every day around **18:00** (Paris), it looks for points given since the last emails. Nothing new: nobody gets anything.
+- Something new: the `REVIEWERS` get **"To check: N points emails"** with one line per person, a **Leave out** link
+  each, and **Approve and send** / **Skip these**. Members get nothing until someone approves.
+- While a check is waiting for an answer, no new one starts; points given meanwhile come in the next one.
+- A wrong amount? **Leave out** that person, fix it on Pulse, and the corrected points come in the next check.
+- Members can turn these off separately from the Climb Coach (link at the bottom).
+
+### Turn it on (5 minutes)
+
+1. In the Apps Script project, replace `Code.gs` with the new [`Code.gs`](Code.gs). **Save**.
+2. **Deploy → Manage deployments** → pencil icon → Version: **New version** → **Deploy**. The web address stays the same.
+   (Needed because the links in these emails are new.)
+3. Pick **`pointsPreview`** → **Run**: `ADMIN` gets what up to three members would receive for points given in the last 7 days.
+4. Pick **`pointsSetup`** → **Run**. The first check (today around 18:00) covers the last 7 days.
+
+**Stop:** Triggers → delete `pointsRun`. **Change the hour:** `POINTS_HOUR`, then run `pointsSetup` again.
