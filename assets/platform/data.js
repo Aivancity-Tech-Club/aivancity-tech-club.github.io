@@ -164,6 +164,7 @@ function demoBackend() {
       if (String(code).trim().toUpperCase() !== 'DEMO') return { ok: false, message: tr('m.checkin.demo', 'That code does not match this session. In the demo, use DEMO.') };
       if (state.facts.some(f => f.uid === 'you' && f.type === 'attend' && f.date === date)) return { ok: false, message: tr('m.checkin.dup', 'You already checked in today.') };
       state.facts.push({ id: 'd' + Date.now(), uid: 'you', type: 'attend', date, status: 'approved' }); save();
+      await this.buddyCheckIn(date);
       return { ok: true, message: tr('m.checkin.ok', 'Checked in. +1 point.') };
     },
     async reviewFact(id, ok, reason) { const f = state.facts.find(x => x.id === id); if (!f) return { ok: false, code: 'err.generic' };
@@ -230,8 +231,9 @@ function demoBackend() {
     async buddyEmail(uid) { const m = state.members.find(x => x.uid === uid); return m ? String(m.name || uid).split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') + '@aivancity.education' : ''; },
     async requestBuddy(to, msg) { const X = extra(), B = demoBuddies(X), id = pairId('you', to);
       if (to === 'you' || B.some(x => x.id === id)) return { ok: false, code: 'err.generic' };
-      X.buddies = [...B, { id, a: 'you', b: to, users: ['you', to], status: 'pending', msg: String(msg || '').trim().slice(0, 200), at: Date.now() }]; saveExtra(X); return { ok: true }; },
-    async answerBuddy(id, yes) { const X = extra(); if (!yes) (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_declined', uid: 'you', other: (demoBuddies(X).find(x => x.id === id) || { users: [] }).users.find(u => u !== 'you') || id, at: Date.now() }); X.buddies = demoBuddies(X).flatMap(x => x.id !== id ? [x] : yes ? [{ ...x, status: 'paired', acceptedAt: Date.now() }] : []); saveExtra(X); return { ok: true }; },
+      X.buddies = [...B, { id, a: 'you', b: to, users: ['you', to], status: 'pending', msg: String(msg || '').trim().slice(0, 200), at: Date.now() }]; saveExtra(X);
+      await this.awardStarter('buddy', id); return { ok: true }; },
+    async answerBuddy(id, yes) { const X = extra(); if (!yes) (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_declined', uid: 'you', other: (demoBuddies(X).find(x => x.id === id) || { users: [] }).users.find(u => u !== 'you') || id, at: Date.now() }); X.buddies = demoBuddies(X).flatMap(x => x.id !== id ? [x] : yes ? [{ ...x, status: 'paired', acceptedAt: Date.now() }] : []); saveExtra(X); if (yes) await this.awardStarter('buddy', id); return { ok: true }; },
     async cancelBuddy(id) { const X = extra(); (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_withdrawn', uid: 'you', other: (demoBuddies(X).find(x => x.id === id) || { users: [] }).users.find(u => u !== 'you') || id, at: Date.now() }); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
     async askEndBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).map(x => (x.id === id ? { ...x, endBy: 'you' } : x)); saveExtra(X); return { ok: true }; },
     async keepBuddy(id) { const X = extra(); X.buddies = demoBuddies(X).map(x => (x.id === id ? { ...x, endBy: null } : x)); saveExtra(X); return { ok: true }; },
@@ -247,8 +249,26 @@ function demoBackend() {
       if (a.place && !state.facts.some(f => f.id === a.uid + '_cp_' + date)) state.facts.push({ id: a.uid + '_cp_' + date, type: 'compete_place', place: a.place, team: !!a.team, ...base }); }); save(); return { ok: true }; },
     async markAttended(uids, date, double) { uids.forEach(u => { if (!state.facts.some(f => f.id === u + '_' + date)) state.facts.push({ id: u + '_' + date, uid: u, type: 'attend', date, status: 'approved', recordedBy: 'you', ...(double ? { double: true } : {}) }); }); save(); return { ok: true }; },
     async awardBuddySession(date, pair) { if (state.facts.some(f => f.id === 'you_bs_' + date)) return { ok: false }; state.facts.push({ id: 'you_bs_' + date, uid: 'you', type: 'buddy_session', date, pair, status: 'approved' }); save(); return { ok: true }; },
-    async markTour(key) { const m = state.members.find(x => x.uid === 'you'); m.tour = { ...(m.tour || {}), [key]: true }; save(); return { ok: true }; },
-    async saveCamp(c) { const X = extra(), old = X.camps.you || { hidden: false, reports: {} }; X.camps.you = { ...old, ...cleanCamp(c), updatedAt: Date.now() }; saveExtra(X); return { ok: true }; },
+    // just checked in: if a buddy already checked in at this session, "came with your buddy" is saved now
+    async buddyCheckIn(date) {
+      for (const b of demoBuddies(extra()).filter(x => x.status === 'paired' && x.users.includes('you'))) {
+        const other = b.a === 'you' ? b.b : b.a;
+        if (state.facts.some(f => f.uid === other && f.type === 'attend' && f.date === date && f.status === 'approved')) { await this.awardBuddySession(date, b.id); return; }
+      }
+    },
+    // organizers: save automatic points other members earned but that were never saved (fixed ids, so never twice)
+    async catchUpPoints(list) {
+      let written = 0;
+      for (const x of list) {
+        const id = x.uid + (x.type === 'starter' ? '_st_' + x.step : '_bs_' + x.date);
+        if (state.facts.some(f => f.id === id)) continue;
+        state.facts.push({ id, uid: x.uid, type: x.type, ...(x.step ? { step: x.step } : {}), date: x.date || todayStr(), status: 'approved', ...(x.pair ? { pair: x.pair } : {}), recordedBy: 'you', auto: true });
+        written++;
+      }
+      save(); return { ok: true, written };
+    },
+    async markTour(key) { const m = state.members.find(x => x.uid === 'you'); m.tour = { ...(m.tour || {}), [key]: true }; save(); await this.awardStarter(key); return { ok: true }; },
+    async saveCamp(c) { const X = extra(), old = X.camps.you || { hidden: false, reports: {} }; X.camps.you = { ...old, ...cleanCamp(c), updatedAt: Date.now() }; saveExtra(X); await this.awardStarter('camp'); return { ok: true }; },
     async reportCamp(uid) { const X = extra(); if (X.camps[uid]) { X.camps[uid].reports = { ...(X.camps[uid].reports || {}), you: true }; saveExtra(X); } return { ok: true }; },
     async hideCamp(uid, hidden) { const X = extra(); if (X.camps[uid]) { X.camps[uid].hidden = !!hidden; saveExtra(X); } return { ok: true }; },
     async loadRequests() { return extra().requests; },
@@ -727,6 +747,7 @@ function firebaseBackend() {
         // members can't read codes: a double-points code only accepts a check-in marked double, so try plain first, then double
         try { await db.collection('facts').doc(uid + '_' + date).set(fact); }
         catch (e1) { if (!e1 || e1.code !== 'permission-denied') throw e1; await db.collection('facts').doc(uid + '_' + date).set({ ...fact, double: true }); }
+        await this.buddyCheckIn(date).catch(e => console.warn(e));
         return { ok: true, message: tr('m.checkin.ok', 'Checked in. +1 point.') };
       } catch (e) {
         return { ok: false, message: tr('m.checkin.bad', 'That code did not work. Check it on the screen, and note codes only work during the session.') };
@@ -851,13 +872,16 @@ function firebaseBackend() {
     async buddyEmail(uid) { try { const d = await db.collection('private').doc(uid).get(); return d.exists ? d.data().email || '' : ''; } catch (e) { return ''; } },
     async requestBuddy(to, msg) {
       const a = auth.currentUser.uid;
-      try { await db.collection('buddies').doc(pairId(a, to)).set({ a, b: to, users: [a, to], status: 'pending', msg: String(msg || '').trim().slice(0, 200), createdAt: FV().serverTimestamp() }); return { ok: true }; }
+      try { await db.collection('buddies').doc(pairId(a, to)).set({ a, b: to, users: [a, to], status: 'pending', msg: String(msg || '').trim().slice(0, 200), createdAt: FV().serverTimestamp() }); }
       catch (e) { return fail(e); }
+      await this.awardStarter('buddy', pairId(a, to)); return { ok: true };
     },
     async answerBuddy(id, yes) {
       const ref = db.collection('buddies').doc(id);
-      try { if (yes) await ref.update({ status: 'paired', acceptedAt: FV().serverTimestamp() }); else await goneBuddy(id, 'buddy_declined'); return { ok: true }; }
+      try { if (yes) await ref.update({ status: 'paired', acceptedAt: FV().serverTimestamp() }); else await goneBuddy(id, 'buddy_declined'); }
       catch (e) { return fail(e); }
+      if (yes) await this.awardStarter('buddy', id);
+      return { ok: true };
     },
     async cancelBuddy(id) { try { await goneBuddy(id, 'buddy_withdrawn'); return { ok: true }; } catch (e) { return fail(e); } },
     // ending a pair takes both: one asks (endBy), the other agrees (the pair is deleted) or keeps it (endBy cleared)
@@ -879,10 +903,11 @@ function firebaseBackend() {
     },
     // getting-started steps that leave no other trace (looked at the Village board, opened a mission): saved on the profile
     // points the site gives by itself: a getting-started step (+1 each) and coming with your buddy (+2); the rules check both
+    // Saved the moment the step happens (camp saved, Village visited, mission opened, buddy asked or accepted), so everyone sees it.
     async awardStarter(step, pair) {
-      const uid = auth.currentUser.uid, doc = { uid, type: 'starter', step, date: todayStr(), status: 'approved', createdAt: FV().serverTimestamp() };
+      const uid = auth.currentUser.uid, ref = db.collection('facts').doc(uid + '_st_' + step), doc = { uid, type: 'starter', step, date: todayStr(), status: 'approved', createdAt: FV().serverTimestamp() };
       if (pair) doc.pair = pair;
-      try { await db.collection('facts').doc(uid + '_st_' + step).set(doc); return { ok: true }; } catch (e) { return fail(e); }
+      try { if ((await ref.get()).exists) return { ok: false }; await ref.set(doc); return { ok: true }; } catch (e) { return fail(e); }
     },
     // an organizer gives points for something someone did at or for an event (rule event_bonus, up to 10 per award)
     async giveBonus(uids, date, points, reason) {
@@ -926,13 +951,36 @@ function firebaseBackend() {
       } catch (e) { return fail(e); }
     },
     async awardBuddySession(date, pair) {
-      const uid = auth.currentUser.uid;
-      try { await db.collection('facts').doc(uid + '_bs_' + date).set({ uid, type: 'buddy_session', date, pair, status: 'approved', createdAt: FV().serverTimestamp() }); return { ok: true }; }
+      const uid = auth.currentUser.uid, ref = db.collection('facts').doc(uid + '_bs_' + date);
+      try { if ((await ref.get()).exists) return { ok: false }; await ref.set({ uid, type: 'buddy_session', date, pair, status: 'approved', createdAt: FV().serverTimestamp() }); return { ok: true }; }
       catch (e) { return fail(e); }
     },
+    // just checked in: if a buddy already checked in at this session, "came with your buddy" is saved now
+    // (the buddy who checked in first gets theirs on their next Mountain visit, or when an organizer opens the Mountain)
+    async buddyCheckIn(date) {
+      const uid = auth.currentUser.uid, pairs = (await this.loadBuddies(uid)).filter(b => b.status === 'paired');
+      for (const b of pairs) {
+        const d = await db.collection('facts').doc((b.a === uid ? b.b : b.a) + '_' + date).get();
+        if (d.exists && d.data().status === 'approved') { await this.awardBuddySession(date, b.id); return; }
+      }
+    },
+    // organizers: save automatic points other members earned but that were never saved (rule 3 in firestore.rules:
+    // organizers record facts with recordedBy). Fixed ids (uid_st_step, uid_bs_date), so nobody gets them twice.
+    async catchUpPoints(list) {
+      const by = auth.currentUser.uid; let written = 0;
+      await Promise.all(list.map(async x => {
+        const ref = db.collection('facts').doc(x.uid + (x.type === 'starter' ? '_st_' + x.step : '_bs_' + x.date));
+        const doc = { uid: x.uid, type: x.type, date: x.date || todayStr(), status: 'approved', recordedBy: by, auto: true, createdAt: FV().serverTimestamp() };
+        if (x.step) doc.step = x.step;
+        if (x.pair) doc.pair = x.pair;
+        try { if ((await ref.get()).exists) return; await ref.set(doc); written++; } catch (e) { console.warn('catch-up', ref.id, e && e.code); }
+      }));
+      return { ok: true, written };
+    },
     async markTour(key) {
-      try { await db.collection('members').doc(auth.currentUser.uid).update({ ['tour.' + key]: true }); return { ok: true }; }
+      try { await db.collection('members').doc(auth.currentUser.uid).update({ ['tour.' + key]: true }); }
       catch (e) { return fail(e); }
+      await this.awardStarter(key); return { ok: true };
     },
     async getCamp(uid) { try { const d = await db.collection('camps').doc(uid).get(); return d.exists ? { uid, ...d.data() } : null; } catch (e) { if (e && e.code === 'permission-denied') return null; throw e; } },
     async saveCamp(c) {
@@ -940,8 +988,8 @@ function firebaseBackend() {
       try {
         const cur = await ref.get();
         if (cur.exists) await ref.update(doc); else await ref.set({ ...doc, hidden: false, reports: {} });
-        return { ok: true };
       } catch (e) { return fail(e); }
+      await this.awardStarter('camp'); return { ok: true };
     },
     async reportCamp(uid) { try { await db.collection('camps').doc(uid).update('reports.' + auth.currentUser.uid, true); return { ok: true }; } catch (e) { return fail(e); } },
     async hideCamp(uid, hidden) { try { await db.collection('camps').doc(uid).update({ hidden: !!hidden }); return { ok: true }; } catch (e) { return fail(e); } },

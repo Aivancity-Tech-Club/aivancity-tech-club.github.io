@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mountain · aivancity Tech Club</title>
-<script src="assets/i18n.js?v=20261113i"></script>
-<script src="assets/analytics.js?v=20261113i" defer></script>
+<script src="assets/i18n.js?v=20261113j"></script>
+<script src="assets/analytics.js?v=20261113j" defer></script>
 <meta name="description" content="Members only: see every Tech Club member on their peak, check in on Thursdays and track your climb to Ninja.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-48.png" sizes="48x48" type="image/png">
@@ -434,15 +434,15 @@ label { font-weight: 700; font-size: 14px; }
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-<script src="assets/world/world-data.js?v=20261113i"></script>
-<script src="assets/world/world.js?v=20261113i"></script>
-<script src="assets/js-yaml.min.js?v=20261113i"></script>
-<script src="assets/schedule.js?v=20261113i"></script>
-<script src="assets/sessions.js?v=20261113i"></script>
-<script src="assets/platform/config.js?v=20261113i"></script>
-<script src="assets/platform/engine.js?v=20261113i"></script>
-<script src="assets/platform/signin.js?v=20261113i"></script>
-<script src="assets/platform/data.js?v=20261113i"></script>
+<script src="assets/world/world-data.js?v=20261113j"></script>
+<script src="assets/world/world.js?v=20261113j"></script>
+<script src="assets/js-yaml.min.js?v=20261113j"></script>
+<script src="assets/schedule.js?v=20261113j"></script>
+<script src="assets/sessions.js?v=20261113j"></script>
+<script src="assets/platform/config.js?v=20261113j"></script>
+<script src="assets/platform/engine.js?v=20261113j"></script>
+<script src="assets/platform/signin.js?v=20261113j"></script>
+<script src="assets/platform/data.js?v=20261113j"></script>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
@@ -569,6 +569,39 @@ label { font-weight: 700; font-size: 14px; }
     if (!jobs.length) return;
     const res = await Promise.all(jobs);
     if (res.some(r => r && r.ok)) await refresh();
+  }
+  /* organizers: automatic points other members already earned but that were never saved (steps done before these points
+     were saved on the spot, or "came with your buddy" for the buddy who checked in first). Saved once per page, with fixed
+     ids, so nobody gets them twice; then every ninja stands on the right peak for everyone. */
+  let caughtUp = false;
+  async function catchUpOthers() {
+    if (caughtUp || !profile || profile.role !== 'organizer' || !data.catchUpPoints) return;
+    caughtUp = true;
+    try {
+      const pairs = await data.loadAllBuddies().catch(() => []);
+      const has = new Set();
+      for (const f of facts) { has.add(f.id); if (f.type === 'starter') has.add(f.uid + '_st_' + f.step); if (f.type === 'buddy_session') has.add(f.uid + '_bs_' + f.date); }
+      const list = [], add = (x, id) => { if (!has.has(id)) { has.add(id); list.push(x); } };
+      const isMember = new Set(members.map(m => m.uid)), needCamp = [];
+      for (const m of members) {
+        const tour = m.tour || {};
+        for (const k of ['village', 'mission']) if (tour[k] === true) add({ uid: m.uid, type: 'starter', step: k }, m.uid + '_st_' + k);
+        const pair = pairs.find(b => b.a === m.uid || (b.status === 'paired' && (b.users || []).includes(m.uid)));
+        if (pair) add({ uid: m.uid, type: 'starter', step: 'buddy', pair: pair.id }, m.uid + '_st_buddy');
+        if (!has.has(m.uid + '_st_camp')) needCamp.push(m.uid);
+      }
+      const camps = await Promise.all(needCamp.map(u => data.getCamp(u).catch(() => null)));
+      camps.forEach((c, i) => c && add({ uid: needCamp[i], type: 'starter', step: 'camp' }, needCamp[i] + '_st_camp'));
+      const came = {};
+      for (const f of facts) if (f.type === 'attend' && f.status === 'approved') (came[f.uid] = came[f.uid] || new Set()).add(f.date);
+      for (const b of pairs) {
+        if (b.status !== 'paired' || !came[b.a] || !came[b.b]) continue;
+        for (const d of came[b.a]) if (came[b.b].has(d)) for (const u of [b.a, b.b]) if (isMember.has(u)) add({ uid: u, type: 'buddy_session', date: d, pair: b.id }, u + '_bs_' + d);
+      }
+      if (!list.length) return;
+      const r = await data.catchUpPoints(list);
+      if (r && r.written) await refresh();
+    } catch (e) { console.warn('catch-up', e); }
   }
   async function loadExtras() {
     const [buddies, camp] = await Promise.all([data.loadBuddies(me.uid).catch(() => []), data.getCamp(me.uid).catch(() => null)]);
@@ -939,7 +972,7 @@ label { font-weight: 700; font-size: 14px; }
     // first visit after approval: the profile is made from the join answers (the form below is only for older accounts)
     profile = made;
     if (!profile) { $('setup').hidden = false; return; }
-    await refresh(); loadExtras();
+    await refresh(); loadExtras(); catchUpOthers();
     if (profile.fresh) setDrawer(true);
     // opened from the profile menu on another page
     if (location.hash === '#me') { history.replaceState(null, '', location.pathname + location.search); setDrawer(true); }
