@@ -87,3 +87,7 @@
 .camp-ask small { font-size: .82rem; opacity: .85; }
 .camp-ask-act { display: flex; flex-wrap: wrap; gap: 8px; }
 .camp-note { margin: 0; padding: 8px 12px; border-left: 4px solid currentColor; background: rgba(255, 255, 255, .5); color: #1e1e1e; border-radius: 0 10px 10px 0; font-style: italic; }
+.camp-pts-h { margin: 16px 0 6px; font-size: 1rem; }
+.camp-wins li span { min-width: 0; overflow-wrap: anywhere; }
+.camp-pts-total { margin: 8px 2px 0; font-weight: 700; text-align: right; }
+@media (max-width: 520px) { .camp-wins li { flex-direction: column; gap: 2px; } }
