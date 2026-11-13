@@ -101,7 +101,7 @@ The AI must go through this list itself and tell the person what to check or run
 - [ ] Tested locally (§5): no console errors; English + French; light + dark; phone width; keyboard works.
 - [ ] Links use clean URLs (`/about`, not `about.html`) and point to pages that exist.
 - [ ] `firestore.rules` changed → PR description says an organizer must **Publish** it in the Firebase console after merging, and the rule was not loosened (§8).
-- [ ] `rules/rules.yaml` changed → needs 2 organizer approvals and a `version` bump (§7).
+- [ ] `rules/rules.yaml` changed → needs an organizer's approval and a `version` bump (§7).
 - [ ] Commit message says what changed, in plain words.
 
 ### H. Firebase console safety
@@ -292,7 +292,7 @@ Organizer how-tos (make someone an organizer, remove a member, set the WhatsApp 
 
 **Let members vote on a planned session** – add `vote: { question, question_fr, options: [{ id, title, title_fr }] }`; results show on `/pulse`.
 
-**Change a rule or point value** – edit `rules/rules.yaml` only, through a pull request approved by 2 organizers; changes start next season and never remove points already earned (see `rules/GOVERNANCE.md`). Bump its `version`.
+**Change a rule or point value** – edit `rules/rules.yaml` only, through a pull request approved by an organizer; changes apply as soon as they are merged and never remove points already earned (see `rules/GOVERNANCE.md`). Bump its `version`.
 
 **Add text / fix a translation** – `assets/i18n.js`, both languages.
 
