@@ -508,6 +508,12 @@ service cloud.firestore {
       // people can always cancel their own spot; anything else only while the event takes sign-ups
       allow update: if regOk(id) && resource.data.uid == request.auth.uid && resource.data.event == request.resource.data.event
         && (request.resource.data.status == 'cancelled' || (eventOpen(request.resource.data.event) && selfConfirmOk(request.resource.data)));
+      // organizers can add someone themselves (from the event page)
+      allow create: if isOrganizer()
+        && request.resource.data.keys().hasOnly(['event', 'uid', 'status', 'at', 'addedBy'])
+        && id == request.resource.data.event + '_' + request.resource.data.uid
+        && request.resource.data.status in ['pending', 'confirmed', 'waitlist']
+        && request.resource.data.addedBy == request.auth.uid && request.resource.data.at == request.time;
       allow update: if isOrganizer() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
         && request.resource.data.status in ['pending', 'confirmed', 'waitlist', 'cancelled'];
       allow delete: if isOrganizer();

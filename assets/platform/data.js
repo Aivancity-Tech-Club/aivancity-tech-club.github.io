@@ -239,6 +239,7 @@ function demoBackend() {
     async removeBuddy(id) { const X = extra(); (X.activity = X.activity || []).push({ id: 'a' + Date.now(), type: 'buddy_undone', uid: 'you', other: ((demoBuddies(X).find(x => x.id === id) || { users: [] }).users).join(' '), at: Date.now() }); X.buddies = demoBuddies(X).filter(x => x.id !== id); saveExtra(X); return { ok: true }; },
     async loadActivity() { return (extra().activity || []).slice().sort((a, b) => b.at - a.at); },
     async awardStarter(step, pair) { if (state.facts.some(f => f.id === 'you_st_' + step)) return { ok: false }; state.facts.push({ id: 'you_st_' + step, uid: 'you', type: 'starter', step, date: todayStr(), status: 'approved', pair }); save(); return { ok: true }; },
+    async markAttended(uids, date, double) { uids.forEach(u => { if (!state.facts.some(f => f.id === u + '_' + date)) state.facts.push({ id: u + '_' + date, uid: u, type: 'attend', date, status: 'approved', recordedBy: 'you', ...(double ? { double: true } : {}) }); }); save(); return { ok: true }; },
     async awardBuddySession(date, pair) { if (state.facts.some(f => f.id === 'you_bs_' + date)) return { ok: false }; state.facts.push({ id: 'you_bs_' + date, uid: 'you', type: 'buddy_session', date, pair, status: 'approved' }); save(); return { ok: true }; },
     async markTour(key) { const m = state.members.find(x => x.uid === 'you'); m.tour = { ...(m.tour || {}), [key]: true }; save(); return { ok: true }; },
     async saveCamp(c) { const X = extra(), old = X.camps.you || { hidden: false, reports: {} }; X.camps.you = { ...old, ...cleanCamp(c), updatedAt: Date.now() }; saveExtra(X); return { ok: true }; },
@@ -306,6 +307,8 @@ function demoBackend() {
       const X = extra(); X.regs = X.regs || demoRegs(); const id = eventId + '_you';
       X.regs = X.regs.filter(r => r.id !== id).concat({ id, event: eventId, uid: 'you', status, at: Date.now() }); saveExtra(X); return { ok: true };
     },
+    async findByEmails(emails) { const X = extra(), out = {}; const uids = [...new Set([...state.members.map(m => m.uid), ...X.requests.map(r => r.uid)])]; emails.forEach(e => { const u = uids.find(x => x + '@' + DOMAIN === e); if (u) out[e] = u; }); return out; },
+    async addRegistrations(eventId, uids, status) { const X = extra(); X.regs = X.regs || demoRegs(); uids.forEach(u => { if (!X.regs.some(r => r.id === eventId + '_' + u)) X.regs.push({ id: eventId + '_' + u, event: eventId, uid: u, status, at: Date.now() }); }); saveExtra(X); return { ok: true }; },
     async setRegistration(reg, status) { const X = extra(); X.regs = (X.regs || demoRegs()).map(r => (r.id === reg.id ? { ...r, status } : r)); saveExtra(X); return { ok: true }; },
     async whoAre(uids) { const out = {}; for (const u of uids) { const m = state.members.find(x => x.uid === u); out[u] = { name: m ? m.name : 'Jane D.', email: (m ? u : 'jane.doe') + '@' + DOMAIN, phone: '+33 6 00 00 00 00', member: !!m }; } return out; },
     currentUid() { return 'you'; },
@@ -875,6 +878,18 @@ function firebaseBackend() {
       if (pair) doc.pair = pair;
       try { await db.collection('facts').doc(uid + '_st_' + step).set(doc); return { ok: true }; } catch (e) { return fail(e); }
     },
+    // an organizer marks people as present at a session (fact id = uid_date, like a check-in, so nobody counts twice)
+    async markAttended(uids, date, double) {
+      const by = auth.currentUser.uid;
+      try {
+        for (let i = 0; i < uids.length; i += 400) {
+          const b = db.batch();
+          uids.slice(i, i + 400).forEach(u => b.set(db.collection('facts').doc(u + '_' + date), { uid: u, type: 'attend', date, status: 'approved', recordedBy: by, ...(double ? { double: true } : {}), createdAt: FV().serverTimestamp() }));
+          await b.commit();
+        }
+        return { ok: true };
+      } catch (e) { return fail(e); }
+    },
     async awardBuddySession(date, pair) {
       const uid = auth.currentUser.uid;
       try { await db.collection('facts').doc(uid + '_bs_' + date).set({ uid, type: 'buddy_session', date, pair, status: 'approved', createdAt: FV().serverTimestamp() }); return { ok: true }; }
@@ -1034,6 +1049,25 @@ function firebaseBackend() {
       const uid = auth.currentUser.uid;
       try { await db.collection('registrations').doc(eventId + '_' + uid).set({ event: eventId, uid, status, at: FV().serverTimestamp() }); return { ok: true }; }
       catch (e) { return fail(e); }
+    },
+    // organizers: school emails → accounts (join form first, then the approval list, then private profiles)
+    async findByEmails(emails) {
+      const out = {}, list = [...new Set(emails.map(e => String(e).toLowerCase()))];
+      for (let i = 0; i < list.length; i += 30) {
+        const chunk = list.slice(i, i + 30);
+        for (const c of ['requests', 'confirmPending', 'private']) {
+          try { (await db.collection(c).where('email', 'in', chunk).get()).docs.forEach(d => { const e = String(d.data().email || '').toLowerCase(); if (e && !out[e]) out[e] = d.id; }); } catch (e) {}
+        }
+      }
+      return out;
+    },
+    // organizers: put people on an event's list themselves (addedBy shows who did it)
+    async addRegistrations(eventId, uids, status) {
+      try {
+        const b = db.batch();
+        uids.forEach(u => b.set(db.collection('registrations').doc(eventId + '_' + u), { event: eventId, uid: u, status, at: FV().serverTimestamp(), addedBy: auth.currentUser.uid }));
+        await b.commit(); return { ok: true };
+      } catch (e) { return fail(e); }
     },
     // organizers: confirming someone's spot also confirms their account (they were reviewed)
     async setRegistration(reg, status) {

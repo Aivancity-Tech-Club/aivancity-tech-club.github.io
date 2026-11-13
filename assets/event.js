@@ -301,7 +301,7 @@ async function mount(root, opts) {
       <div class="wl-act"><a class="btn btn-primary" href="/mountain#steps">${esc(T('wl.cta'))}</a><button type="button" class="link-btn" data-act="wl-hide">${esc(T('wl.hide'))}</button></div></section>`;
   }
   async function reloadRegs() {
-    if (past || err) return;
+    if (err || (past && !W().isOrg)) return;   // organizers still see (and add to) the list of a past event
     try { regs = W().isOrg ? await data.loadRegistrations(key) : W().me ? await data.myRegistration(key).then(r => (r ? [r] : [])) : []; } catch (e) { regs = []; }
   }
   async function signUpForSpot() {
@@ -359,7 +359,7 @@ async function mount(root, opts) {
   async function loadPeople() { const ids = regs.map(r => r.uid).filter(u => !people[u]); if (ids.length) Object.assign(people, await data.whoAre(ids)); }
   function drawOrg() {
     const box = q('.ev-org');
-    if (!W().isOrg || past) { box.hidden = true; return; }
+    if (!W().isOrg) { box.hidden = true; return; }
     box.hidden = false;
     const n = (s) => regs.filter(r => r.status === s).length;
     const list = regs.filter(r => (orgFilter === 'all' ? r.status !== 'cancelled' : r.status === orgFilter)).sort((a, b) => a.at - b.at);
@@ -368,7 +368,7 @@ async function mount(root, opts) {
         <div class="ev-org-tools">
         ${regs.length ? `<button type="button" class="btn btn-ghost" data-org="csv">${esc(T('ev.csv'))}</button>` : ''}
         ${n('pending') ? `<button type="button" class="btn btn-primary" data-org="all">${esc(T('ev.confirmall', { n: n('pending') }))}</button>` : ''}</div></div>
-      ${!past ? `<div class="s-tabs" role="group" aria-label="${esc(T('ev.org.h'))}">${['all', 'pending', 'confirmed', 'waitlist', 'cancelled'].map(s =>
+      ${ev.registration || past || regs.length ? `<div class="s-tabs" role="group" aria-label="${esc(T('ev.org.h'))}">${['all', 'pending', 'confirmed', 'waitlist', 'cancelled'].map(s =>
           `<button type="button" class="s-tab" data-of="${s}" aria-pressed="${orgFilter === s}">${esc(T('ev.os.' + s))} <small>${s === 'all' ? regs.filter(r => r.status !== 'cancelled').length : n(s)}</small></button>`).join('')}</div>
       ${list.length ? `<ul class="ev-people">${list.map(r => { const p = people[r.uid] || {};
         return `<li><div><b>${esc(p.name || '…')}</b>${p.member ? '' : ` <span class="chip chip-planned">${esc(T('ev.newacc'))}</span>`}<small>${esc(p.email || '')}${p.phone ? ' · ' + esc(p.phone) : ''}</small></div>
@@ -377,8 +377,26 @@ async function mount(root, opts) {
             ${r.status !== 'waitlist' && r.status !== 'cancelled' ? `<button type="button" class="link-btn" data-org="wait" data-reg="${esc(r.id)}">${esc(T('ev.towait'))}</button>` : ''}
             ${r.status !== 'cancelled' ? `<button type="button" class="link-btn" data-org="drop" data-reg="${esc(r.id)}">${esc(T('ev.drop'))}</button>` : ''}
             ${wa(p) ? `<a class="link-btn" href="${esc(wa(p))}" target="_blank" rel="noopener">WhatsApp ↗</a>` : ''}</div></li>`; }).join('')}</ul>`
-        : `<p class="help">${esc(T('ev.org.none'))}</p>`}` : `<p class="help">${esc(T('ev.org.noreg'))}</p>`}`;
+        : `<p class="help">${esc(T('ev.org.none'))}</p>`}` : `<p class="help">${esc(T('ev.org.noreg'))}</p>`}
+      <form class="ev-add" novalidate><label for="evAdd"><b>${esc(T('ev.add.h'))}</b></label><p class="help">${esc(T('ev.add.p'))}</p>
+        <textarea class="textarea" id="evAdd" rows="3" placeholder="j.dupont@aivancity.education"></textarea>
+        <p class="row-actions"><button type="submit" class="btn btn-ghost">${esc(T('ev.add.btn'))}</button></p><p class="help" id="evAddMsg" role="status">${esc(addMsg)}</p></form>`;
   }
+  let addMsg = '';
+  async function addPeople(form) {
+    const emails = [...new Set((form.querySelector('#evAdd').value.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi) || []).map(x => x.toLowerCase()))];
+    if (!emails.length) return;
+    form.querySelector('button').disabled = true;
+    const found = await data.findByEmails(emails), unknown = emails.filter(e => !found[e]);
+    const uids = [...new Set(Object.values(found))], have = Object.fromEntries(regs.map(r => [r.uid, r]));
+    const fresh = uids.filter(u => !have[u]), revive = uids.filter(u => have[u] && have[u].status !== 'confirmed').map(u => have[u]);
+    let ok = true;
+    if (fresh.length) ok = (await data.addRegistrations(key, fresh, 'confirmed')).ok;
+    for (const r of revive) ok = (await data.setRegistration(r, 'confirmed')).ok && ok;
+    addMsg = (ok ? T('ev.add.ok', { n: fresh.length + revive.length }) : T('err.generic')) + (unknown.length ? ' ' + T('ev.add.unknown', { list: unknown.join(', ') }) : '');
+    await reloadRegs(); await loadPeople(); draw();
+  }
+  root.addEventListener('submit', (e) => { if (e.target.closest('.ev-add')) { e.preventDefault(); addPeople(e.target); } });
   async function orgAction(b) {
     const k = b.dataset.org;
     if (k === 'csv') {
