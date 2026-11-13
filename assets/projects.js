@@ -1,4 +1,4 @@
-/* /projects: the club's projects. NOX is written in the page; the rest come from the database (projects/{id}),
+/* /projects: the club's projects, from the database (projects/{id}),
    and organizers add and edit them here. The About page uses this file too, read-only (it has no organizer form). */
 (function () {
   const READONLY = !document.getElementById('pjForm'), stubs = {};
@@ -32,10 +32,6 @@
   function render() {
     const list = projects.filter(p => !p.removed).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     $('siteProjects').innerHTML = list.map(card).join('');
-    // NOX is written in the page: a removal record (projects/nox, removed) hides it
-    const noxGone = projects.some(p => p.id === 'nox' && p.removed);
-    $('pjNox').hidden = noxGone; $('pjRemoved').hidden = !(isOrg && noxGone);
-    document.querySelectorAll('#pjNox [data-pj-del]').forEach(b => { b.hidden = !isOrg; });
   }
   async function load() {
     try { projects = await data.loadProjects(isOrg); } catch (e) { projects = []; }
@@ -75,7 +71,7 @@
   // Delete straight from a card: first click asks, second click deletes
   let armed = null;
   async function remove(id) {
-    const r = id === 'nox' ? await data.saveProject({ id: 'nox', title: 'NOX: The Deadline', published: true, removed: true }) : await data.deleteProject(id);
+    const r = await data.deleteProject(id);
     $('pjNote').hidden = r.ok; if (!r.ok) { $('pjNote').textContent = T(r.code || 'err.generic'); return; }
     if (editing === id) closeForm();
     await load();
@@ -87,7 +83,6 @@
     if (armed !== b) { armed = b; b.textContent = T('pj.delete.sure'); b.classList.add('btn-danger'); return; }
     armed = null; b.disabled = true; remove(b.dataset.pjDel);
   });
-  $('pjRestore').addEventListener('click', async () => { const r = await data.deleteProject('nox'); if (r.ok) load(); });
   $('pjDel').addEventListener('click', async () => {
     if (!delSure) { delSure = true; $('pjDel').textContent = T('pj.delete.sure'); $('pjDel').classList.add('btn-danger'); return; }
     const r = await data.deleteProject(editing);

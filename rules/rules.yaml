@@ -11,7 +11,8 @@
 #   - A change can never remove points or a bandana already earned.
 # ==============================================================
 
-version: "1.7.0"   # 1.7.0 (13/11/2026): contribution points cover work for the club as well as events, with a published scale
+version: "1.8.0"   # 1.8.0 (13/11/2026): podium only with 2+ teams or players; organizers who played can enter results; hosting has no minimum attendance
+                   # 1.7.0: 1.7.0 (13/11/2026): contribution points cover work for the club as well as events, with a published scale
                    # 1.6.0 (13/11/2026): organizers can give event-contribution points (up to 10 per award)
 effective_from: "2026-10-15"     # first Thursday session of Fall 2026
 
@@ -130,10 +131,10 @@ rules:
     points: { 1: 10, 2: 6, 3: 4 }
     trigger: "Final ranking entered for a solo competition."
     recorded_by: organizer
-    notes: "Tied players each receive the points of the higher place. Added on top of the points for entering."
+    notes: "Only when at least 2 players competed. Tied players each receive the points of the higher place. Added on top of the points for entering."
     name_fr: "Podium en compétition individuelle"
     trigger_fr: "Classement final saisi pour une compétition individuelle."
-    notes_fr: "En cas d'égalité, chaque joueur reçoit les points de la meilleure place. S'ajoute aux points de participation."
+    notes_fr: "Seulement si au moins 2 joueurs se sont affrontés. En cas d'égalité, chaque joueur reçoit les points de la meilleure place. S'ajoute aux points de participation."
 
   - id: compete_place_team
     category: compete
@@ -141,10 +142,10 @@ rules:
     points: { 1: 8, 2: 5, 3: 3 }
     trigger: "Final ranking entered for a team competition."
     recorded_by: organizer
-    notes: "Every registered team member receives the points. Teams must be registered before the start."
+    notes: "Only when at least 2 teams competed: if everyone played in one team, they all get the points for entering, not a podium. Every registered team member receives the points. Teams must be registered before the start."
     name_fr: "Podium en compétition par équipe"
     trigger_fr: "Classement final saisi pour une compétition par équipe."
-    notes_fr: "Chaque membre inscrit de l'équipe reçoit les points. Les équipes doivent être inscrites avant le départ."
+    notes_fr: "Seulement si au moins 2 équipes se sont affrontées : si tout le monde a joué dans une seule équipe, chacun reçoit les points de participation, sans podium. Chaque membre inscrit de l'équipe reçoit les points. Les équipes doivent être inscrites avant le départ."
 
   # ---------- Share ----------
   - id: talk_lightning
@@ -183,12 +184,8 @@ rules:
     points: 10
     trigger: "Member is named as host of an event on the published schedule."
     recorded_by: organizer
-    conditions:
-      - "At least 10 check-ins at the event (remote included)."
     name_fr: "Organiser un événement"
     trigger_fr: "Le membre est indiqué comme organisateur d'un événement au programme publié."
-    conditions_fr:
-      - "Au moins 10 enregistrements à l'événement (à distance compris)."
 
   - id: event_bonus             # id kept so points already given stay valid
     category: share
@@ -445,7 +442,7 @@ accessories:
 # --------------------------------------------------------------
 integrity:
   visibility: "All points, proofs and logs are visible to every signed-in member."
-  self_scoring: "An organizer who took part in a competition cannot enter its results."
+  self_scoring: "An organizer who took part in a competition can enter its results, the same as for everyone else; every entry shows who recorded it. Contribution points are the exception: another organizer gives them."
   edit_window_hours: 48
   after_lock: "Corrections after 48 hours are added as new log entries with a reason."
   errors: "A wrong result is treated as a bug: the rule or data is fixed and everyone's points are recomputed."
@@ -454,7 +451,7 @@ integrity:
 # French text for the integrity guarantees above (same order).
 integrity_fr:
   visibility: "Tous les points, preuves et journaux sont visibles par chaque membre connecté."
-  self_scoring: "Un organisateur qui a participé à une compétition ne peut pas en saisir les résultats."
+  self_scoring: "Un organisateur qui a participé à une compétition peut en saisir les résultats, comme pour tout le monde ; chaque saisie indique qui l'a faite. Les points de contribution sont l'exception : c'est un autre organisateur qui les donne."
   edit_window_hours: 48
   after_lock: "Après 48 heures, les corrections sont ajoutées comme nouvelles entrées du journal, avec un motif."
   errors: "Un résultat faux est traité comme un bug : on corrige la règle ou la donnée et on recalcule les points de tout le monde."

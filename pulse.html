@@ -16,12 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;700;800&family=Google+Sans+Code:wght@400;700&family=Instrument+Serif:ital@1&display=swap"></noscript>
-  <link rel="stylesheet" href="assets/styles.css?v=20261113f">
-  <link rel="stylesheet" href="assets/village.css?v=20261113f">
-  <link rel="stylesheet" href="assets/pulse.css?v=20261113f">
-  <script src="assets/i18n.js?v=20261113f"></script>
-  <script src="assets/analytics.js?v=20261113f" defer></script>
-  <script src="assets/halloween.js?v=20261113f" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20261113h">
+  <link rel="stylesheet" href="assets/village.css?v=20261113h">
+  <link rel="stylesheet" href="assets/pulse.css?v=20261113h">
+  <script src="assets/i18n.js?v=20261113h"></script>
+  <script src="assets/analytics.js?v=20261113h" defer></script>
+  <script src="assets/halloween.js?v=20261113h" defer></script>
 </head>
 <body data-i18n-title="pulse.title">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -131,14 +131,14 @@
     </div>
   </footer>
 
-  <script src="assets/schedule.js?v=20261113f"></script>
+  <script src="assets/schedule.js?v=20261113h"></script>
 
-  <script src="assets/sessions.js?v=20261113f"></script>
-  <script src="assets/js-yaml.min.js?v=20261113f"></script>
-  <script src="assets/platform/config.js?v=20261113f"></script>
-  <script src="assets/platform/engine.js?v=20261113f"></script>
-  <script src="assets/platform/signin.js?v=20261113f"></script>
-  <script src="assets/platform/data.js?v=20261113f"></script>
+  <script src="assets/sessions.js?v=20261113h"></script>
+  <script src="assets/js-yaml.min.js?v=20261113h"></script>
+  <script src="assets/platform/config.js?v=20261113h"></script>
+  <script src="assets/platform/engine.js?v=20261113h"></script>
+  <script src="assets/platform/signin.js?v=20261113h"></script>
+  <script src="assets/platform/data.js?v=20261113h"></script>
   <script>
   (async () => {
     const $ = (id) => document.getElementById(id), T = (k, v) => I18N.t(k, v);
@@ -499,7 +499,7 @@
         <li>${ex(T("bn.g.num.w"), T("bn.g.num.ex"))}<br>${T("bn.g.num", { max: eb.points_max || 10 })}${scale.length ? `<ul>${scale.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</li>
         ${enter ? `<li>${ex(T("bn.g.played.w"), T("bn.g.comp.ex"))}<br>${T("bn.g.played", { n: enter })}</li>` : ""}
         ${team[1] ? `<li>${ex(T("bn.g.podium.w"), T("bn.g.comp.ex"))}<br>${T("bn.g.podium", { a: team[1], b: team[2], c: team[3], x: solo[1], y: solo[2], z: solo[3] })}</li>` : ""}
-        <li>${ex(T("bn.g.talk.w"), T("bn.g.talk.ex"))}<br>${T("bn.g.talk", { t: rule("talk_lightning").points, w: rule("workshop").points, h: rule("host_event").points })} <span class="soft">${esc(cond("talk_lightning"))} ${esc(T("bn.g.host.c"))} ${esc(cond("host_event"))}</span></li>
+        <li>${ex(T("bn.g.talk.w"), T("bn.g.talk.ex"))}<br>${T("bn.g.talk", { t: rule("talk_lightning").points, w: rule("workshop").points, h: rule("host_event").points })} <span class="soft">${esc(cond("talk_lightning"))}</span></li>
         <li>${T("bn.g.not")} <a href="/rules">${esc(T("bn.g.rules"))} →</a></li></ul>`;
     }
     function drawErasePicker() {
@@ -556,7 +556,7 @@
       const rule = (id) => ((rulebook && rulebook.rules) || []).find(r => r.id === id) || {};
       const has = new Set(facts.map(f => f.id));
       const give = [], notMember = [], unknown = [], mine = [], already = [];
-      awards.forEach(a => { const u = byEmail[a.email]; if (!u) unknown.push(a.email); else if (u === data.currentUid()) mine.push(a.email); else if (!isMem.has(u)) notMember.push(a.email);
+      awards.forEach(a => { const u = byEmail[a.email]; if (!u) unknown.push(a.email); else if (u === data.currentUid() && a.kind === "bonus") mine.push(a.email); else if (!isMem.has(u)) notMember.push(a.email);
         else if (a.kind === "compete" && has.has(u + "_ce_" + date) && (!a.place || has.has(u + "_cp_" + date))) already.push(nameOf(u));
         else if (a.kind === "fixed" && has.has(u + "_" + a.type + "_" + date)) already.push(nameOf(u));
         else { if (a.kind === "fixed") a.pts = rule(a.type).points || 0;
