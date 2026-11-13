@@ -6,12 +6,13 @@
 #  If a rule is not in this file, it does not exist.
 #
 #  How this file changes (see rules/GOVERNANCE.md):
-#   - Only through a pull request, approved by at least 2 organizers.
-#   - Changes take effect at the start of the NEXT season.
+#   - Only through a pull request, approved by an organizer.
+#   - Changes take effect as soon as they are merged (everyone's points are recomputed on every page).
 #   - A change can never remove points or a bandana already earned.
 # ==============================================================
 
-version: "1.8.0"   # 1.8.0 (13/11/2026): podium only with 2+ teams or players; organizers who played can enter results; hosting has no minimum attendance
+version: "1.9.0"   # 1.9.0 (13/11/2026): the white bandana no longer needs a check-in, so everyone climbs with the points they earn; changes apply once merged, one organizer approves
+                   # 1.8.0 (13/11/2026): podium only with 2+ teams or players; organizers who played can enter results; hosting has no minimum attendance
                    # 1.7.0: 1.7.0 (13/11/2026): contribution points cover work for the club as well as events, with a published scale
                    # 1.6.0 (13/11/2026): organizers can give event-contribution points (up to 10 per award)
 effective_from: "2026-10-15"     # first Thursday session of Fall 2026
@@ -392,7 +393,7 @@ ranks:
   - id: white
     name: "Hello World"
     bandana: "#f0f0f0"
-    requires: { lifetime_points: 0, first_check_in: true }
+    requires: { lifetime_points: 0 }
   - id: yellow
     name: "Debugger"
     bandana: "#f9ab00"
