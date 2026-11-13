@@ -15,7 +15,7 @@ Live site: https://aivancity-tech-club.github.io/ · Schedule (flyer QR code): h
 | `schedule.html` | Full schedule (this is the page the flyer QR code opens) |
 | `rules.html` | Public rules page, generated from `rules/rules.yaml` |
 | `rules/rules.yaml` | **The official points & bandana rulebook, the source of truth** |
-| `rules/GOVERNANCE.md` | How the rules can change (pull request + 2 organizer approvals) |
+| `rules/GOVERNANCE.md` | How the rules can change (pull request + an organizer's approval; applies once merged) |
 | `assets/schedule.js` | **The schedule data. Edit this to add or change sessions.** |
 | `assets/styles.css` | Styles (GDG on Campus brand colours) |
 | `assets/tech-club-logo.svg` | Tech Club logo (vector; `tech-club-logo.png` is a 512px copy for phone home screens) |
