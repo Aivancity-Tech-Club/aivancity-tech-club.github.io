@@ -46,7 +46,7 @@
     if (!btn || !SAVE.includes(label(btn))) return;
     const url = postUrl(btn);
     if (!url) return;
-    chrome.runtime.sendMessage({ type: 'saved', url, account: author(btn), savedAt: new Date().toISOString() }, (r) => {
+    chrome.runtime.sendMessage({ type: 'saved', url, account: author(btn) }, (r) => {
       if (chrome.runtime.lastError) return;
       if (r && r.ok) toast(r.duplicate ? 'Déjà dans la bibliothèque du club' : 'Envoyé au club ✓', true);
       else toast(r && r.error ? 'Pas envoyé : ' + r.error : 'Pas envoyé', false);
