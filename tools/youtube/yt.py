@@ -45,6 +45,8 @@ def channel(handles, shorts_only=False):
         c = items[0]
         subs = int(c['statistics'].get('subscriberCount') or 0)
         print(f"# {h} · {c['snippet']['title']} · {subs} subscribers · {c['statistics'].get('videoCount')} videos", file=sys.stderr)
+        if not int(c['statistics'].get('videoCount') or 0):
+            continue   # no video yet (and no uploads playlist)
         uploads = c['contentDetails']['relatedPlaylists']['uploads']
         ids = [x['contentDetails']['videoId'] for x in get('playlistItems', part='contentDetails', playlistId=uploads, maxResults=50).get('items', [])]
         if not ids:

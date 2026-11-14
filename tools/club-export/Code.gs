@@ -42,12 +42,16 @@ function setup() {
 }
 
 function sheet() {
+  let ss = null;
   const id = P.getProperty('SHEET_ID');
-  if (id) { try { return SpreadsheetApp.openById(id); } catch (e) { /* deleted: make a new one */ } }
-  const ss = SpreadsheetApp.create(SHEET_NAME);
-  P.setProperty('SHEET_ID', ss.getId());
-  try { DriveApp.getFileById(ss.getId()).moveTo(DriveApp.getFolderById(FOLDER_ID)); }
-  catch (e) { Logger.log('Could not put the sheet in "08 Data": share that folder with this account as editor, or move the sheet there yourself.'); }
+  if (id) { try { ss = SpreadsheetApp.openById(id); } catch (e) { ss = null; /* deleted: make a new one */ } }
+  if (!ss) { ss = SpreadsheetApp.create(SHEET_NAME); P.setProperty('SHEET_ID', ss.getId()); }
+  // keep it in "08 Data", where the agents look (retried every run, in case the folder was shared later)
+  const file = DriveApp.getFileById(ss.getId());
+  if (!file.getParents().hasNext() || file.getParents().next().getId() !== FOLDER_ID) {
+    try { file.moveTo(DriveApp.getFolderById(FOLDER_ID)); }
+    catch (e) { Logger.log('Could not put the sheet in "08 Data" (' + e + '). Share that folder with this account as editor, then run again.'); }
+  }
   return ss;
 }
 
