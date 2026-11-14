@@ -14,6 +14,7 @@ read it, but some older scanner apps don't. --light makes the same design in sta
 Always test a new code with an iPhone and an Android phone before printing.
 """
 import base64
+import html
 import math
 import pathlib
 import sys
@@ -100,7 +101,7 @@ def build(url: str, light: bool = False) -> str:
     lx = off + c * M - lw / 2
     ly = off + c * M - lw / 2 * (650 / 690)
     outer_r, inner_r = 2.4 * M, 1.6 * M
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size:.0f} {size:.0f}" width="{size:.0f}" height="{size:.0f}" role="img" aria-label="QR code: {url}">
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size:.0f} {size:.0f}" width="{size:.0f}" height="{size:.0f}" role="img" aria-label="QR code: {html.escape(url)}">
 <rect width="{size:.0f}" height="{size:.0f}" rx="{outer_r:.0f}" fill="{frame}"/>
 <rect x="{FRAME*M:.0f}" y="{FRAME*M:.0f}" width="{size-2*FRAME*M:.0f}" height="{size-2*FRAME*M:.0f}" rx="{inner_r:.0f}" fill="{bg}"/>
 <g fill="{fg}">
