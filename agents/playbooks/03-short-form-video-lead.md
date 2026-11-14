@@ -32,6 +32,8 @@ average % watched, shares, profile visits, sign-ups from the video's link.
   aivancity games, real numbers from the club (check-ins, bandanas), with consent for anyone named.
 - **Study what works elsewhere:** `python3 tools/instagram/ig.py study ACCOUNT…` (Business/Creator accounts) and
   `ig.py hashtag TAG` give their best posts first, with each caption's hook. Put the best in the inspiration library.
+- **Every day, check the inspiration inbox:** new rows in the library (sent by the team with the Chrome extension: Instagram
+  saves, images, links, notes). For each: the author's numbers (`ig.py study`), the image if there is one, the team's note.
 - **Study the inspiration library** (`03 Marketing / Inspiration`): every two weeks, fill in each new video's hook,
   format, length, why it works and how the club could use it, and turn patterns seen in 3+ videos into rules here.
 - YouTube Shorts get a searchable French title; TikTok and Reels get a short, natural caption.

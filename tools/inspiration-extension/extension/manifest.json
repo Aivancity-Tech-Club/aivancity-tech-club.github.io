@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "aivancity Tech Club · Inspiration",
-  "version": "1.0.0",
-  "description": "When you save a post on Instagram, its link and author go to the club's Inspiration library.",
-  "permissions": ["storage"],
+  "version": "1.1.0",
+  "description": "Send what inspires you (Instagram saves, any image, video, link or page) to the club's Inspiration library.",
+  "permissions": ["storage", "contextMenus", "activeTab"],
   "host_permissions": ["https://script.google.com/*", "https://script.googleusercontent.com/*"],
   "background": { "service_worker": "background.js" },
   "content_scripts": [{ "matches": ["https://www.instagram.com/*"], "js": ["content.js"], "run_at": "document_idle" }],
   "options_ui": { "page": "options.html", "open_in_tab": true },
-  "action": { "default_title": "Tech Club Inspiration: settings", "default_popup": "options.html" },
+  "action": { "default_title": "Envoyer au Tech Club", "default_popup": "popup.html" },
+  "commands": { "_execute_action": { "suggested_key": { "default": "Alt+Shift+S" }, "description": "Envoyer cette page au Tech Club" } },
   "icons": { "128": "icon-128.png" }
 }
