@@ -19,6 +19,8 @@ Find out what actually brings students to Thursday sessions, and tell the team w
 Judged on: whether your recommendations raise sign-ups and check-ins over the following weeks.
 
 ## How you work
+- **Instagram is automatic:** run `python3 tools/instagram/ig.py club` and copy the result into
+  `08 Data / Post results` (views, reach, likes, comments, saves, shares for every post).
 - **Per post:** reach or views, 3-second hold and % watched (video), saves, shares, comments, profile visits,
   link clicks, and sign-ups from its `&src=` link. Organizers paste platform numbers into
   `08 Data / Post results` until the platforms are connected; site numbers come from the club data snapshot.

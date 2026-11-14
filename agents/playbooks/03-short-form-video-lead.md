@@ -30,6 +30,8 @@ average % watched, shares, profile visits, sign-ups from the video's link.
 - **Each week**, list 3 trending formats or sounds that fit the club; the organizer picks the sound when posting.
 - **Material:** `tools/content-studio` (club look, ninja mascot, Mountain artwork), gameplay clips from
   aivancity games, real numbers from the club (check-ins, bandanas), with consent for anyone named.
+- **Study what works elsewhere:** `python3 tools/instagram/ig.py study ACCOUNT…` (Business/Creator accounts) and
+  `ig.py hashtag TAG` give their best posts first, with each caption's hook. Put the best in the inspiration library.
 - **Study the inspiration library** (`03 Marketing / Inspiration`): every two weeks, fill in each new video's hook,
   format, length, why it works and how the club could use it, and turn patterns seen in 3+ videos into rules here.
 - YouTube Shorts get a searchable French title; TikTok and Reels get a short, natural caption.
