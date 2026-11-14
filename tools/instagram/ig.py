@@ -2,7 +2,7 @@
 """Instagram reader for the club's agents, through Meta's official Graph API (read-only).
 
     python3 tools/instagram/ig.py club                 # the club's account and every post, with its numbers
-    python3 tools/instagram/ig.py study USER [USER…]    # other professional accounts: what works for them
+    python3 tools/instagram/ig.py study USER [USER…]    # other professional accounts: which posts broke out, and by how much
     python3 tools/instagram/ig.py hashtag TAG [--recent] # top (or recent) posts for a hashtag
 
 Output is CSV on stdout (add  > file.csv  to save it), ready to paste into Google Sheets.
@@ -12,7 +12,7 @@ adds it to every request to graph.facebook.com. Elsewhere, set IG_TOKEN in your 
 Limits (Meta's): 30 different hashtags per 7 days; other accounts must be Business or Creator accounts;
 their video files are not available, only captions and numbers.
 """
-import csv, json, os, signal, subprocess, sys, urllib.parse
+import csv, json, os, signal, statistics, subprocess, sys, urllib.parse
 
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)   # quiet when piped into head
 
@@ -79,8 +79,16 @@ def study(users):
                          'type': m.get('media_product_type'), 'likes': m.get('like_count'), 'comments': m.get('comments_count'),
                          'engagement_per_1000_followers': round(eng * 1000 / f, 1), 'hook': hook(m.get('caption')),
                          'permalink': m['permalink']})
-    rows.sort(key=lambda r: r['engagement_per_1000_followers'], reverse=True)
-    write(rows, ['account', 'followers', 'date', 'type', 'likes', 'comments', 'engagement_per_1000_followers', 'hook', 'permalink'])
+    # breakout: how many times this post beat the account's usual post (its median likes + comments)
+    for acc in {r['account'] for r in rows}:
+        mine = [r for r in rows if r['account'] == acc]
+        usual = statistics.median([(r['likes'] or 0) + (r['comments'] or 0) for r in mine]) or 1
+        for r in mine:
+            r['usual_post'] = round(usual)
+            r['times_usual'] = round(((r['likes'] or 0) + (r['comments'] or 0)) / usual, 1)
+    rows.sort(key=lambda r: r['times_usual'], reverse=True)
+    write(rows, ['account', 'followers', 'date', 'type', 'likes', 'comments', 'usual_post', 'times_usual',
+                 'engagement_per_1000_followers', 'hook', 'permalink'])
 
 
 def hashtag(tag, recent=False):

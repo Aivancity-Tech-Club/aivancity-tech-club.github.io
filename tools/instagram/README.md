@@ -4,7 +4,7 @@ Lets the agents read Instagram without anyone copying numbers by hand.
 
 ```bash
 python3 tools/instagram/ig.py club                    # @aivancity_tech.club: every post with views, reach, likes, comments, saves, shares
-python3 tools/instagram/ig.py study duolingo konbini   # other Business/Creator accounts: their recent posts, best first (engagement per 1,000 followers)
+python3 tools/instagram/ig.py study duolingo konbini   # other Business/Creator accounts: their recent posts, biggest breakout first (times the account's usual post)
 python3 tools/instagram/ig.py hashtag hackathon        # top posts for a hashtag (add --recent for the newest)
 ```
 Each prints CSV, ready for Google Sheets (`08 Data / Post results`, `03 Marketing / Inspiration`).
