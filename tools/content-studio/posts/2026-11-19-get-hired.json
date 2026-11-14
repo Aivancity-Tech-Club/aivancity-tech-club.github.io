@@ -1,0 +1,116 @@
+{
+  "id": "2026-11-19-get-hired",
+  "source": "assets/schedule.js, session 2026-11-19 (lang en, level all, planned)",
+  "brand": "aivancity Tech Club · GDG on Campus",
+  "carousel": [
+    {
+      "kind": "cover",
+      "eyebrow": "Jeudi 19 novembre · 13h",
+      "title": "Get Hired : <b>devenez plus recrutable</b>",
+      "lede": "Des conseils concrets pour décrocher un stage ou un emploi.",
+      "chip": "Ouvert à tous les niveaux",
+      "ninja": "blue"
+    },
+    {
+      "kind": "list",
+      "eyebrow": "Au programme",
+      "title": "Quatre choses <strong>à soigner</strong>",
+      "items": [
+        "Votre CV",
+        "Votre profil GitHub",
+        "Votre LinkedIn",
+        "Vos entretiens"
+      ]
+    },
+    {
+      "kind": "facts",
+      "eyebrow": "À noter",
+      "title": "Infos <strong>pratiques</strong>",
+      "facts": [
+        [
+          "Quand",
+          "Jeudi 19 novembre"
+        ],
+        [
+          "Heure",
+          "13h – 14h"
+        ],
+        [
+          "Où",
+          "AIClinic – Salle 107"
+        ],
+        [
+          "Langue",
+          "Séance en anglais"
+        ],
+        [
+          "Pour qui",
+          "Tous les niveaux"
+        ]
+      ],
+      "lede": "Chaque présence compte pour votre bandana sur la Montagne."
+    },
+    {
+      "kind": "cta",
+      "navy": true,
+      "eyebrow": "1 minute suffit",
+      "title": "Réservez <b>votre place</b>",
+      "lede": "Scannez le code ou passez par le lien en bio.",
+      "qr": "qr-2026-11-19.svg",
+      "url": "aivancity-tech-club.github.io"
+    }
+  ],
+  "stories": [
+    {
+      "kind": "cover",
+      "eyebrow": "Demain · 13h",
+      "title": "Get Hired : <b>devenez plus recrutable</b>",
+      "lede": "CV, GitHub, LinkedIn, entretiens. AIClinic – Salle 107.",
+      "chip": "Séance en anglais · tous niveaux",
+      "ninja": "blue"
+    },
+    {
+      "kind": "cta",
+      "navy": true,
+      "eyebrow": "Get Hired · jeudi 13h",
+      "title": "Inscrivez-vous <b>en 1 minute</b>",
+      "lede": "Scannez le code ou touchez le lien.",
+      "qr": "qr-2026-11-19.svg",
+      "url": "aivancity-tech-club.github.io"
+    }
+  ],
+  "reel": {
+    "ninja": "blue",
+    "beats": [
+      {
+        "seconds": 3,
+        "eyebrow": "Stage · emploi",
+        "title": "Votre profil est‑il <b>prêt</b> ?"
+      },
+      {
+        "seconds": 3.5,
+        "title": "On fait le point <b>ensemble</b>",
+        "tags": [
+          "CV",
+          "GitHub",
+          "LinkedIn",
+          "Entretiens"
+        ]
+      },
+      {
+        "seconds": 3,
+        "title": "En <b>une heure</b>.",
+        "lede": "Des conseils concrets pour vous démarquer."
+      },
+      {
+        "seconds": 4,
+        "eyebrow": "Jeudi 19 novembre · 13h",
+        "title": "Get <b>Hired</b>",
+        "lede": "AIClinic – Salle 107 · séance en anglais",
+        "tags": [
+          "Inscription : lien en bio"
+        ]
+      }
+    ]
+  }
+}

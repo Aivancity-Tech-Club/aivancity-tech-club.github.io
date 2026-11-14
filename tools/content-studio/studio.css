@@ -1,0 +1,81 @@
+/* Content studio: the club's look (assets/styles.css) at social-media size (1080 px wide).
+   Colours and fonts are the site's own: navy, cyan, apricot, warm cream, Figtree, Instrument Serif italic, Caveat. */
+:root {
+  --navy: #2b3767; --navy-deep: #1f2850; --cyan: #55c9ea; --teal-ink: #17708c;
+  --apricot: #ffe2c4; --cream: #fbf6ee; --surface: #fffdf9; --ink: #221d19; --ink-soft: #57504a;
+  --p-blue: #d8f1f9; --p-green: #dcefdc; --p-red: #f8ddd6;
+  --line: 5px solid var(--ink);
+  --sans: "Figtree", system-ui, sans-serif; --serif: "Instrument Serif", Georgia, serif;
+  --hand: "Caveat", cursive; --mono: "Google Sans Code", ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { background: var(--cream); color: var(--ink); font-family: var(--sans); }
+.canvas { position: relative; overflow: hidden; width: 1080px; display: flex; flex-direction: column; padding: 84px 84px 72px; }
+.canvas.post { height: 1350px; }
+.canvas.story { height: 1920px; padding: 220px 84px 260px; }   /* keeps text out of the app's top and bottom bars */
+.canvas.navy { background: var(--navy); color: #fff; }
+
+.eyebrow { font-family: var(--hand); font-size: 64px; font-weight: 600; color: var(--teal-ink); line-height: 1; transform: rotate(-2deg); transform-origin: left; }
+.navy .eyebrow { color: var(--cyan); }
+h1 { font-size: 118px; line-height: .98; font-weight: 800; letter-spacing: -.035em; margin-top: 26px; }
+h1 b, h2 b { font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--teal-ink); letter-spacing: -.01em; }
+.navy h1 b, .navy h2 b { color: var(--cyan); }
+h2 { font-size: 92px; line-height: 1; font-weight: 300; letter-spacing: -.03em; }
+h2 strong { font-weight: 800; }
+.lede { font-size: 46px; line-height: 1.25; color: var(--ink-soft); margin-top: 30px; font-weight: 500; }
+.navy .lede { color: #dfe6ff; }
+
+.brand { position: absolute; left: 84px; right: 84px; bottom: 60px; display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--ink-soft); }
+.story .brand { bottom: 200px; }
+.navy .brand { color: #c9d3f5; }
+.brand .pg { border: 3px solid currentColor; border-radius: 999px; padding: 6px 18px; }
+
+.ninja { position: absolute; width: 560px; right: -40px; bottom: 90px; filter: drop-shadow(14px 14px 0 rgba(34, 29, 25, .9)); }
+.story .ninja { width: 640px; bottom: 360px; right: -30px; }
+
+.card { background: var(--surface); border: var(--line); border-radius: 36px; box-shadow: 12px 12px 0 var(--ink); }
+.thursday { background: var(--apricot); }
+.items { display: grid; gap: 26px; margin-top: 54px; }
+.item { display: flex; gap: 30px; align-items: center; padding: 30px 36px; font-size: 52px; font-weight: 800; letter-spacing: -.02em; }
+.item .n { flex: none; width: 92px; height: 92px; border-radius: 50%; border: var(--line); display: grid; place-items: center;
+  font-family: var(--mono); font-size: 40px; background: var(--cyan); }
+.item:nth-child(2) .n { background: var(--apricot); } .item:nth-child(3) .n { background: var(--p-green); } .item:nth-child(4) .n { background: var(--p-red); }
+
+.facts { margin-top: 54px; padding: 46px 50px; display: grid; gap: 30px; }
+.fact { display: grid; grid-template-columns: 250px 1fr; gap: 24px; align-items: baseline; font-size: 50px; font-weight: 800; letter-spacing: -.02em; }
+.fact span { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
+.chip { display: inline-block; margin-top: 34px; align-self: flex-start; font-size: 34px; font-weight: 800; border: var(--line); border-radius: 999px; padding: 12px 30px; background: var(--cyan); }
+
+.qr { width: 470px; height: 470px; border: var(--line); border-radius: 36px; background: #fff; padding: 22px; margin-top: 50px; box-shadow: 12px 12px 0 var(--ink); }
+.qr img { width: 100%; height: 100%; }
+.url { font-family: var(--mono); font-size: 34px; font-weight: 700; margin-top: 40px; }
+.big-cta { display: inline-block; margin-top: 40px; background: var(--navy); color: #fff; border-radius: 999px; padding: 26px 48px; font-size: 46px; font-weight: 800; align-self: flex-start; }
+.navy .big-cta { background: var(--cyan); color: #10162e; }
+
+/* ---------- Reel / TikTok (1080 × 1920, animated) ---------- */
+.reel { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); color: #fff; }
+.reel .stars { position: absolute; inset: 0; background-image: radial-gradient(#ffffff55 2px, transparent 2.5px); background-size: 90px 90px; animation: drift 12s linear infinite; }
+@keyframes drift { to { background-position: 0 180px; } }
+.reel .beat { position: absolute; left: 84px; right: 84px; top: 330px; opacity: 0; animation-fill-mode: both; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+.reel .beat .eyebrow { color: var(--cyan); }
+.reel .beat h1 { font-size: 132px; }
+.reel .beat .lede { color: #dfe6ff; font-size: 54px; }
+.reel .ninja { width: 700px; right: 50%; margin-right: -350px; bottom: 170px; filter: drop-shadow(0 0 40px #55c9ea66); animation: bob 1.6s ease-in-out infinite alternate; }
+@keyframes bob { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-34px) rotate(2deg); } }
+.reel .tags { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 40px; }
+.reel .tag { font-size: 50px; font-weight: 800; border: 5px solid #fff; border-radius: 999px; padding: 10px 34px; opacity: 0; animation: pop .5s both; }
+@keyframes beat { 0% { opacity: 0; transform: translateY(80px); } 12% { opacity: 1; transform: none; } 88% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-60px); } }
+@keyframes beatLast { 0% { opacity: 0; transform: translateY(80px); } 15% { opacity: 1; transform: none; } 100% { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+.reel .brand { bottom: 90px; color: #c9d3f5; }
+
+/* stories: bigger text for a full phone screen; the accent stays readable on navy in the video */
+.story .eyebrow { font-size: 82px; }
+.story h1 { font-size: 150px; }
+.story h2 { font-size: 120px; }
+.story .lede { font-size: 58px; }
+.story .chip { font-size: 42px; }
+.story .qr { width: 600px; height: 600px; }
+.story .url { font-size: 40px; }
+.reel h1 b { color: var(--cyan); }
