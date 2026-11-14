@@ -33,5 +33,5 @@ QR codes: `python3 tools/make_qr.py "https://aivancity-tech-club.github.io/event
 - Every image gets a French alt text.
 
 ## Where the files go
-The agent puts each post in Google Drive, `Tech Club Agents / À valider / DATE name`, with the texts as a Google Doc.
-An organizer reads it, posts it (Meta Business Suite, LinkedIn, TikTok), then moves the folder to `Publié`.
+The agent puts each post in Google Drive, `Tech Club Agents / 01 To approve / DATE name`, with the texts as a Google Doc.
+An organizer reads it, posts it (Meta Business Suite, LinkedIn, TikTok), then moves the folder to `02 Published`.
