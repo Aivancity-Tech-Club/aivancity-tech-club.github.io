@@ -95,11 +95,11 @@ const SESSIONS = [
     type_fr: "Carrière",
     title_fr: "Get Hired : devenir plus recrutable",
     description_fr: "CV, profil GitHub, LinkedIn et préparation aux entretiens : des conseils concrets pour se démarquer en stage et en emploi." },
-  { lang: "en", date: "2026-11-26", format: "career", level: "all", track: "tech", type: "Business", title: "Starting a Student Enterprise", planned: true,
-    description: "What it takes to start a business as a student, from first idea to the paperwork.",
-    type_fr: "Entrepreneuriat",
-    title_fr: "Créer une entreprise étudiante",
-    description_fr: "Ce qu'il faut pour lancer une entreprise en étant étudiant, de la première idée aux démarches." },
+  { lang: "en", date: "2026-11-26", format: "build", level: "all", track: "tech", type: "Build session", title: "Let's Build an Operating System",
+    description: "We build a tiny operating system together, from the boot process to printing our first text on screen, and see what really happens when a computer starts. Bring a laptop.",
+    type_fr: "Session build",
+    title_fr: "Construisons un système d'exploitation",
+    description_fr: "On construit ensemble un mini système d'exploitation, du démarrage jusqu'à l'affichage de notre premier texte à l'écran, pour comprendre ce qui se passe vraiment quand un ordinateur s'allume. Apportez un ordinateur." },
 
   // ---------- December: the big finish ----------
   { lang: "en", date: "2026-12-03", format: "workshop", level: "advanced", track: "tech", type: "Systems design", title: "Systems Design: how would you build it?", planned: true,
