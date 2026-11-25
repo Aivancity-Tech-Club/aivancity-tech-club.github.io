@@ -1,5 +1,5 @@
 /* /showcase: apps built by aivancity students. The list lives in assets/showcase-apps.js.
-   Category buttons and a search box filter the cards; the chosen category is kept in the address (?c=health) so it can be shared.
+   Newest first. Category buttons and a search box filter the cards; the chosen category is kept in the address (?c=health) so it can be shared.
    The home page uses this file too (#scHome): it shows 3 apps, apps marked featured: true first, the others taking turns each day. */
 (function () {
   const grid = document.getElementById('scGrid'), cats = document.getElementById('scCats'), search = document.getElementById('scSearch');
@@ -9,7 +9,9 @@
   const esc = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const safeUrl = (u) => (/^https:\/\/\S+$/.test(u || '') ? u : '');
   const catOf = (id) => SHOWCASE_CATEGORIES.find(c => c.id === id);
-  const apps = SHOWCASE_APPS.filter(a => a && a.id && a.name);
+  // newest first (by the date it was added), featured apps on top; apps with the same date keep the file's order
+  const apps = SHOWCASE_APPS.filter(a => a && a.id && a.name).map((a, i) => ({ a, i }))
+    .sort((x, y) => (!!y.a.featured - !!x.a.featured) || String(y.a.added || '').localeCompare(String(x.a.added || '')) || x.i - y.i).map(x => x.a);
   let current = new URLSearchParams(location.search).get('c') || 'all';
   if (current !== 'all' && !catOf(current)) current = 'all';
 

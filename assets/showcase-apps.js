@@ -12,6 +12,7 @@
    logo         square icon in assets/showcase/ (128×128 .webp), optional: without one, the first letter is shown
    color        background colour for the letter when there is no logo
    by           who made it. Leave "" until the team agrees to be named (the repository is public).
+   added        the date it was added to the showcase (YYYY-MM-DD): the newest apps are shown first
    season       when it was made, e.g. "Autumn 2026"; season_fr in French
    featured     true to always show it on the home page (otherwise apps with a screenshot take turns, one set of 3 per day)
    note         optional short warning shown on the card (e.g. "Wakes up in about 30 seconds"); note_fr in French
@@ -28,7 +29,7 @@ const SHOWCASE_CATEGORIES = [
 
 const SHOWCASE_APPS = [
   {
-    id: 'france-welcome', name: 'France Welcome', category: 'student-life',
+    id: 'france-welcome', name: 'France Welcome', category: 'student-life', added: '2026-11-24',
     tagline: 'The paperwork guide for foreign students arriving in France',
     tagline_fr: 'Le guide des démarches pour les étudiants étrangers qui arrivent en France',
     description: 'An interactive checklist for visas, bank, housing and CAF, a monthly budget calculator, and the 2026 rule changes explained in plain English. Pick your profile and it shows only the steps that apply to you.',
@@ -37,7 +38,7 @@ const SHOWCASE_APPS = [
     cover: 'france-welcome.webp', logo: '', color: '#1f5fd1', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
   },
   {
-    id: 'relay', name: 'Relay', category: 'learning',
+    id: 'relay', name: 'Relay', category: 'learning', added: '2026-11-24',
     tagline: 'Stuck on a course? Get help from a student one year above',
     tagline_fr: 'Bloqué sur un cours ? Faites-vous aider par un étudiant de l\'année au-dessus',
     description: 'A clickable prototype that matches students who struggle with a course with someone from the year above who did well in it, for coursework but also for internships, alternance and choosing courses.',
@@ -46,7 +47,7 @@ const SHOWCASE_APPS = [
     cover: 'relay.webp', logo: 'relay-logo.webp', color: '#16181d', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
   },
   {
-    id: 'gradeeting', name: 'Gradeeting', category: 'community',
+    id: 'gradeeting', name: 'Gradeeting', category: 'community', added: '2026-11-24',
     tagline: 'Meet aivancity students and teachers before the first conversation',
     tagline_fr: 'Découvrez les étudiants et les profs d\'aivancity avant la première conversation',
     description: 'Volunteers share a photo, their class and a few words; visitors leave moderated, anonymous comments. It also has two small games to get to know people: Guess Who and Swipe & Meet.',
@@ -55,7 +56,7 @@ const SHOWCASE_APPS = [
     cover: 'gradeeting.webp', logo: '', color: '#e0623a', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
   },
   {
-    id: 'curl-check', name: 'Curl Check', category: 'style',
+    id: 'curl-check', name: 'Curl Check', category: 'style', added: '2026-11-24',
     tagline: 'A one-minute hair quiz for wavy, curly and coily hair',
     tagline_fr: 'Un quiz capillaire d\'une minute pour cheveux ondulés, bouclés et crépus',
     description: 'Answer a few questions and get a personal routine, product reviews by hair type, a community board and a wash-day tracker.',
@@ -65,7 +66,7 @@ const SHOWCASE_APPS = [
     note: 'The app may need half a minute to wake up.', note_fr: 'L\'application peut mettre une trentaine de secondes à se réveiller.',
   },
   {
-    id: 'ascendlab', name: 'AscendLab', category: 'health',
+    id: 'ascendlab', name: 'AscendLab', category: 'health', added: '2026-11-24',
     tagline: 'Your training and nutrition plan, built around you',
     tagline_fr: 'Votre programme d\'entraînement et de nutrition, construit autour de vous',
     description: 'An AI-powered companion for beginners and athletes in any sport: a weekly programme based on your level, goals and free time, with a calorie target and advice on protein, steps and recovery.',
@@ -74,7 +75,7 @@ const SHOWCASE_APPS = [
     cover: 'ascendlab.webp', logo: 'ascendlab-logo.webp', color: '#0c0d12', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
   },
   {
-    id: 'take-care', name: 'Take Care', category: 'health',
+    id: 'take-care', name: 'Take Care', category: 'health', added: '2026-11-24',
     tagline: 'Free 5 to 30 minute workouts for your break',
     tagline_fr: 'Des séances de sport gratuites de 5 à 30 minutes pour votre pause',
     description: 'The best free workout videos, sorted by length and by how much you will sweat, with one theme per weekday and a WhatsApp channel to keep each other going. Made for students and office workers short on time.',
@@ -83,7 +84,7 @@ const SHOWCASE_APPS = [
     cover: 'take-care.webp', logo: 'take-care-logo.webp', color: '#17705f', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
   },
   {
-    id: 'abroadly', name: 'Abroadly', category: 'money',
+    id: 'abroadly', name: 'Abroadly', category: 'money', added: '2026-11-24',
     tagline: 'Money clarity for students living abroad',
     tagline_fr: 'Y voir clair dans son argent quand on étudie à l\'étranger',
     description: 'Track your spending, set a monthly budget and see everything in your own currency, with exchange rates explained. There is a demo with sample data if you just want to look around.',
@@ -92,7 +93,7 @@ const SHOWCASE_APPS = [
     cover: 'abroadly.webp', logo: 'abroadly-logo.webp', color: '#183a2c', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
   },
   {
-    id: 'microtime', name: 'MicroTime', category: 'student-life',
+    id: 'microtime', name: 'MicroTime', category: 'student-life', added: '2026-11-24',
     tagline: 'Make the most of the short gaps between classes',
     tagline_fr: 'Profitez des petits trous entre les cours',
     description: 'A 30-minute gap or two hours between classes often turns into scrolling. MicroTime suggests small things that fit the time you have, and keeps a friendly class leaderboard.',
@@ -101,7 +102,7 @@ const SHOWCASE_APPS = [
     cover: 'microtime.webp', logo: 'microtime-logo.webp', color: '#2f9e64', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
   },
   {
-    id: 'helper', name: 'Helper', category: 'careers',
+    id: 'helper', name: 'Helper', category: 'careers', added: '2026-11-25',
     tagline: 'Your job and internship search, all in one place',
     tagline_fr: 'Votre recherche de stage ou d\'emploi, au même endroit',
     description: 'Track your applications, prepare interviews, keep your recruiters\' details, find companies and offers, and write CVs and cover letters.',
@@ -111,7 +112,7 @@ const SHOWCASE_APPS = [
     note: 'Still in development: feedback welcome.', note_fr: 'Encore en développement : vos retours sont les bienvenus.',
   },
   {
-    id: 'no-return', name: 'No Return', category: 'style',
+    id: 'no-return', name: 'No Return', category: 'style', added: '2026-11-24',
     tagline: 'Try clothes on before you buy, and wear more of what you own',
     tagline_fr: 'Essayez avant d\'acheter, et portez davantage ce que vous avez déjà',
     description: 'A virtual try-on to see clothes on you before buying, a closet in your pocket, and an outfit every morning based on the weather and what you have not worn in a while. Available in five languages.',
@@ -121,7 +122,7 @@ const SHOWCASE_APPS = [
     note: 'May take half a minute to open the first time.', note_fr: 'Peut mettre une trentaine de secondes à s\'ouvrir la première fois.',
   },
   {
-    id: 'phenixfit', name: 'PhenixFit', category: 'health',
+    id: 'phenixfit', name: 'PhenixFit', category: 'health', added: '2026-11-24',
     tagline: 'How much to eat and how to train, from your own numbers',
     tagline_fr: 'Combien manger et comment s\'entraîner, à partir de vos chiffres',
     description: 'Enter your weight, height, age and goal: PhenixFit works out your daily calories and protein, sets up 3 to 6 workouts a week and suggests a matching meal plan. Free, no account, your data stays on your phone.',
@@ -130,7 +131,7 @@ const SHOWCASE_APPS = [
     cover: 'phenixfit.webp', logo: 'phenixfit-logo.webp', color: '#c2410c', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
   },
   {
-    id: 'tech-club', name: 'aivancity Tech Club', category: 'community',
+    id: 'tech-club', name: 'aivancity Tech Club', category: 'community', added: '2026-11-24',
     tagline: 'The club\'s website and member platform',
     tagline_fr: 'Le site et la plateforme des membres du club',
     description: 'The weekly schedule, sign-up for sessions, and a game where every member climbs a mountain as a ninja by attending, helping others and shipping projects. Built to keep more students active in the club.',
