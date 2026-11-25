@@ -99,7 +99,12 @@ const SESSIONS = [
     description: "We build a tiny operating system together, from the boot process to printing our first text on screen, and see what really happens when a computer starts. Bring a laptop.",
     type_fr: "Session build",
     title_fr: "Construisons un système d'exploitation",
-    description_fr: "On construit ensemble un mini système d'exploitation, du démarrage jusqu'à l'affichage de notre premier texte à l'écran, pour comprendre ce qui se passe vraiment quand un ordinateur s'allume. Apportez un ordinateur." },
+    description_fr: "On construit ensemble un mini système d'exploitation, du démarrage jusqu'à l'affichage de notre premier texte à l'écran, pour comprendre ce qui se passe vraiment quand un ordinateur s'allume. Apportez un ordinateur.",
+    link: "https://alajemba-vik.github.io/build-your-own-os/", linkText: "Follow the tutorial (set up before you come)",
+    linkText_fr: "Suivre le tutoriel (à installer avant de venir)",
+    recap: { link: "https://alajemba-vik.github.io/build-your-own-os/", linkText: "The full tutorial", linkText_fr: "Le tutoriel complet",
+      task: "Do chapter 4 of the tutorial: a timer and a keyboard driver, so your OS answers when you type.",
+      task_fr: "Faites le chapitre 4 du tutoriel : un minuteur et un pilote de clavier, pour que votre OS réagisse quand vous tapez." } },
 
   // ---------- December: the big finish ----------
   { lang: "en", date: "2026-12-03", format: "workshop", level: "advanced", track: "tech", type: "Systems design", title: "Systems Design: how would you build it?", planned: true,
