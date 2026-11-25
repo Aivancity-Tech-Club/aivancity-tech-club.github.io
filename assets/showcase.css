@@ -1,0 +1,54 @@
+/* /showcase: apps built by aivancity students */
+.sc-total { margin: 18px 0 0; font-family: var(--mono); font-size: .9rem; color: var(--ink-soft); }
+.sc-total b { font-family: var(--sans); font-size: 1.6rem; color: var(--ink); margin-right: 6px; }
+
+.sc-tools { display: grid; gap: 14px; margin-bottom: 22px; }
+.sc-search { max-width: 420px; }
+.sc-cats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; border: 0; }
+.sc-chip { font: inherit; font-size: .95rem; font-weight: 700; color: var(--ink); background: var(--surface); border: var(--stroke) solid var(--line);
+  border-radius: 999px; padding: 8px 16px; min-height: 44px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.sc-chip small { font-family: var(--mono); font-weight: 400; font-size: .8rem; color: var(--ink-soft); }
+.sc-chip:hover { background: var(--p-blue); }
+.sc-chip[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+.sc-chip[aria-pressed="true"] small { color: #d8e0ff; }
+.sc-chip:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+.sc-count { margin: 0; font-family: var(--mono); font-size: .85rem; color: var(--ink-soft); }
+
+.sc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 22px; }
+.sc-card { background: var(--surface); border: var(--stroke) solid var(--line); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column;
+  scroll-margin-top: 90px; }
+.sc-card:target { box-shadow: 6px 6px 0 var(--cyan); }
+.sc-cover { aspect-ratio: 16 / 10; border-bottom: var(--stroke) solid var(--line); background: #e9e3d8; overflow: hidden; }
+.sc-cover img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.sc-cover-plain { background: var(--sc-c, var(--navy)); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.sc-cover-name { color: #fff; font-weight: 800; font-size: clamp(1.8rem, 5vw, 2.4rem); letter-spacing: -.02em; text-align: center; overflow-wrap: anywhere; }
+.sc-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.sc-head { display: flex; align-items: center; gap: 14px; }
+.sc-logo { width: 56px; height: 56px; flex: none; border-radius: 14px; border: 1.5px solid var(--line); object-fit: cover; background: #fff; }
+.sc-letter { display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.6rem; }
+.sc-head h2 { margin: 0; font-size: 1.3rem; line-height: 1.15; letter-spacing: -.015em; }
+.sc-cat { margin: 2px 0 0; font-family: var(--mono); font-size: .8rem; color: var(--teal-ink); }
+.sc-tag { margin: 0; font-weight: 700; }
+.sc-desc { margin: 0; color: var(--ink-soft); font-size: .95rem; }
+.sc-note { margin: 0; font-size: .85rem; color: var(--ink-soft); border-left: 3px solid var(--yellow); padding-left: 10px; }
+.sc-meta { margin: 0; font-family: var(--mono); font-size: .8rem; color: var(--ink-soft); }
+.sc-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: auto 0 0; padding-top: 6px; }
+
+.sc-empty { border: var(--stroke) dashed var(--line); border-radius: 18px; padding: 22px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; }
+.sc-empty p { margin: 0; color: var(--ink-soft); }
+
+.sc-add { margin-top: 40px; background: var(--p-yellow); color: #221d19; border: var(--stroke) solid var(--line); border-radius: 26px; padding: 26px 28px;
+  box-shadow: 6px 6px 0 var(--line); display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
+.sc-add h2 { margin: 0 0 6px; font-size: 1.5rem; font-weight: 400; }
+.sc-add p { margin: 0; max-width: 60ch; }
+.sc-add .btn-primary { background: var(--navy); color: #fff; border-color: #221d19; }
+
+@media (prefers-color-scheme: dark) {
+  .sc-chip:hover { background: #24304f; }
+  .sc-chip[aria-pressed="true"] { background: var(--cyan); color: #10162e; border-color: var(--cyan); }
+  .sc-chip[aria-pressed="true"] small { color: #10162e; }
+  .sc-cat { color: var(--cyan); }
+  .sc-cover { background: #2a2420; }
+  .sc-add { box-shadow: 6px 6px 0 #000; }
+  .sc-add .btn-primary { background: var(--navy); color: #fff; }
+}
