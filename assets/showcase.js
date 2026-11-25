@@ -1,9 +1,10 @@
 /* /showcase: apps built by aivancity students. The list lives in assets/showcase-apps.js.
-   Category buttons and a search box filter the cards; the chosen category is kept in the address (?c=health) so it can be shared. */
+   Category buttons and a search box filter the cards; the chosen category is kept in the address (?c=health) so it can be shared.
+   The home page uses this file too (#scHome): it shows 3 apps, apps marked featured: true first, the others taking turns each day. */
 (function () {
   const grid = document.getElementById('scGrid'), cats = document.getElementById('scCats'), search = document.getElementById('scSearch');
-  const count = document.getElementById('scCount'), empty = document.getElementById('scEmpty');
-  if (!grid || typeof SHOWCASE_APPS === 'undefined') return;
+  const count = document.getElementById('scCount'), empty = document.getElementById('scEmpty'), home = document.getElementById('scHome');
+  if ((!grid && !home) || typeof SHOWCASE_APPS === 'undefined') return;
   const T = (k, v) => I18N.t(k, v), pick = (o, f) => I18N.pick(o, f) || o[f] || '';
   const esc = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const safeUrl = (u) => (/^https:\/\/\S+$/.test(u || '') ? u : '');
@@ -16,7 +17,7 @@
     return a.logo ? `<img class="sc-logo" src="assets/showcase/${esc(a.logo)}" alt="" width="56" height="56" loading="lazy">`
       : `<span class="sc-logo sc-letter" style="background:${esc(/^#[0-9a-f]{3,8}$/i.test(a.color || '') ? a.color : '#2b3767')}" aria-hidden="true">${esc(a.name.trim()[0].toUpperCase())}</span>`;
   }
-  function card(a) {
+  function card(a, h = 'h2') {
     const cat = catOf(a.category), link = safeUrl(a.link), repo = safeUrl(a.repo);
     const cover = a.cover ? `<img src="assets/showcase/${esc(a.cover)}" alt="${esc(T('sc.shot', { name: a.name }))}" width="960" height="600" loading="lazy">`
       : `<span class="sc-cover-name" aria-hidden="true">${esc(a.name)}</span>`;
@@ -24,7 +25,7 @@
       <div class="sc-cover${a.cover ? '' : ' sc-cover-plain'}" ${a.cover ? '' : `style="--sc-c:${esc(a.color || '#2b3767')}"`}>${cover}</div>
       <div class="sc-body">
         <div class="sc-head">${logo(a)}
-          <div><h2 id="sc_${esc(a.id)}">${esc(a.name)}</h2>
+          <div><${h} id="sc_${esc(a.id)}">${esc(a.name)}</${h}>
           ${cat ? `<p class="sc-cat">${esc(pick(cat, 'title'))}</p>` : ''}</div>
         </div>
         <p class="sc-tag">${esc(pick(a, 'tagline'))}</p>
@@ -37,6 +38,16 @@
         </p>
       </div>
     </article>`;
+  }
+  // home page: 3 apps with a screenshot; featured ones first, then the rest in an order that changes once a day
+  if (home) {
+    const day = Math.floor(Date.now() / 864e5), seeded = (id) => { let h = day; for (const c of id) h = (h * 31 + c.charCodeAt(0)) % 2147483647; return h; };
+    const pool = apps.filter(a => a.cover && safeUrl(a.link) && a.id !== 'tech-club'); // the club's own site is not shown on its own home page
+    const chosen = pool.filter(a => a.featured).concat(pool.filter(a => !a.featured).sort((a, b) => seeded(a.id) - seeded(b.id))).slice(0, 3);
+    const draw = () => { home.innerHTML = chosen.map(a => card(a, 'h3')).join(''); };
+    const section = home.closest('section'); if (section) section.hidden = !chosen.length;
+    draw(); addEventListener('langchange', draw);
+    return;
   }
   function matches(a, q) {
     if (!q) return true;
@@ -51,7 +62,7 @@
   function render() {
     const q = search.value.trim().toLowerCase();
     const list = apps.filter(a => (current === 'all' || a.category === current) && matches(a, q));
-    grid.innerHTML = list.map(card).join('');
+    grid.innerHTML = list.map(a => card(a)).join('');
     empty.hidden = list.length > 0;
     count.textContent = T(list.length === 1 ? 'sc.count1' : 'sc.count', { n: list.length });
   }
