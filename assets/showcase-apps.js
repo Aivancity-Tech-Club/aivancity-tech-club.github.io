@@ -13,6 +13,7 @@
    color        background colour for the letter when there is no logo
    by           who made it. Leave "" until the team agrees to be named (the repository is public).
    season       when it was made, e.g. "Autumn 2026"; season_fr in French
+   featured     true to always show it on the home page (otherwise apps with a screenshot take turns, one set of 3 per day)
    note         optional short warning shown on the card (e.g. "Wakes up in about 30 seconds"); note_fr in French
 */
 const SHOWCASE_CATEGORIES = [
@@ -101,12 +102,13 @@ const SHOWCASE_APPS = [
   },
   {
     id: 'helper', name: 'Helper', category: 'careers',
-    tagline: 'Adapt your CV to each job offer in minutes',
-    tagline_fr: 'Adaptez votre CV à chaque offre en quelques minutes',
-    description: 'A job application assistant that helps students tailor their CV to an internship or work-study offer, to save time during the search.',
-    description_fr: 'Un assistant de candidature qui aide les étudiants à adapter leur CV à une offre de stage ou d\'alternance, pour gagner du temps pendant la recherche.',
-    link: '', repo: 'https://github.com/Hii987/Helper',
-    cover: '', logo: '', color: '#2b3767', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
+    tagline: 'Your job and internship search, all in one place',
+    tagline_fr: 'Votre recherche de stage ou d\'emploi, au même endroit',
+    description: 'Track your applications, prepare interviews, keep your recruiters\' details, find companies and offers, and write CVs and cover letters.',
+    description_fr: 'Suivez vos candidatures, préparez vos entretiens, gardez les coordonnées des recruteurs, trouvez des entreprises et des offres, et rédigez CV et lettres de motivation.',
+    link: 'https://helper-job-search-center.web.app/', repo: 'https://github.com/Hii987/Helper',
+    cover: '', logo: '', color: '#1b6b3a', by: 'Nathan Celerier, PGE3 AI & Data Science', season: 'Autumn 2026', season_fr: 'Automne 2026',
+    note: 'Still in development: feedback welcome.', note_fr: 'Encore en développement : vos retours sont les bienvenus.',
   },
   {
     id: 'no-return', name: 'No Return', category: 'style',
