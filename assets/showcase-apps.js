@@ -107,7 +107,7 @@ const SHOWCASE_APPS = [
     tagline_fr: 'Votre recherche de stage ou d\'emploi, au même endroit',
     description: 'Track your applications, prepare interviews, keep your recruiters\' details, find companies and offers, and write CVs and cover letters.',
     description_fr: 'Suivez vos candidatures, préparez vos entretiens, gardez les coordonnées des recruteurs, trouvez des entreprises et des offres, et rédigez CV et lettres de motivation.',
-    link: 'https://helper-job-search-center.web.app/', repo: 'https://github.com/Hii987/Helper',
+    link: 'https://helper-job-search-center.web.app/', repo: 'https://github.com/Nathan-Cel/job-application-organizer',
     cover: '', logo: '', color: '#1b6b3a', by: 'Nathan Celerier, PGE3 AI & Data Science', season: 'Autumn 2026', season_fr: 'Automne 2026',
     note: 'Still in development: feedback welcome.', note_fr: 'Encore en développement : vos retours sont les bienvenus.',
   },
