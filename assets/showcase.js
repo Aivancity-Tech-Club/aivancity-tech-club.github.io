@@ -1,6 +1,6 @@
 /* /showcase: apps built by aivancity students. The list lives in assets/showcase-apps.js.
    Newest first. Category buttons and a search box filter the cards; the chosen category is kept in the address (?c=health) so it can be shared.
-   The home page uses this file too (#scHome): it shows 3 apps, apps marked featured: true first, the others taking turns each day. */
+   The home page uses this file too (#scHome): one big "app of the day" (featured: true first, otherwise a different one each day) and small tiles for all the others. */
 (function () {
   const grid = document.getElementById('scGrid'), cats = document.getElementById('scCats'), search = document.getElementById('scSearch');
   const count = document.getElementById('scCount'), empty = document.getElementById('scEmpty'), home = document.getElementById('scHome');
@@ -41,13 +41,43 @@
       </div>
     </article>`;
   }
-  // home page: 3 apps with a screenshot; featured ones first, then the rest in an order that changes once a day
+  // home page: one big "app of the day" (featured ones first, then a different app with a screenshot each day),
+  // then a row of small tiles for every other app, each linking to its card on /showcase
   if (home) {
     const day = Math.floor(Date.now() / 864e5), seeded = (id) => { let h = day; for (const c of id) h = (h * 31 + c.charCodeAt(0)) % 2147483647; return h; };
-    const pool = apps.filter(a => a.cover && safeUrl(a.link) && a.id !== 'tech-club'); // the club's own site is not shown on its own home page
-    const chosen = pool.filter(a => a.featured).concat(pool.filter(a => !a.featured).sort((a, b) => seeded(a.id) - seeded(b.id))).slice(0, 3);
-    const draw = () => { home.innerHTML = chosen.map(a => card(a, 'h3')).join(''); };
-    const section = home.closest('section'); if (section) section.hidden = !chosen.length;
+    const shown = apps.filter(a => a.id !== 'tech-club'); // the club's own site is not shown on its own home page
+    const pool = shown.filter(a => a.cover && safeUrl(a.link));
+    const spot = pool.filter(a => a.featured).concat(pool.filter(a => !a.featured).sort((a, b) => seeded(a.id) - seeded(b.id)))[0];
+    const rest = shown.filter(a => a !== spot);
+    const tile = (a) => {
+      const cat = catOf(a.category);
+      return `<li><a class="sc-tile" href="/showcase#${esc(a.id)}">${logo(a)}<span><b>${esc(a.name)}</b>${cat ? `<small>${esc(pick(cat, 'title'))}</small>` : ''}</span></a></li>`;
+    };
+    const draw = () => {
+      let h = '';
+      if (spot) {
+        const cat = catOf(spot.category), link = safeUrl(spot.link), repo = safeUrl(spot.repo);
+        h += `<article class="sc-spot" aria-labelledby="sc_${esc(spot.id)}">
+          <a class="sc-spot-cover" href="${esc(link)}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+            <img src="assets/showcase/${esc(spot.cover)}" alt="" width="960" height="600" loading="lazy"></a>
+          <div class="sc-spot-body">
+            <p class="sc-kicker">${esc(T('home.sc.today'))}${cat ? ` · ${esc(pick(cat, 'title'))}` : ''}</p>
+            <div class="sc-head">${logo(spot)}<h3 id="sc_${esc(spot.id)}">${esc(spot.name)}</h3></div>
+            <p class="sc-tag">${esc(pick(spot, 'tagline'))}</p>
+            <p class="sc-desc">${esc(pick(spot, 'description'))}</p>
+            ${pick(spot, 'note') ? `<p class="sc-note">${esc(pick(spot, 'note'))}</p>` : ''}
+            <p class="sc-actions">
+              <a class="btn btn-primary" href="${esc(link)}" target="_blank" rel="noopener">${esc(T('sc.open'))} <span aria-hidden="true">↗</span><span class="sr-only"> ${esc(T('sc.newtab'))}</span></a>
+              ${repo ? `<a class="btn btn-ghost" href="${esc(repo)}" target="_blank" rel="noopener">${esc(T('sc.code'))}<span class="sr-only"> ${esc(T('sc.newtab'))}</span></a>` : ''}
+            </p>
+          </div>
+        </article>`;
+      }
+      if (rest.length) h += `<h3 class="sc-rail-h">${esc(T(rest.length === 1 ? 'home.sc.more1' : 'home.sc.more', { n: rest.length }))}</h3>
+        <ul class="sc-rail">${rest.map(tile).join('')}</ul>`;
+      home.innerHTML = h;
+    };
+    const section = home.closest('section'); if (section) section.hidden = !shown.length;
     draw(); addEventListener('langchange', draw);
     return;
   }

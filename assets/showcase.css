@@ -43,9 +43,36 @@
 .sc-add p { margin: 0; max-width: 60ch; }
 .sc-add .btn-primary { background: var(--navy); color: #fff; border-color: #221d19; }
 
-/* home page: the same cards, shorter */
-.sc-home .sc-desc, .sc-home .sc-note, .sc-home .sc-meta, .sc-home .sc-actions .btn-ghost { display: none; }
+/* home page: one big "app of the day", then small tiles for every other app */
+.sc-spot { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); background: var(--surface); border: var(--stroke) solid var(--line);
+  border-radius: 26px; overflow: hidden; box-shadow: 6px 6px 0 var(--line); }
+.sc-spot-cover { display: block; border-right: var(--stroke) solid var(--line); background: #e9e3d8; min-height: 100%; }
+.sc-spot-cover img { display: block; width: 100%; height: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: top center; transition: transform .4s ease; }
+.sc-spot-cover:hover img { transform: scale(1.03); }
+.sc-spot-body { padding: 26px 28px; display: flex; flex-direction: column; gap: 12px; }
+.sc-kicker { margin: 0; align-self: flex-start; font-family: var(--mono); font-size: .8rem; background: var(--p-yellow); color: #221d19;
+  border: 1.5px solid #221d19; border-radius: 999px; padding: 3px 12px; }
 .sc-head h3 { margin: 0; font-size: 1.3rem; line-height: 1.15; letter-spacing: -.015em; }
+.sc-spot .sc-head h3 { font-size: clamp(1.6rem, 3vw, 2.1rem); }
+.sc-spot .sc-tag { font-size: 1.1rem; }
+.sc-rail-h { margin: 34px 0 14px; font-size: 1.05rem; font-weight: 700; }
+.sc-rail { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.sc-tile { display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; min-height: 64px; background: var(--surface); color: var(--ink);
+  text-decoration: none; border: var(--stroke) solid var(--line); border-radius: 18px; transition: transform .15s ease, box-shadow .15s ease; }
+.sc-tile:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--line); }
+.sc-tile:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+.sc-tile .sc-logo { width: 44px; height: 44px; border-radius: 12px; font-size: 1.25rem; }
+.sc-tile span { display: flex; flex-direction: column; min-width: 0; }
+.sc-tile b { font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.sc-tile small { font-family: var(--mono); font-size: .75rem; color: var(--ink-soft); }
+@media (max-width: 760px) {
+  .sc-spot { grid-template-columns: 1fr; }
+  .sc-spot-cover { border-right: 0; border-bottom: var(--stroke) solid var(--line); }
+  .sc-spot-body { padding: 20px; }
+  .sc-rail { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 6px 10px 2px; margin-right: -20px; }
+  .sc-rail li { flex: 0 0 auto; width: 210px; scroll-snap-align: start; }
+}
+@media (prefers-reduced-motion: reduce) { .sc-spot-cover img, .sc-tile { transition: none; } .sc-spot-cover:hover img, .sc-tile:hover { transform: none; } }
 
 @media (prefers-color-scheme: dark) {
   .sc-chip:hover { background: #24304f; }
@@ -55,5 +82,8 @@
   .sc-cover { background: #2a2420; }
   .sc-add { box-shadow: 6px 6px 0 #000; }
   .sc-add .btn-primary { background: var(--navy); color: #fff; }
+  .sc-spot { box-shadow: 6px 6px 0 #000; }
+  .sc-spot-cover { background: #2a2420; }
+  .sc-tile:hover { box-shadow: 4px 4px 0 #000; }
 }
 .home-sc-lede { margin: -6px 0 20px; color: var(--ink-soft); max-width: 60ch; }
