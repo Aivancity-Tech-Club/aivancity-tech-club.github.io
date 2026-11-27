@@ -43,6 +43,26 @@
 .sc-add p { margin: 0; max-width: 60ch; }
 .sc-add .btn-primary { background: var(--navy); color: #fff; border-color: #221d19; }
 
+/* likes and dislikes, and the organizers' hide button */
+.sc-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1.5px dashed var(--line); }
+.sc-vote { display: flex; gap: 8px; }
+.sc-v { font: inherit; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.sc-v:hover { background: var(--p-blue); }
+.sc-v[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+.sc-v:focus-visible, .sc-hide:focus-visible, .sc-dlg-x:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+.sc-n { font-family: var(--mono); font-size: .9rem; }
+.sc-card.is-hidden { opacity: .65; border-style: dashed; }
+.sc-msg { margin-bottom: 16px; }
+.sc-dlg { width: min(520px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 0; border: var(--stroke) solid var(--line); border-radius: 26px;
+  background: var(--surface); color: var(--ink); box-shadow: 6px 6px 0 var(--line); }
+.sc-dlg::backdrop { background: rgba(16, 22, 46, .55); }
+.sc-dlg-in { position: relative; padding: 26px; display: grid; gap: 12px; }
+.sc-dlg h2 { margin: 0; padding-right: 44px; font-size: 1.5rem; line-height: 1.2; }
+.sc-dlg .help { margin: 0; }
+.sc-dlg-x { position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--line);
+  background: transparent; color: inherit; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+
 /* home page: one big "app of the day", then small tiles for every other app */
 .sc-spot { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); background: var(--surface); border: var(--stroke) solid var(--line);
   border-radius: 26px; overflow: hidden; box-shadow: 6px 6px 0 var(--line); }
@@ -83,6 +103,9 @@
   .sc-add { box-shadow: 6px 6px 0 #000; }
   .sc-add .btn-primary { background: var(--navy); color: #fff; }
   .sc-spot { box-shadow: 6px 6px 0 #000; }
+  .sc-v:hover { background: #24304f; }
+  .sc-v[aria-pressed="true"] { background: var(--cyan); color: #10162e; border-color: var(--cyan); }
+  .sc-dlg { box-shadow: 6px 6px 0 #000; }
   .sc-spot-cover { background: #2a2420; }
   .sc-tile:hover { box-shadow: 4px 4px 0 #000; }
 }
