@@ -463,6 +463,26 @@ service cloud.firestore {
       allow delete: if isOrganizer();
     }
 
+    // ---------- /showcase (the apps themselves live in assets/showcase-apps.js) ----------
+    // Hidden apps: showcaseHidden/{appId} { by, at }. Anyone can read the list (the page hides those apps); only organizers add or remove.
+    match /showcaseHidden/{app} {
+      allow read: if true;
+      allow create, update: if isOrganizer() && app.matches('^[a-z0-9-]{1,60}$')
+        && request.resource.data.keys().hasOnly(['by', 'at']) && request.resource.data.by == request.auth.uid && request.resource.data.at == request.time;
+      allow delete: if isOrganizer();
+    }
+    // Likes and dislikes: showcaseVotes/{appId}_{uid} { app, v: 1 | -1, at }. One per school account and app.
+    // Anyone can read them (the page shows the counts); you can only add, change or remove your own.
+    match /showcaseVotes/{id} {
+      allow read: if true;
+      allow create, update: if school()
+        && request.resource.data.keys().hasOnly(['app', 'v', 'at'])
+        && request.resource.data.app is string && request.resource.data.app.matches('^[a-z0-9-]{1,60}$')
+        && id == request.resource.data.app + '_' + request.auth.uid
+        && request.resource.data.v in [1, -1] && request.resource.data.at == request.time;
+      allow delete: if school() && id == resource.data.app + '_' + request.auth.uid;
+    }
+
     match /events/{id} {
       allow read: if resource.data.published == true || isOrganizer();
       allow create, update: if isOrganizer() && eventOk(request.resource.data);

@@ -296,6 +296,9 @@ function demoBackend() {
     async saveProject(p) { const X = extra(); X.projects = X.projects || []; const id = p.id || 'pr' + Date.now(), doc = { id, ...cleanProject(p) };
       const i = X.projects.findIndex(x => x.id === id); if (i >= 0) X.projects[i] = doc; else X.projects.push(doc); saveExtra(X); return { ok: true, id }; },
     async deleteProject(id) { const X = extra(); X.projects = (X.projects || []).filter(p => p.id !== id); saveExtra(X); return { ok: true }; },
+    // ---------- /showcase: likes and dislikes, and organizers hiding an app ----------
+    async setShowcaseVote(app, v) { const X = extra(); X.scVotes = X.scVotes || {}; if (v) X.scVotes[app] = v; else delete X.scVotes[app]; saveExtra(X); return { ok: true }; },
+    async setShowcaseHidden(app, on) { const X = extra(); X.scHidden = X.scHidden || {}; if (on) X.scHidden[app] = true; else delete X.scHidden[app]; saveExtra(X); return { ok: true }; },
     // ---------- events made on the site, and registrations ----------
     async loadEvents(all) { return (extra().events || demoEvents()).filter(e => all || e.published); },
     async getEvent(id) { return (extra().events || demoEvents()).find(e => e.id === id) || null; },
@@ -1044,6 +1047,18 @@ function firebaseBackend() {
       } catch (e) { return fail(e); }
     },
     async deleteProject(id) { try { await db.collection('projects').doc(id).delete(); return { ok: true }; } catch (e) { return fail(e); } },
+    // ---------- /showcase: one like (1) or dislike (-1) per account and app (showcaseVotes/{app}_{uid}); v = 0 removes it ----------
+    async setShowcaseVote(app, v) {
+      const ref = db.collection('showcaseVotes').doc(app + '_' + auth.currentUser.uid);
+      try { if (v === 1 || v === -1) await ref.set({ app, v, at: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; }
+      catch (e) { return fail(e); }
+    },
+    // organizers: hide an app from /showcase and the home page (showcaseHidden/{app}), or show it again
+    async setShowcaseHidden(app, on) {
+      const ref = db.collection('showcaseHidden').doc(app);
+      try { if (on) await ref.set({ by: auth.currentUser.uid, at: FV().serverTimestamp() }); else await ref.delete(); return { ok: true }; }
+      catch (e) { return fail(e); }
+    },
     async loadEvents(all) {
       const q = all ? db.collection('events') : db.collection('events').where('published', '==', true);
       const s = await q.get(); return s.docs.map(d => ({ id: d.id, ...d.data() }));
