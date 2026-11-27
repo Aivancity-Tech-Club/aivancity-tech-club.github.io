@@ -62,7 +62,7 @@ const SHOWCASE_APPS = [
     description: 'Answer a few questions and get a personal routine, product reviews by hair type, a community board and a wash-day tracker.',
     description_fr: 'Répondez à quelques questions et obtenez une routine personnalisée, des avis produits par type de cheveux, un espace communauté et un suivi des jours de lavage.',
     link: 'https://curlcheck-project.streamlit.app/', repo: '',
-    cover: '', logo: '', color: '#8a4b2a', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
+    cover: 'curl-check.webp', logo: '', color: '#8a4b2a', by: '', season: 'Autumn 2026', season_fr: 'Automne 2026',
     note: 'The app may need half a minute to wake up.', note_fr: 'L\'application peut mettre une trentaine de secondes à se réveiller.',
   },
   {
@@ -108,7 +108,7 @@ const SHOWCASE_APPS = [
     description: 'Track your applications, prepare interviews, keep your recruiters\' details, find companies and offers, and write CVs and cover letters.',
     description_fr: 'Suivez vos candidatures, préparez vos entretiens, gardez les coordonnées des recruteurs, trouvez des entreprises et des offres, et rédigez CV et lettres de motivation.',
     link: 'https://helper-job-search-center.web.app/', repo: 'https://github.com/Nathan-Cel/job-application-organizer',
-    cover: '', logo: '', color: '#1b6b3a', by: 'Nathan Celerier, PGE3 AI & Data Science', season: 'Autumn 2026', season_fr: 'Automne 2026',
+    cover: 'helper.webp', logo: '', color: '#1b6b3a', by: 'Nathan Celerier, PGE3 AI & Data Science', season: 'Autumn 2026', season_fr: 'Automne 2026',
     note: 'Still in development: feedback welcome.', note_fr: 'Encore en développement : vos retours sont les bienvenus.',
   },
   {
